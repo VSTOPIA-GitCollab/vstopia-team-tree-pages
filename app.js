@@ -171,34 +171,26 @@
     const ny=y*Math.cos(state.rx)-nz*Math.sin(state.rx),depth=y*Math.sin(state.rx)+nz*Math.cos(state.rx),perspective=850/(850-depth*.55);
     const scale=Math.min(state.width/710,state.height/590)*state.zoom;
     return{x:state.width/2+nx*scale*perspective,y:state.height*.59-ny*scale*perspective,r:p.radius*scale*perspective,depth};}
-  function frame(t){if(state.mode!=='tree'){requestAnimationFrame(frame);return;}const w=state.width,h=state.height;
-    ctx.clearRect(0,0,w,h);ctx.save();ctx.strokeStyle='rgba(137,187,129,.09)';ctx.lineWidth=1;
-    for(let i=1;i<=4;i++){ctx.beginPath();ctx.ellipse(w/2,h*.59+58,Math.min(w,h)*i*.14,Math.min(w,h)*i*.035,0,0,Math.PI*2);ctx.stroke();}ctx.restore();
-    const nodes=world(),at=new Map();for(const n of nodes)at.set(n.id,project(n,t));const root=at.get('root');
-    const trunk=ctx.createLinearGradient(root.x,root.y+155,root.x,root.y);trunk.addColorStop(0,'rgba(90,125,86,.06)');trunk.addColorStop(.65,'rgba(126,171,107,.45)');trunk.addColorStop(1,'rgba(207,188,126,.48)');
-    ctx.strokeStyle=trunk;ctx.lineCap='round';ctx.lineWidth=Math.max(3,Math.min(w,h)*.014);ctx.beginPath();ctx.moveTo(root.x+12,root.y+160);ctx.bezierCurveTo(root.x-14,root.y+115,root.x+13,root.y+42,root.x,root.y);ctx.stroke();
-    for(const n of nodes.filter(n=>n.parent).sort((a,b)=>at.get(a.id).depth-at.get(b.id).depth)){
-      const a=at.get(n.parent),b=at.get(n.id),selected=n.repo===state.selected,bend=n.type==='repo'?.22:.4;
-      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.bezierCurveTo(a.x,a.y-(b.y-a.y)*bend,b.x,b.y+(a.y-b.y)*bend,b.x,b.y);
-      ctx.strokeStyle=selected?'rgba(237,213,150,.73)':n.type==='repo'?'rgba(125,174,115,.3)':'rgba(99,160,128,.19)';ctx.lineWidth=selected?2.3:1.2;ctx.stroke();}
-    state.hits=[];const labels=[];
-    for(const n of nodes.slice().sort((a,b)=>at.get(a.id).depth-at.get(b.id).depth)){
-      const p=at.get(n.id),selected=n.repo===state.selected;
-      if(n.type==='root'){
-        ctx.fillStyle='#d8c78a';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(5,p.r),0,Math.PI*2);ctx.fill();ctx.font='700 10px ui-monospace,monospace';ctx.textAlign='center';ctx.fillStyle='#e3d0a3';ctx.fillText('VSTOPIA',p.x,p.y+25);continue;}
-      if(n.type==='repo'){const glow=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,selected?32:22);glow.addColorStop(0,selected?'rgba(244,210,150,.39)':'rgba(179,210,133,.17)');glow.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(p.x,p.y,selected?32:22,0,Math.PI*2);ctx.fill();}
-      ctx.beginPath();ctx.arc(p.x,p.y,Math.max(2,p.r),0,Math.PI*2);ctx.fillStyle=n.type==='open'?'#e5a28c':n.type==='commit'?'#a5dfb9':'#dec488';ctx.fill();
-      if(selected&&n.type==='repo'){ctx.beginPath();ctx.arc(p.x,p.y,Math.max(2,p.r)+7,0,Math.PI*2);ctx.strokeStyle='rgba(240,218,165,.75)';ctx.stroke();}
-      if(n.type==='repo'){state.hits.push({repo:n.repo,x:p.x,y:p.y,r:Math.max(15,p.r+8),depth:p.depth});if(selected||w>500&&p.depth>-160)labels.push({text:n.repo,x:p.x,y:p.y-18,selected,depth:p.depth});}
-    }
-    labels.sort((a,b)=>Number(b.selected)-Number(a.selected)||b.depth-a.depth);const used=[];
-    for(const label of labels){ctx.font=label.selected?'700 12px ui-monospace,monospace':'10px ui-monospace,monospace';const mw=Math.min(180,ctx.measureText(label.text).width);
-      const b={x:label.x-mw/2-4,y:label.y-12,w:mw+8,h:16};if(!label.selected&&used.some(q=>b.x<q.x+q.w&&b.x+b.w>q.x&&b.y<q.y+q.h&&b.y+b.h>q.y))continue;
-      used.push(b);ctx.fillStyle='rgba(7,23,15,.8)';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.fillStyle=label.selected?'#f4dca3':'#bbd4b4';ctx.textAlign='center';ctx.fillText(label.text,label.x,label.y);}
+  const backCanvas=document.createElement('canvas');
+  const backCtx=backCanvas.getContext('2d');
+  let lastForestPaint=0;
+  function frame(t){
+    if(t-lastForestPaint<70){requestAnimationFrame(frame);return;}
+    lastForestPaint=t;
+    if(state.mode!=='tree'){requestAnimationFrame(frame);return;}
+    const nodes=world(), projected=new Map();
+    for(const node of nodes)projected.set(node.id,project(node,t));
+    state.hits=[];
+    window.VstopiaForest.draw(backCtx,{w:state.width,h:state.height,t,motion:!reducedMotion,
+      world:nodes,projected,selected:state.selected,hits:state.hits});
+    // Compositing is atomic: keep the previous complete tree until this one is ready.
+    ctx.clearRect(0,0,state.width,state.height);
+    ctx.drawImage(backCanvas,0,0,state.width,state.height);
     requestAnimationFrame(frame);
   }
   function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);state.width=Math.max(1,r.width);state.height=Math.max(1,r.height);
-    canvas.width=Math.round(state.width*d);canvas.height=Math.round(state.height*d);ctx.setTransform(d,0,0,d,0,0);}
+    canvas.width=Math.round(state.width*d);canvas.height=Math.round(state.height*d);ctx.setTransform(d,0,0,d,0,0);
+    backCanvas.width=canvas.width;backCanvas.height=canvas.height;backCtx.setTransform(d,0,0,d,0,0);}
   canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;state.drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false};canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging');});
   canvas.addEventListener('pointermove',e=>{if(!state.drag)return;const d=state.drag,dx=e.clientX-d.x,dy=e.clientY-d.y;if(Math.abs(e.clientX-d.sx)+Math.abs(e.clientY-d.sy)>5)d.moved=true;
     if(d.moved){state.ry+=dx*.009;state.rx=Math.max(-1.1,Math.min(1.1,state.rx+dy*.006));}d.x=e.clientX;d.y=e.clientY;});
