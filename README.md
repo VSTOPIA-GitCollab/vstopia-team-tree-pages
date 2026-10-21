@@ -62,3 +62,8 @@ Wide Three.js stage with a reflective HDRI lake and continuously flowing creek, 
 The public Three.js canvas now extends **behind** the header and glass UI panels. The redundant public-aggregates disclaimer block was removed from the sidebar while backend privacy validation remains. The lake is an irregular triangulated polygon away from the main EZ-Tree, now visible on the left; its feeding creek starts near the 16 km terrain's western edge, with wider banks and physically carved riverbed. More meadow and natural riverbank grass groups (33,000 five-blade tufts), angular deformed boulders scattered throughout the landscape (~220 visible instances), and no pebble ring around the lake. The large right inspector presents both members and task cards without nested scrolling.
 
 A single original MIT [`@specy/liquid-glass-react`](https://www.npmjs.com/package/@specy/liquid-glass-react) WebGL island provides the header's optical refraction; other containers use existing self-hosted liquid-glass-react optical surfaces and low-opacity backdrop glass. Avoid spawning a WebGL renderer for every small card. Full V3 build/QA notes and multiple rotated screenshots: [Natural Garden V3](docs/NATURAL_GARDEN_V3_2026-10-21.md).
+
+
+## Readable collaborators / white glass labels (October 21, 2026)
+
+Both public team cards now use a responsive two-column internal layout: readable 2×2 commit/PR metrics alongside three independent work-status rows and full-width latest-activity dates. The side rail is slightly wider, no child card scroll/clipping is allowed, and the glass overlays display white text (including selected tree labels) with subtle HDRI-safe text shadows. See [implementation notes](docs/TEAM_CARDS_READABILITY_2026-10-21.md) and desktop/mobile screenshots.
