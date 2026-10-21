@@ -39,3 +39,42 @@
 .garden-note{font:10px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:10px;color:#a4bca5}
 @keyframes leaf-sway{0%,100%{transform:rotate(-12deg) translateY(0)}50%{transform:rotate(15deg) translateY(-2px)}}
 @media(prefers-reduced-motion:reduce){.needs-attention .work-leaf{animation:none}}
+
+/* LIVING COUNCIL FOREST — painted bark / glass/neon / botanical mascots */
+:root{--gold:#f4d296;--mint:#a9f2d0;--line:rgba(131,204,148,.18)}
+body{background:#040b0a}
+.topbar{background:linear-gradient(115deg,#071b15,#081a19 54%,#0a1713);border-bottom:1px solid #92dba433;box-shadow:0 1px 18px rgba(48,174,102,.07)}
+.brand-icon{border-radius:10px;border-color:#9be3a08c;box-shadow:inset 0 0 14px #9be3a020,0 0 16px #83f5c018}
+.sidebar,.inspector{background:linear-gradient(160deg,#0b221b,#071510 85%)}
+.sidebar h1,.workbench h2,.inspector h2{font-family:Georgia,'Times New Roman',serif}
+.workbench{background:#031810}
+.tree-stage{isolation:isolate;background:radial-gradient(ellipse at 50% 26%,#1c514078,transparent 66%),linear-gradient(180deg,#061b1a 0%,#08201a 55%,#06130f 100%)}
+.tree-stage::before{content:'';pointer-events:none;position:absolute;inset:0;background:radial-gradient(ellipse at 50% 75%,transparent 50%,rgba(0,7,7,.43) 100%);z-index:1}
+.tree-stage::after{border:1px solid #93dd9a31;box-shadow:inset 0 0 24px #70e6ab0b;z-index:2}
+.tree-grid.forest-atmosphere{opacity:.16;mask-image:linear-gradient(to bottom,transparent,black 88%);background-size:48px 48px}
+.stage-coordinate{z-index:5;letter-spacing:.14em;color:#d0edc0;text-shadow:0 0 10px #9ae1ae66;font-size:9px}
+#treeCanvas{z-index:1}
+.stage-legend,.stage-instructions{z-index:5}
+.stage-legend{bottom:22px;left:22px;background:#071d17b8;border:1px solid #8acc9a40;border-radius:6px;padding:9px 12px}
+.stage-instructions{bottom:64px;color:#b8d7b4;text-shadow:0 0 12px #315d3b}
+.stage-buttons button{border-color:#88bc9c77;background:linear-gradient(145deg,#153d2c,#0e2a20);color:#d1f0ce}
+.stage-buttons button:hover{box-shadow:0 0 14px #7cf5b540}
+.stage-buttons button[aria-pressed=true]{box-shadow:0 0 20px #c6cf6d45}
+.metric{background:linear-gradient(150deg,#123527,#0b251e);border-color:#8ccf9452;box-shadow:inset 0 0 14px #55a8720a}
+.metric strong{color:#f3db9f;text-shadow:0 0 24px #f1d0872b}
+.inspector-section{border-color:#88b89a29}
+.member-card{border-color:#93c69e5c;box-shadow:inset 0 0 20px #64b86d0d}
+.work-pill.needs-attention{box-shadow:0 0 13px #9cba6238}
+.forest-character{position:absolute;z-index:4;pointer-events:none;bottom:55px;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 0 15px rgba(112,239,163,.22))}
+.forest-character img{width:clamp(78px,10vw,125px);height:auto;object-fit:contain;transform-origin:50% 86%;animation:forest-mascot-breathe 5s ease-in-out infinite}
+.forest-rabbit{left:1.8%}.forest-turtle{right:1.3%;bottom:52px}
+.forest-turtle img{width:clamp(104px,12vw,150px);animation:forest-mascot-walk 7s ease-in-out infinite}
+.mascot-speech{max-width:150px;white-space:nowrap;margin-top:-7px;background:linear-gradient(100deg,#143d30dc,#0e342cdd);border:1px solid #9cdfbb5c;border-radius:20px;padding:7px 10px;color:#dbefce;font:9px ui-monospace,Consolas,monospace;text-shadow:0 0 6px #75aa8a;box-shadow:0 0 14px #74d29e20;animation:forest-speech-pulse 6s ease-in-out infinite}
+.forest-moon{position:absolute;top:10%;left:45%;width:12%;aspect-ratio:1;z-index:0;border-radius:50%;background:radial-gradient(circle,#afeedb20,transparent 69%);box-shadow:0 0 88px #a6f0ca0d;pointer-events:none}
+@keyframes forest-mascot-breathe{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+@keyframes forest-mascot-walk{0%,100%{transform:translateX(0) rotate(-1deg)}50%{transform:translateX(-8px) translateY(-4px) rotate(2deg)}}
+@keyframes forest-speech-pulse{0%,100%{opacity:.8}50%{opacity:1;box-shadow:0 0 22px #b3fbb943}}
+@media(max-width:1400px){.forest-character img{width:86px}.forest-turtle img{width:112px}.forest-character{bottom:51px}.forest-turtle{bottom:51px}.mascot-speech{font-size:8px}}
+@media(max-width:1100px){.mascot-speech{display:none}.forest-rabbit{left:0}.forest-turtle{right:0}}
+@media(max-width:620px){.forest-character img{width:69px}.forest-turtle img{width:89px}.forest-character{bottom:43px}.forest-turtle{bottom:43px}.stage-legend{bottom:10px;left:11px;max-width:calc(100% - 16px)}.stage-instructions{bottom:54px}}
+@media(prefers-reduced-motion:reduce){.forest-character img,.mascot-speech{animation:none}}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="205" height="150" viewBox="0 0 205 150" role="img" aria-label="Tartaruga del bosco dal guscio luminoso">
+ <defs>
+  <radialGradient id="skin" cx="35%" cy="21%" r="90%"><stop stop-color="#d5efaf"/><stop offset=".45" stop-color="#7ebd75"/><stop offset="1" stop-color="#315f4b"/></radialGradient>
+  <radialGradient id="shell" cx="45%" cy="20%" r="88%"><stop stop-color="#93c88b"/><stop offset=".5" stop-color="#396d5b"/><stop offset="1" stop-color="#132f32"/></radialGradient>
+  <filter id="soft"><feGaussianBlur stdDeviation="5"/></filter>
+ </defs>
+ <ellipse cx="100" cy="134" rx="75" ry="10" fill="#4be3aa" opacity=".35" filter="url(#soft)"/>
+ <path d="M54 99q-25 6-21 26 20 14 37-11m54-15q23 7 33 27-6 17-32 2" fill="url(#skin)" stroke="#4b825d" stroke-width="2"/>
+ <path d="M156 81q35-28 43 2 12 31-24 42-20 3-29-16" fill="url(#skin)" stroke="#569568" stroke-width="2.3"/>
+ <circle cx="184" cy="87" r="5.2" fill="#192c27"/><circle cx="185.5" cy="85.4" r="1.8" fill="#fff5dc"/>
+ <path d="M180 107q8 6 15-2" fill="none" stroke="#315848" stroke-width="2" stroke-linecap="round"/>
+ <path d="M37 110Q37 34 103 26c45-2 66 41 62 88z" fill="url(#shell)" stroke="#a2c779" stroke-width="4"/>
+ <path d="M53 80q16-25 48-33 40 3 54 35l-16 22-39 11-32-9z" fill="#375d51" stroke="#a6c88d" stroke-width="3"/>
+ <path d="M88 48l22 20-6 28-36 13-17-29m59-12 32 11-7 27-31-10m-16-48-7 27-28 7" fill="none" stroke="#91be83" stroke-width="3" stroke-linejoin="round"/>
+ <path d="M42 110q53 18 119 2" stroke="#bee59b" stroke-width="4" opacity=".63" fill="none"/>
+ <path d="M58 121q-12 8-6 18h26l9-18m47-1 12 18h22q7-13-12-27" fill="url(#skin)" stroke="#50885e" stroke-width="2"/>
+ <circle cx="82" cy="61" r="3.5" fill="#adffd2" opacity=".8"/><circle cx="122" cy="86" r="4" fill="#d4ef97" opacity=".7"/>
+ <path d="M120 20l4-8 4 8-4 8z" fill="#acffd5" opacity=".9"/>
+</svg>

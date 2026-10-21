@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="170" height="205" viewBox="0 0 170 205" role="img" aria-label="Coniglietto del bosco con luce azzurra">
+ <defs>
+  <radialGradient id="fur" cx="32%" cy="26%" r="87%"><stop stop-color="#fff9e9"/><stop offset=".45" stop-color="#dce9d7"/><stop offset=".84" stop-color="#a1beb2"/><stop offset="1" stop-color="#436a60"/></radialGradient>
+  <linearGradient id="ear" x2=".9" y2="1"><stop stop-color="#f3d3ce"/><stop offset="1" stop-color="#a57b93"/></linearGradient>
+  <radialGradient id="eyes"><stop stop-color="#36534c"/><stop offset="1" stop-color="#111c17"/></radialGradient>
+  <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
+ </defs>
+ <ellipse cx="88" cy="189" rx="52" ry="9" fill="#54dd9d" opacity=".38" filter="url(#glow)"/>
+ <path d="M64 79C50 41 43 12 52 8c20-6 28 45 30 70" fill="url(#fur)" stroke="#74958a" stroke-width="2"/>
+ <path d="M66 68C56 42 53 22 57 21c6-2 16 27 17 48" fill="url(#ear)" opacity=".9"/>
+ <path d="M88 78C88 34 106 7 118 12c17 8 2 51-17 73" fill="url(#fur)" stroke="#74958a" stroke-width="2"/>
+ <path d="M98 68c3-26 12-42 18-43 7 2-3 30-15 48" fill="url(#ear)"/>
+ <ellipse cx="88" cy="149" rx="43" ry="42" fill="url(#fur)" stroke="#98ac9b" stroke-width="2"/>
+ <ellipse cx="129" cy="146" rx="17" ry="20" fill="#dae8d7"/><circle cx="130" cy="145" r="9" fill="#eff8e7"/>
+ <path d="M55 163q-25 10-15 25 12 15 32-2M110 164q26 9 21 21-8 13-26-1" fill="url(#fur)" stroke="#74958a" stroke-width="2"/>
+ <ellipse cx="84" cy="104" rx="45" ry="42" fill="url(#fur)" stroke="#9ab7a7" stroke-width="2"/>
+ <ellipse cx="68" cy="105" rx="6" ry="9" fill="url(#eyes)"/><ellipse cx="101" cy="105" rx="6" ry="9" fill="url(#eyes)"/>
+ <circle cx="66.5" cy="101.5" r="2.2" fill="white"/><circle cx="99.5" cy="101.5" r="2.2" fill="white"/>
+ <ellipse cx="83" cy="123" rx="7" ry="5" fill="#bc8793"/><path d="M83 126v6m0 0q-7 8-13 1m13-1q8 8 14 0" fill="none" stroke="#577267" stroke-linecap="round" stroke-width="1.8"/>
+ <path d="M49 121l-19-4m20 10-20 3m88-9 18-4m-17 10 19 5" fill="none" stroke="#d5eee2" stroke-width="1.9" stroke-linecap="round"/>
+ <path d="M65 169q14 8 33 0" stroke="#d8f5e2" stroke-width="5" opacity=".55" fill="none"/>
+ <circle cx="43" cy="88" r="2.7" fill="#8dfdde"/><circle cx="123" cy="57" r="2" fill="#ffd09d"/><path d="M137 98l5-4 5 4-5 4z" fill="#a5e8fb" opacity=".9"/>
+</svg>
