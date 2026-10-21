@@ -42,3 +42,8 @@ The 3D scene has a wide layout and a bottom horizontal GitHub stats bar, physica
 `LIST` now opens a right-side liquid-glass drawer while preserving the active animated Three.js tree, rather than replacing it. Close by clicking `LIST` again, `3D REAL TREE`, `×`, or `Escape`. The list contains demonstrative branch names only.
 
 `ground-blend.js` retains existing stochastic anti-tiling and distance feathering. `scripts/calibrate_ground.py` and the public-safe numeric `assets/calibration/ground-grade.json` apply robust multi-point linear-sRGB terrain/HDRI grading, followed by a restrained left/right color adjustment based on real browser measurements. See [color and interaction notes](docs/RIGHT_LIST_HDRI_COLOR_MATCH.md), [right-drawer screenshot](docs/screenshots/right-list-open-2026-10-21.png), and [calibrated meadow screenshot](docs/screenshots/terrain-hdri-calibrated-2026-10-21.png). The user's original desktop screenshot is **not** published.
+
+
+## October 21 — Apple glass, planted trunk, extended garden
+
+The redundant LIST drawer has been removed (the searchable sidebar remains the canonical project navigator). The stage uses a 16 km world mesh with longer HDRI transition, adjusts the EZ-Tree geometry’s true bounding-box base to the PBR terrain, and includes 12 procedural shrubs built from shared EZ-Tree branches and an instanced 3D leafy canopy (3,120 small lobes, one draw call). The interface uses the macOS system SF font stack and a self-hosted, small React island built with the **actual** MIT [`rdev/liquid-glass-react`](https://github.com/rdev/liquid-glass-react) library on prominent glass controls. The 3D tree and sidebar stay in plain JavaScript. See [implementation notes](docs/APPLE_GLASS_GROUNDED_GARDEN.md).

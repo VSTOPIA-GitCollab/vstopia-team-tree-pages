@@ -8,28 +8,27 @@ sys.path.insert(0,str(ROOT/'scripts'))
 from calibrate_ground import calibration, PHOTO, RENDER
 JS=(ROOT/'app.js').read_text()
 HTML=(ROOT/'index.html').read_text()
-CSS=(ROOT/'right-list.css').read_text()
+CSS=(ROOT/'apple-glass.css').read_text()
 GRADE=(ROOT/'ground-blend.js').read_text()
 TREE=(ROOT/'ez-tree-scene.js').read_text()
 PROFILE=json.loads((ROOT/'assets/calibration/ground-grade.json').read_text())
 
 class RightListColorTests(unittest.TestCase):
-    def test_list_is_toggled_without_hiding_tree(self):
-        self.assertIn('id="listDrawer"',HTML)
-        self.assertIn('aria-controls="listDrawer"',HTML)
-        self.assertIn('state.mode=\'tree\'',JS)
+    def test_redundant_list_removed_but_original_sidebar_remains(self):
+        self.assertNotIn('id="listDrawer"',HTML)
+        self.assertNotIn('id="viewList"',HTML)
+        self.assertNotIn('id="viewTree"',HTML)
+        self.assertIn('id="repoList"',HTML)
+        self.assertNotIn('setMode(',JS)
+        self.assertNotIn('renderList(',JS)
         self.assertIn('const stageMode=()=>!stage.hidden;',TREE)
-        self.assertIn("$('listDrawer').hidden=!show",JS)
-        self.assertIn("setMode($('listDrawer').hidden?'list':'tree')",JS)
-        self.assertIn("$('listDrawerClose').addEventListener",JS)
-        self.assertIn("e.key==='Escape'",JS)
-        self.assertIn("window.dispatchEvent(new CustomEvent('vstopia:mode',{detail:{mode:'tree'}}))",JS)
 
-    def test_right_drawer_is_liquid_glass(self):
-        self.assertIn('position:absolute;z-index:12;right:13px',CSS)
-        self.assertIn('backdrop-filter:blur(27px)',CSS)
-        self.assertIn('.list-drawer[hidden]{display:none!important}',CSS)
-        self.assertIn('flex-direction:column',CSS)
+    def test_original_react_liquid_glass_is_bundled(self):
+        self.assertIn('src="./vendor/vstopia-liquid-glass-island.mjs"',HTML)
+        self.assertIn('liquid-glass-react', (ROOT/'glass-react-source/glass-island.jsx').read_text())
+        self.assertIn('vstopia-glass-optic',(ROOT/'glass-react-source/glass-island.jsx').read_text())
+        self.assertTrue((ROOT/'vendor/vstopia-liquid-glass-island.mjs').stat().st_size>80000)
+        self.assertIn('SF Pro',(ROOT/'apple-glass.css').read_text())
 
     def test_calibration_uses_multiple_pairs_and_correct_color_space(self):
         self.assertEqual(len(PHOTO),6)
@@ -43,7 +42,7 @@ class RightListColorTests(unittest.TestCase):
         self.assertIn('uGroundRight',GRADE)
         self.assertIn('uGroundWidth',GRADE)
         self.assertIn('diffuseColor.rgb *= mix(uGroundLeft,uGroundRight',GRADE)
-        self.assertIn('smoothstep(35.0,390.0',GRADE)
+        self.assertIn('smoothstep(520.0,3900.0',GRADE)
 
     def test_calibration_file_has_only_aggregate_color_samples(self):
         self.assertEqual(PROFILE['schema_version'],1)

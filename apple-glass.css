@@ -1,0 +1,74 @@
+/* Native Apple SF typography and true rdev/liquid-glass-react optical islands.
+   The ESM bundle is locally built and served from /vendor; no CDN, no font downloads. */
+:root{--apple-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Arial,sans-serif;
+ --glass-edge:rgba(255,255,255,.86);--glass-text:#294858}
+html,body,body :where(*){
+ font-family:var(--apple-ui)!important;
+ -webkit-font-smoothing:antialiased;
+ text-rendering:optimizeLegibility;
+}
+body{font-size:13px;line-height:1.48;letter-spacing:-.012em}
+.sidebar h1,.workbench h2,.inspector h2{
+ font-size:clamp(21px,1.75vw,28px)!important;font-weight:690!important;
+ letter-spacing:-.045em!important;line-height:1.1!important;
+ text-shadow:none!important;
+}
+.sidebar h1{font-size:25px!important}
+.member-top a,.detail-title,.detail-commit{font-weight:630!important}
+.eyebrow,.section-heading,.section-divider,.stage-coordinate,
+.metric span,.member-stat small,.work-pill span,.brand-type small,
+.filter,.stage-buttons button{font-size:10px!important;letter-spacing:.055em!important}
+.search-field input,.repo-copy strong,.member-card strong{font-size:11.5px!important}
+.repo-copy small,.metric small,.member-top small{font-size:9.5px!important;letter-spacing:0!important}
+.metric strong{font-size:clamp(22px,2vw,30px)!important;font-weight:630;letter-spacing:-.035em}
+.member-stat strong{font-size:17px!important;font-weight:650}
+.topbar{background:linear-gradient(120deg,rgba(255,255,255,.55),rgba(227,242,247,.29));border-bottom:1px solid var(--glass-edge)}
+.sidebar,.layout>.inspector{background:linear-gradient(118deg,rgba(237,248,250,.58),rgba(225,243,248,.24)),rgba(244,251,255,.20);
+ border-color:var(--glass-edge)}
+.metric,.member-card,.search-field,.forest-speed-control,.stage-buttons,
+.sidebar-footer,.view-switch{
+ background:linear-gradient(132deg,rgba(255,255,255,.48),rgba(255,255,255,.16) 42%,rgba(179,217,230,.16));
+ border:1px solid rgba(255,255,255,.79);
+ box-shadow:inset 0 1px 1px rgba(255,255,255,.89),inset 1px 0 0 rgba(255,255,255,.34),
+  0 8px 28px rgba(25,77,100,.09),0 1px 2px rgba(62,111,134,.07);
+ backdrop-filter:blur(15px) saturate(135%);-webkit-backdrop-filter:blur(15px) saturate(135%);
+}
+.true-liquid-glass{position:relative!important;isolation:isolate;overflow:hidden}
+.true-liquid-glass>.liquid-glass-island{
+ position:absolute;inset:0;z-index:0;display:block;pointer-events:none!important;
+ overflow:hidden;border-radius:inherit;
+}
+.true-liquid-glass>.liquid-glass-island>.vstopia-glass-optic,
+.true-liquid-glass .glass{width:100%!important;height:100%!important;max-width:none!important;min-height:0!important}
+.true-liquid-glass .glass{
+ display:block!important;padding:0!important;box-shadow:none!important;
+ border-radius:inherit!important;overflow:hidden!important;
+}
+.true-liquid-glass .glass__warp{
+ background:linear-gradient(125deg,rgba(255,255,255,.24),rgba(245,250,254,.07) 48%,rgba(156,215,239,.08));
+ box-shadow:inset 0 1px rgba(255,255,255,.66);
+}
+.true-liquid-glass>.liquid-glass-island svg{width:100%!important;height:100%!important;pointer-events:none}
+.true-liquid-glass>:not(.liquid-glass-island){position:relative;z-index:1}
+.true-liquid-glass:hover{box-shadow:inset 0 1px 2px rgba(255,255,255,.96),0 13px 35px rgba(35,90,102,.15)}
+.scene-mode-indicator{
+ display:inline-flex;align-items:center;gap:7px;border-radius:20px;
+ padding:9px 13px;border:1px solid rgba(255,255,255,.89);
+ background:rgba(247,252,253,.46);box-shadow:inset 0 1px rgba(255,255,255,.89),0 6px 19px rgba(29,99,132,.07);
+ color:#346472;font-size:10px;font-weight:620;letter-spacing:.085em;
+}
+.scene-mode-indicator::before{content:"";width:7px;height:7px;border-radius:50%;background:#43b39b;box-shadow:0 0 11px rgba(23,170,141,.5)}
+.brand-type strong,.brand-type em{font-weight:680}
+.stage-instructions,.stage-legend{font-size:9.5px!important;font-weight:540;letter-spacing:.03em}
+.forest-speed-control{background:rgba(242,250,251,.52);font-size:10px!important}
+@media(prefers-reduced-motion:reduce){.true-liquid-glass:hover{transform:none!important}}
+
+/* The speed pill is positioned over the 3D stage, not in ordinary document flow. */
+.forest-speed-control.true-liquid-glass{position:absolute!important;left:50%!important;bottom:10px!important;top:auto!important;transform:translateX(-50%)!important;width:max-content!important;z-index:15}
+/* Ensure the small island cannot consume layout space or swallow pointer events. */
+.true-liquid-glass>.liquid-glass-island{width:100%;height:100%;flex:none}
+
+/* Keep the physically grounded trunk fully visible between the glass controls. */
+.forest-speed-control.true-liquid-glass{left:auto!important;right:14px!important;transform:none!important}
+.stage-instructions{left:16px!important;top:29px!important;bottom:auto!important;transform:none!important;font-size:9px!important}
+@media(max-width:750px){.forest-speed-control.true-liquid-glass{right:6px!important;bottom:5px!important}.stage-instructions{display:none!important}}

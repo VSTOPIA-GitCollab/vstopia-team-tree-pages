@@ -1,0 +1,1 @@
+{"name":"vstopia-liquid-glass-island","private":true,"version":"1.0.0","scripts":{"build":"esbuild glass-island.jsx --bundle --format=esm --minify --target=es2022 --outfile=../vendor/vstopia-liquid-glass-island.mjs"},"dependencies":{"react":"19.2.0","react-dom":"19.2.0","liquid-glass-react":"1.1.1"},"devDependencies":{"esbuild":"0.24.2"}}

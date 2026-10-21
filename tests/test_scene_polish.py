@@ -16,7 +16,7 @@ class ScenePolishTests(unittest.TestCase):
 
     def test_gradient_world_blends_against_hdri(self):
         self.assertIn('vTerrainWorldPosition',GROUND)
-        self.assertIn('smoothstep(35.0,390.0',GROUND)
+        self.assertIn('smoothstep(520.0,3900.0',GROUND)
         self.assertIn('diffuseColor.a *= feather;',GROUND)
         self.assertIn('material.transparent=true;',GROUND)
         self.assertIn('scene.environment=texture',JS)
