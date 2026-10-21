@@ -31,3 +31,7 @@ The public collaborator cards include aggregated **open issues assigned**, **ope
 ## Realistic 3D scene & glass UI
 
 The optional, self-hosted EZ-Tree / Three.js oak uses a licensed sky photograph and liquid-glass CSS. See [the scene runbook](docs/REAL_TREE_LIQUID_SKY.md) and vendored MIT licenses. Browser without WebGL continues to receive the prior animated Canvas tree. The visible project labels are synthetic; public GitHub activity is aggregated and must never expose private repository contents.
+
+## Wide Council garden scene — 21 October 2026
+
+The 3D scene has a wide layout and a bottom horizontal GitHub stats bar, physically lit foliage with sun shadows, stochastic anti-tiling PBR meadow shading with HDRI-edge blending, and a functioning snail-to-rabbit wind speed slider. See [implementation and QA notes](docs/SCENE_POLISH_2026-10-21.md) and [desktop screenshot](docs/screenshots/scene-polish-2026-10-21.png). The speed-slider interpretation is not claimed to reproduce Marcello's original unavailable Council code.

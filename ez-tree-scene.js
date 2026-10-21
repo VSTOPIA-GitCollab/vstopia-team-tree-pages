@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import {Tree} from '@dgreenheck/ez-tree';
 import {RGBELoader} from './vendor/RGBELoader.js';
+import {applyTerrainBlending} from './ground-blend.js';
 
 const stage=document.getElementById('treeStage');
 const fallback=document.getElementById('treeCanvas');
@@ -15,6 +16,11 @@ window.VstopiaEzTree=api;
 let renderer, camera, scene, tree, ground, holder, markerLayer, target, frameId;
 let sceneExtent=0;
 let requiresRender=true;
+let windPhase=0;
+let previousWindTime=0;
+let lastWindTelemetry=0;
+const speedControl=document.getElementById('forestAnimationSpeed');
+let animationSpeed=.75;
 const invalidate=()=>{requiresRender=true;};
 const buttons=[];
 const names=['Audio Playground','Creative Engine','Motion Lab','Plugin Workshop','Research Garden','Release Pipeline','Community Space','Design Studio','Sample Library','Collaboration Hub','Prototype Station','Knowledge Base'];
@@ -81,7 +87,8 @@ function buildScene(){
   vertices.setZ(i,relief);
  }
  vertices.needsUpdate=true;terrainGeometry.computeVertexNormals();
- const terrainMaterial=new THREE.MeshStandardMaterial({color:0xc6d6ba,roughness:.96,metalness:0,side:THREE.FrontSide});
+ const terrainMaterial=new THREE.MeshStandardMaterial({color:0x8c977a,roughness:1,metalness:0,side:THREE.FrontSide});
+ applyTerrainBlending(terrainMaterial);
  const terrain=new THREE.Mesh(terrainGeometry,terrainMaterial);
  terrain.rotation.x=-Math.PI/2;
  terrain.receiveShadow=true;terrain.position.y=-.055;
@@ -106,24 +113,25 @@ function buildScene(){
  Promise.all(maps.map(([field,file])=>new Promise((resolve,reject)=>{
   loader.load('./'+base+file,texture=>{
    texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
-   texture.repeat.set(field==='normalMap'?480:300,field==='normalMap'?480:300);texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+   texture.repeat.set(field==='normalMap'?250:210,field==='normalMap'?250:210);texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
    if(field==='map')texture.colorSpace=THREE.SRGBColorSpace;
    resolve([field,texture]);
   },undefined,reject);
  }))).then(textures=>{
   for(const [field,texture] of textures)terrainMaterial[field]=texture;
-  terrainMaterial.color.set(0xa6b497);
-  terrainMaterial.normalScale.set(.58,.58);
+  terrainMaterial.color.set(0x899777);
+  terrainMaterial.normalScale.set(.32,.32);
   terrainMaterial.needsUpdate=true;
-  stage.dataset.pbr='diffuse-normal-roughness-ready';invalidate();
+  stage.dataset.pbr='diffuse-normal-roughness-ready';
+  stage.dataset.terrainBlend='stochastic-texture-bomb-distance-alpha';invalidate();
  }).catch(error=>console.error('[VSTOPIA Ground] PBR texture load failed',error));
  // Sparse grass at the foot of the trunk improves scale and avoids a floating-tree appearance.
  const grassGeo=new THREE.ConeGeometry(.14,.86,3);grassGeo.translate(0,.43,0);
- const grassMat=new THREE.MeshLambertMaterial({color:0xa7b08c,side:THREE.DoubleSide});
+ const grassMat=new THREE.MeshLambertMaterial({color:0x6a8856,side:THREE.DoubleSide});
  const blades=new THREE.InstancedMesh(grassGeo,grassMat,1500);
  const dummy=new THREE.Object3D();let seed=312711;
  const next=()=>{seed=(Math.imul(seed,1664525)+1013904223)|0;return (seed>>>0)/4294967296;};
- const tuftColors=[new THREE.Color(0x7f9560),new THREE.Color(0x9a9a5a),new THREE.Color(0x748b4c)];
+ const tuftColors=[new THREE.Color(0x597d48),new THREE.Color(0x739052),new THREE.Color(0x78965d)];
  for(let i=0;i<1500;i++){
   const a=next()*Math.PI*2,r=Math.sqrt(next())*radius*.46;
   dummy.position.set(Math.cos(a)*r,.014,Math.sin(a)*r);
@@ -156,10 +164,17 @@ let lastTick=0;
 function render(t){
  if(state.disposed)return;
  frameId=requestAnimationFrame(render);
- if(t-lastTick<(reduceMotion?140:48))return;
+ if(t-lastTick<(reduceMotion?140:50))return;
  lastTick=t;
  if(!stageMode())return;
- // No automatic movement: tree, atmosphere and grass remain motionless.
+ // Only the tree sways; terrain and HDRI remain fixed. The slider sets real wind speed.
+ if(!reduceMotion && animationSpeed>0){
+   const dt=previousWindTime?Math.min(.12,(t-previousWindTime)*.001):0;
+   windPhase+=dt*animationSpeed;
+   tree.update(windPhase);requiresRender=true;
+ }
+ previousWindTime=t;
+ if(t-lastWindTelemetry>700){stage.dataset.windPhase=windPhase.toFixed(3);lastWindTelemetry=t;}
  if(!requiresRender)return;
  requiresRender=false;
  setOrbit();
@@ -192,6 +207,12 @@ function setupInteractions(){
  window.addEventListener('vstopia:select-changed',e=>{state.selected=e.detail.name;updateMarkers();});
  window.addEventListener('vstopia:mode',e=>{holder.hidden=e.detail.mode!=='tree';markerLayer.hidden=e.detail.mode!=='tree';invalidate();});
  window.addEventListener('vstopia:filters',e=>{for(const b of buttons)b.el.style.opacity=e.detail.visible.includes(b.name)?'1':'.22';});
+ if(speedControl){
+  const output=document.getElementById('forestSpeedValue');
+  const change=()=>{animationSpeed=Number(speedControl.value);output.value=animationSpeed.toFixed(2)+'×';
+    stage.dataset.windSpeed=animationSpeed.toFixed(2);invalidate();};
+  speedControl.addEventListener('input',change);change();
+ }
  new ResizeObserver(resize).observe(stage);
 }
 function build(){
@@ -202,26 +223,55 @@ function build(){
  stage.insertBefore(markerLayer,fallback);
  renderer=new THREE.WebGLRenderer({canvas:holder,alpha:true,antialias:true,powerPreference:'high-performance'});
  renderer.setClearColor(0x000000,0);
- renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;
+ renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.24;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
  scene=new THREE.Scene();
  // PBR environment and visible panorama share the *same* static HDRI, so their light/horizon stays aligned.
  scene.background=new THREE.Color(0xb3ccd6);
- scene.fog=new THREE.Fog(0xa8ada6,2100,12500);
+ scene.fog=null; // The feathered ground fades into the HDRI, not a gray fog band.
  const hdriLoader=new RGBELoader();
  hdriLoader.setDataType(THREE.HalfFloatType);
  hdriLoader.load('./assets/environment/kloppenheim_03_2k.hdr',texture=>{
   texture.mapping=THREE.EquirectangularReflectionMapping;
   scene.background=texture;scene.environment=texture;
-  scene.backgroundIntensity=1.0;scene.environmentIntensity=.82;
+  scene.backgroundIntensity=1.0;scene.environmentIntensity=1.20;
   stage.dataset.hdri='kloppenheim_03_2k';invalidate();
  },undefined,error=>console.error('[VSTOPIA HDRI] Could not load environment',error));
- scene.add(new THREE.HemisphereLight(0xcce2ee,0x8d805b,.68));
- const sun=new THREE.DirectionalLight(0xfff6db,1.85);sun.position.set(-18,60,35);scene.add(sun);
- const rim=new THREE.DirectionalLight(0xd3e7e6,.35);rim.position.set(20,17,-20);scene.add(rim);
+ scene.add(new THREE.HemisphereLight(0xedfaff,0x829264,1.42));
+ const sun=new THREE.DirectionalLight(0xfff1c4,3.6);sun.position.set(-32,77,42);
+ sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+ sun.shadow.camera.left=-75;sun.shadow.camera.right=75;
+ sun.shadow.camera.top=95;sun.shadow.camera.bottom=-95;
+ sun.shadow.normalBias=.035;sun.shadow.bias=-.00006;
+ sun.target.position.set(0,24,0);scene.add(sun.target);scene.add(sun);
+ stage.dataset.sun='direct-shadow-light-3.6';
+ const rim=new THREE.DirectionalLight(0xdcf5e7,1.2);rim.position.set(20,19,-20);scene.add(rim);
  tree=new Tree();tree.loadPreset('Oak Large');
  tree.options.seed=58123;
  tree.options.bark.flatShading=false;
- tree.generate();tree.update(0);scene.add(tree);
+ tree.generate();tree.update(0);
+ let leafCount=0;
+ tree.traverse(node=>{
+  if(!node.isMesh)return;
+  node.castShadow=true;
+  const name=(node.name+' '+(node.material?.name||'')).toLowerCase();
+  if(/leaf|leaves|foliage|crown/.test(name)){
+   leafCount++;
+   node.castShadow=false; // Dense self-shadowing was crushing the leaf colors.
+   node.receiveShadow=false;
+   for(const mat of (Array.isArray(node.material)?node.material:[node.material])){
+    if(!mat)continue;
+    mat.side=THREE.DoubleSide;
+    if(mat.color)mat.color.multiplyScalar(1.35);
+    if(mat.emissive){mat.emissive.setRGB(.035,.11,.045);mat.emissiveIntensity=.48;}
+    if('shininess' in mat)mat.shininess=8;
+    mat.needsUpdate=true;
+   }
+  }
+ });
+ stage.dataset.leafMeshes=String(leafCount);
+
+ scene.add(tree);
  buildScene();setupInteractions();resize();emitReady();frameId=requestAnimationFrame(render);
 }
 try{build();}catch(error){
