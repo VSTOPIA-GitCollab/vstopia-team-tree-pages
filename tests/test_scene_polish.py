@@ -34,15 +34,17 @@ class ScenePolishTests(unittest.TestCase):
         self.assertIn('sun.castShadow=true',JS)
         self.assertIn('renderer.shadowMap.enabled=true',JS)
 
-    def test_slider_drives_wind_not_environment(self):
-        self.assertIn('id="forestAnimationSpeed"',HTML)
-        self.assertIn('assets/council-snail.svg',HTML)
-        self.assertIn('assets/council-rabbit.svg',HTML)
+    def test_wind_stays_at_max_without_hud(self):
+        self.assertIn('const animationSpeed=2;',JS)
         self.assertIn('windPhase+=dt*animationSpeed',JS)
         self.assertIn('tree.update(windPhase)',JS)
+        self.assertIn("stage.dataset.windSpeed=animationSpeed.toFixed(2)",JS)
+        for old in ('forestAnimationSpeed','forestSpeedValue','tourButton','resetView','nodeSummary','stageInstructions','stage-legend','stage-coordinate','forest-speed-control','workbench-footer'):
+            self.assertNotIn('id="'+old+'"',HTML)
+            self.assertNotIn('class="'+old+'"',HTML)
+        self.assertNotIn('assets/council-snail.svg',HTML)
+        self.assertNotIn('assets/council-rabbit.svg',HTML)
         self.assertNotIn('scene.rotation',JS)
-        self.assertNotIn('terrain.rotation.y=',JS)
-        self.assertIn("stage.dataset.windPhase=windPhase.toFixed(3)",JS)
 
     def test_no_private_data_leaked_into_scene(self):
         for word in ('github_pat_','gho_','AUDIOENCE-World','OstinDesktopCommander','VSTOPIA-Council'):

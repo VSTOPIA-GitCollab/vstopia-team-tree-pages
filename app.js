@@ -126,7 +126,6 @@
       }
       $('syncStatus').textContent='SNAPSHOT AGGIORNATO';
       $('lastSync').textContent='SYNC '+new Date(snapshot.updated_at).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-      $('nodeSummary').textContent=`${number(snapshot.repository_count)} PROGETTI CONDIVISI / ${number(snapshot.open_pull_requests)} PR APERTE · DATI AGGREGATI`;
       $('supervisorMessage').textContent=missions()[supervisorIndex%missions().length];
     } catch(err) {
       $('syncStatus').textContent='GITHUB · SNAPSHOT NON DISPONIBILE';
@@ -136,8 +135,7 @@
     }
   }
 
-  function stopTour(){if(state.tour!==null)clearInterval(state.tour);state.tour=null;$('tourButton').textContent='▶ AUTO TOUR';$('tourButton').setAttribute('aria-pressed','false');}
-  function select(name,fromTour=false){if(!fromTour)stopTour();state.selected=name;renderSidebar();renderDetail();window.dispatchEvent(new CustomEvent('vstopia:select-changed',{detail:{name}}));}
+  function select(name){state.selected=name;renderSidebar();renderDetail();window.dispatchEvent(new CustomEvent('vstopia:select-changed',{detail:{name}}));}
   function renderSidebar(){const list=$('repoList');list.replaceChildren();const data=visible();window.dispatchEvent(new CustomEvent('vstopia:filters',{detail:{visible:data.map(r=>r.name)}}));$('repoCountLabel').textContent=String(data.length).padStart(2,'0');
     for(const r of data){const b=create('button','repo-item'+(r.name===state.selected?' selected':''));b.type='button';
       b.setAttribute('aria-pressed',String(r.name===state.selected));b.append(create('span','repo-glyph','⌁'));
@@ -200,14 +198,9 @@
   $('repoSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase().trim();renderSidebar();});
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('repoSearch').focus();}});
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>{state.filter=b.dataset.filter;for(const n of document.querySelectorAll('[data-filter]')){n.classList.toggle('active',n===b);n.setAttribute('aria-pressed',String(n===b));}renderSidebar();});
-  $('resetView').addEventListener('click',()=>{state.ry=.52;state.rx=.20;state.zoom=1;window.dispatchEvent(new Event('vstopia:reset'));});
-  $('tourButton').addEventListener('click',()=>{if(state.tour!==null){stopTour();return;}const rs=visible();if(!rs.length)return;
-    $('tourButton').setAttribute('aria-pressed','true');$('tourButton').textContent='❚❚ STOP TOUR';let i=Math.max(0,rs.findIndex(r=>r.name===state.selected));select(rs[i].name,true);
-    state.tour=setInterval(()=>{const items=visible();if(!items.length){stopTour();return;}i=(i+1)%items.length;select(items[i].name,true);if(!reducedMotion)state.ry+=.12;},6500);});
   $('clock').textContent='PUBLIC STATS';$('syncStatus').textContent='LOADING AGGREGATES';
   $('metricRepos').textContent='—';$('metricCommits').textContent='—';$('metricIssues').textContent='—';$('metricPrs').textContent='—';$('metricMerges').textContent='—';
   $('commitsFoot').textContent='Aggregato · branch principali';$('lastSync').textContent='IN ATTESA';
-  $('nodeSummary').textContent=`${repos.length} NODI DIMOSTRATIVI / AGGREGATI IN CARICAMENTO`;
   const activity=$('activityFeed');activity.replaceChildren(create('div','activity-kicker','ANIMATED SUPERVISOR · DEMO'));
   const mascot=create('div','supervisor-mascot','♣');mascot.setAttribute('aria-hidden','true');activity.append(mascot);
   activity.append(create('div','activity-message','Il supervisore controlla le review richieste e le attività assegnate. Suggerimenti amichevoli, senza classifiche di produttività.'));

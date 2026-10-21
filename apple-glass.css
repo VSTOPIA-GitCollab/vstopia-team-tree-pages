@@ -72,3 +72,16 @@ body{font-size:13px;line-height:1.48;letter-spacing:-.012em}
 .forest-speed-control.true-liquid-glass{left:auto!important;right:14px!important;transform:none!important}
 .stage-instructions{left:16px!important;top:29px!important;bottom:auto!important;transform:none!important;font-size:9px!important}
 @media(max-width:750px){.forest-speed-control.true-liquid-glass{right:6px!important;bottom:5px!important}.stage-instructions{display:none!important}}
+
+/* Minimal viewport: only correctly anchored project names appear over the 3D tree. */
+:root{--intel-height:248px}
+@media(max-width:1150px){:root{--intel-height:262px}}
+.workbench{display:flex;flex-direction:column;min-height:0}
+.workbench-top{flex:0 0 auto}
+.workbench>.tree-stage{flex:1 1 auto;min-height:0}
+.workbench-footer,.forest-speed-control,.forest-character,.stage-coordinate,.stage-legend,.stage-instructions,.scene-mode-indicator{display:none!important}
+.living-node{transition:none!important;will-change:transform}
+.living-node-label{pointer-events:none}
+
+/* Marker orb center is exactly on its bark vertex; labels extend below the orb. */
+.living-node{transform:translate(-50%,-50%)!important}
