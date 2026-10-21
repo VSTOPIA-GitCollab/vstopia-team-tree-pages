@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { Sky } from 'three/addons/objects/Sky.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createMysticTree, createDistantMountains } from './nature.js';
 import { mountVstopiaTreeBridge } from './vstopia-bridge.js';
 
@@ -207,7 +208,88 @@ $('wind').oninput=e=>{wind.value=+e.target.value;$('wind-value').textContent=win
 function lighting(value){
  const elev=mix(.20,.95,value);sunDir.set(-.55,elev,.36).normalize();sun.position.copy(sunDir).multiplyScalar(110);su.sunPosition.value.copy(sunDir);su.turbidity.value=mix(7,3,value);sun.color.setHSL(mix(.075,.12,value),mix(.48,.12,value),.87);sun.intensity=mix(2.0,3.2,value);renderer.toneMappingExposure=mix(.80,1.02,value);water.material.uniforms.sunDirection.value.copy(sunDir);water.material.uniforms.sunColor.value.copy(sun.color);scene.fog.color.set(value<.32?'#b8afa1':'#a6b8b7');$('light-value').textContent=value<.28?'Golden hour':value<.76?'Late afternoon':'Clear daylight';
 }
-$('light').oninput=e=>lighting(+e.target.value);$('light').onchange=()=>{envTarget.dispose();envTarget=pmrem.fromScene(envScene,.04,.1,2000);scene.environment=envTarget.texture;};lighting(.62);
+// The source scene keeps its original physical sky for standalone visitors.
+// The VSTOPIA integration defaults to our previous photographic HDRI.
+// Scene background, PBR IBL AND planar Water.js mirror always use the same sky.
+const originalSkyBackground=scene.background;
+const skyAssets={
+ kloppenheim:'./assets/sky/kloppenheim_03_2k.hdr',
+ cloudy:'./assets/sky/partly-cloudy-2k.hdr'
+};
+const skyCache=new Map();
+let skyMode='physical',skyRequest=0;
+const rgbeLoader=new RGBELoader().setDataType(THREE.HalfFloatType);
+function updateSkyLighting(){
+ const v=+$('light').value;
+ if(skyMode==='physical'){
+  scene.environmentIntensity=1;
+  renderer.toneMappingExposure=mix(.80,1.02,v);
+ }else{
+  scene.environmentIntensity=mix(.88,1.20,v);
+  scene.backgroundIntensity=mix(.84,1.10,v);
+  // Photographic skies need softer fog than the original procedural sky.
+  scene.fog.color.set('#aebfc3');scene.fog.density=.0020;
+ }
+}
+async function selectSky(name){
+ const request=++skyRequest,valid=(name==='physical'||Object.hasOwn(skyAssets,name));
+ if(!valid)return;
+ $('sky-status').textContent=name==='physical'?'Original physical sky':'Loading sky…';
+ document.body.dataset.skyReady='loading';
+ if(name==='physical'){
+  skyMode='physical';sky.visible=true;clouds.visible=true;
+  scene.background=originalSkyBackground;
+  scene.environment=envTarget.texture;
+  scene.fog.color.set(+$('light').value<.32?'#b8afa1':'#a6b8b7');
+  scene.fog.density=.0045;
+  scene.backgroundIntensity=1;
+  updateSkyLighting();
+  $('sky-status').textContent='Physical atmosphere';
+  document.body.dataset.skyPreset='physical';document.body.dataset.skyReady='ready';
+  return;
+ }
+ try{
+  let pending=skyCache.get(name);
+  if(!pending){
+   pending=rgbeLoader.loadAsync(skyAssets[name]).then(texture=>{
+    texture.mapping=THREE.EquirectangularReflectionMapping;
+    return texture;
+   });
+   skyCache.set(name,pending);
+  }
+  const texture=await pending;
+  if(request!==skyRequest)return;
+  skyMode=name;
+  sky.visible=false;clouds.visible=false;
+  scene.background=texture;
+  scene.environment=texture;
+  scene.backgroundBlurriness=0;
+  scene.backgroundRotation.set(0,0,0);
+  scene.environmentRotation.set(0,0,0);
+  updateSkyLighting();
+  $('sky-status').textContent=name==='kloppenheim'?'VSTOPIA HDRI':'Mountain clouds HDRI';
+  document.body.dataset.skyPreset=name;document.body.dataset.skyReady='ready';
+ }catch(error){
+  console.error('[Stillwater sky HDRI] Loading failed',name,error);
+  skyCache.delete(name);
+  if(request!==skyRequest)return;
+  $('sky').value='physical';
+  await selectSky('physical');
+  $('sky-status').textContent='HDRI unavailable; original sky restored';
+  document.body.dataset.skyReady='fallback';
+ }
+}
+$('sky').addEventListener('change',e=>selectSky(e.target.value));
+$('light').oninput=e=>{lighting(+e.target.value);updateSkyLighting();};
+$('light').onchange=()=>{
+ if(skyMode==='physical'){
+  envTarget.dispose();envTarget=pmrem.fromScene(envScene,.04,.1,2000);
+  scene.environment=envTarget.texture;
+ }
+ updateSkyLighting();
+};
+lighting(.62);selectSky('physical');
+
 $('quality').onchange=e=>{const q=e.target.value;renderer.setPixelRatio(Math.min(devicePixelRatio,q==='balanced'?1:q==='high'?1.6:2));sun.shadow.mapSize.setScalar(q==='ultra'?4096:q==='high'?2048:1024);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}grass.count=Math.floor(gi*(q==='balanced'?.48:1));};
 $('orbit').onclick=()=>{controls.autoRotate=!controls.autoRotate;$('orbit').setAttribute('aria-pressed',String(controls.autoRotate));};
 $('pause').onclick=()=>{paused=!paused;$('pause').setAttribute('aria-pressed',String(paused));$('pause').innerHTML=paused?'▶ <span>Resume</span>':'Ⅱ <span>Pause</span>';};
@@ -225,6 +307,7 @@ if(isEmbedded){
  $('wind').value='2';$('wind').dispatchEvent(new Event('input',{bubbles:true}));
  $('light').value='1';$('light').dispatchEvent(new Event('input',{bubbles:true}));
  $('light').dispatchEvent(new Event('change',{bubbles:true}));
+ $('sky').value='kloppenheim';$('sky').dispatchEvent(new Event('change',{bubbles:true}));
  // Keep native Atmosphere sliders available; start collapsed to preserve the scene.
  if($('panel-toggle')?.getAttribute('aria-expanded')==='true')$('panel-toggle').click();
  vstopiaBridge=mountVstopiaTreeBridge({THREE,scene,camera,controls,renderer,

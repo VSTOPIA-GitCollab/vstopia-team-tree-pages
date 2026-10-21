@@ -53,3 +53,11 @@ Minimal source changes:
 ## When approved
 
 Only after user signs off on the visual and controls: reconcile branch to freshest `origin/main`, carefully update regression/CI checks for the r180 iframe source (including secret scan on `stillwater/**` JS and authored files), verify licenses/attributions, create review PR, merge and watch Pages deploy. Do not alter VSTOPIA-Council personal repo or other agents' worktrees. Detailed source documentation takes precedence over generic assumptions from the earlier forest prototype.
+
+## October 22: restore VSTOPIA photographic sky (local-only follow-up)
+
+Per user's preference, we added the **previous VSTOPIA Kloppenheim photographic HDRI** as the default **only in embedded VSTOPIA mode** while retaining the original Stillwater physical `Sky` as standalone default. Under native *The atmosphere → Sky*, the three options are **Original physical sky**, **VSTOPIA panorama HDRI (Kloppenheim)**, and **Mountain clouds HDRI (partly-cloudy-2k)**. Both HDR files are **local** assets and RGBELoader is bundled locally; there are no live network dependencies beyond localhost. The two sky sources are from Poly Haven, available under CC0 terms (see the existing project's asset attribution documents).
+
+The old `Sky` dome and synthetic cloud plane are hidden in the photographic modes to avoid blocking the panorama. The **same equirectangular HDR texture** is bound to `scene.background` and `scene.environment` (IBL) and visible to the scene's original planar `Water.js` reflection. HDRI exposure and indirect-light intensity respond to the existing Light slider; Wind stays 2/2 at embedded startup. Returning to the physical sky restores the original Sky, clouds and PMREM, keeping the standalone source scene functional. On load failure the source sky is restored automatically.
+
+Browser QA: 13 GitHub snapshot projects, 12 actual bark anchors, three selectable sky presets, wind 2 and light 1 confirmed from the real Chrome iframe. All three modes loaded and switched repeatedly without errors. Actual screenshot: [VSTOPIA sky test](screenshots/stillwater-restored-vstopia-hdri-local-2026-10-22.jpg). **Still no push, merge or production deploy.**

@@ -17,3 +17,6 @@ body.embedded #restore{display:none!important}
 body.embedded #panel{width:185px!important;padding:0 13px 10px!important}
 body.embedded #panel #panel-toggle{padding:10px 0!important}
 body.embedded #panel #panel-body[hidden]{display:none!important}
+
+/* HDRI sky selector belongs to the original Atmosphere slider panel. */
+body.embedded #sky-status{display:block;opacity:.86;font:500 10px Arial,Helvetica,sans-serif;color:#fff;padding:0 0 7px!important;text-shadow:0 1px 3px #142a2c}body.embedded #sky{font-size:10px!important;max-width:120px!important;min-width:0!important}
