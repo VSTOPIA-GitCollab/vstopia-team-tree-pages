@@ -1,0 +1,41 @@
+name: Deploy public demo to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify no private GitHub API integration or secrets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          forbidden = ('InnovateSN','Marcello','ostinsolo','VSTOPIA-Council','gho_', 'GITHUB_TOKEN', '/api/overview')
+          for p in (Path('index.html'), Path('app.js'), Path('style.css')):
+              content = p.read_text()
+              for token in forbidden:
+                  assert token not in content, f'Forbidden public string in {p}: {token}'
+          assert 'DEMO' in Path('index.html').read_text()
+          print('PASS: public-only allowlist')
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
