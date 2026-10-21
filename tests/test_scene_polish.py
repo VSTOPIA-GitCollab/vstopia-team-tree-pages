@@ -16,7 +16,7 @@ class ScenePolishTests(unittest.TestCase):
 
     def test_gradient_world_blends_against_hdri(self):
         self.assertIn('vTerrainWorldPosition',GROUND)
-        self.assertIn('smoothstep(190.0,1150.0',GROUND)
+        self.assertIn('smoothstep(35.0,390.0',GROUND)
         self.assertIn('diffuseColor.a *= feather;',GROUND)
         self.assertIn('material.transparent=true;',GROUND)
         self.assertIn('scene.environment=texture',JS)
@@ -25,7 +25,7 @@ class ScenePolishTests(unittest.TestCase):
         self.assertIn('vec4 tbBomb',GROUND)
         self.assertEqual(GROUND.count('texture2D(tex,uv+o'),4)
         self.assertIn('tbNoise',GROUND)
-        self.assertIn('applyTerrainBlending(terrainMaterial)',JS)
+        self.assertIn('applyTerrainBlending(terrainMaterial, terrainGrade, spatialGrade)',JS)
 
     def test_lighting_corrects_named_ez_tree_leaves(self):
         self.assertIn('leaf|leaves|foliage|crown',JS)

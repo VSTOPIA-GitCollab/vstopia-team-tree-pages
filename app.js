@@ -145,7 +145,7 @@
       b.append(copy,create('span','repo-chevron','›'));b.addEventListener('click',()=>select(r.name));list.append(b);}
     if(!data.length)list.append(create('div','loading-list','Nessun progetto corrisponde al filtro.'));
   }
-  function renderList(){const list=$('listView');list.replaceChildren();visible().forEach((r,i)=>{const b=create('button','list-entry'+(r.name===state.selected?' selected':''));
+  function renderList(){const list=$('listView');list.replaceChildren();$('listDrawerCount').textContent=String(visible().length);visible().forEach((r,i)=>{const b=create('button','list-entry'+(r.name===state.selected?' selected':''));
     b.append(create('span','list-number',String(i+1).padStart(2,'0')));const body=create('div','');body.append(create('strong','',r.name),create('small','',`${r.commits} commit demo · ${r.issues} issue demo · ${r.prs} PR demo`));
     b.append(body,create('span','','›'));b.addEventListener('click',()=>select(r.name));list.append(b);});}
   function renderDetail(){const r=repos.find(x=>x.name===state.selected);const root=$('selectedDetail');root.replaceChildren();$('selectedIndicator').textContent='DEMO';
@@ -155,10 +155,22 @@
     root.append(badges,create('div','detail-divider'),create('div','detail-label','ESEMPIO DI ATTIVITÀ'));
     root.append(create('div','detail-commit',r.last_commit.message));root.append(create('div','detail-meta','Dati simulati: non rappresentano persone o attività reali.'));
   }
-  function setMode(mode){state.mode=mode;canvas.hidden=mode!=='tree';window.dispatchEvent(new CustomEvent('vstopia:mode',{detail:{mode}}));$('listView').hidden=mode!=='list';
-    $('viewTree').classList.toggle('current',mode==='tree');$('viewList').classList.toggle('current',mode==='list');
-    $('viewTree').setAttribute('aria-pressed',String(mode==='tree'));$('viewList').setAttribute('aria-pressed',String(mode==='list'));
-    $('stageInstructions').textContent=mode==='tree'?'DRAG TO ORBIT · SCROLL TO ZOOM · CLICK TO EXPLORE':'SELECT A DEMO PROJECT';}
+  // The 3D tree never disappears: LIST is now an independent drawer on the right.
+  function setMode(mode){
+    const show=mode==='list';
+    state.mode='tree';
+    $('listDrawer').hidden=!show;
+    $('viewList').classList.toggle('current',show);
+    $('viewTree').classList.toggle('current',!show);
+    $('viewList').setAttribute('aria-expanded',String(show));
+    $('viewList').setAttribute('aria-pressed',String(show));
+    $('viewTree').setAttribute('aria-pressed',String(!show));
+    $('listToggleMark').textContent=show?'▾':'▸';
+    $('stageInstructions').textContent='DRAG TO ORBIT · SCROLL TO ZOOM · CLICK TO EXPLORE';
+    // This ensures the native canvas fallback and Three.js retain their current view.
+    window.dispatchEvent(new CustomEvent('vstopia:mode',{detail:{mode:'tree'}}));
+  }
+
   const hash = s=>{let n=2166136261;for(const c of s){n^=c.charCodeAt(0);n=Math.imul(n,16777619);}return(n>>>0)/4294967295;};
   function world(){const rs=visible();const points=[{id:'root',x:0,y:-112,z:0,type:'root',radius:11}];
     rs.forEach((r,i)=>{const angle=i*Math.PI*(3-Math.sqrt(5))+.15,ring=Math.sqrt((i+.8)/Math.max(1,rs.length)),distance=54+ring*205;
@@ -207,7 +219,9 @@
   $('repoSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase().trim();renderSidebar();renderList();});
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('repoSearch').focus();}});
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>{state.filter=b.dataset.filter;for(const n of document.querySelectorAll('[data-filter]')){n.classList.toggle('active',n===b);n.setAttribute('aria-pressed',String(n===b));}renderSidebar();renderList();});
-  $('viewTree').addEventListener('click',()=>setMode('tree'));$('viewList').addEventListener('click',()=>setMode('list'));
+  $('viewTree').addEventListener('click',()=>setMode('tree'));$('viewList').addEventListener('click',()=>setMode($('listDrawer').hidden?'list':'tree'));
+  $('listDrawerClose').addEventListener('click',()=>{setMode('tree');$('viewList').focus();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('listDrawer').hidden){setMode('tree');$('viewList').focus();}});
   $('resetView').addEventListener('click',()=>{state.ry=.52;state.rx=.20;state.zoom=1;window.dispatchEvent(new Event('vstopia:reset'));});
   $('tourButton').addEventListener('click',()=>{if(state.tour!==null){stopTour();return;}const rs=visible();if(!rs.length)return;
     $('tourButton').setAttribute('aria-pressed','true');$('tourButton').textContent='❚❚ STOP TOUR';let i=Math.max(0,rs.findIndex(r=>r.name===state.selected));select(rs[i].name,true);

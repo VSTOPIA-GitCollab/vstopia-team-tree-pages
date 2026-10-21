@@ -35,3 +35,10 @@ The optional, self-hosted EZ-Tree / Three.js oak uses a licensed sky photograph 
 ## Wide Council garden scene — 21 October 2026
 
 The 3D scene has a wide layout and a bottom horizontal GitHub stats bar, physically lit foliage with sun shadows, stochastic anti-tiling PBR meadow shading with HDRI-edge blending, and a functioning snail-to-rabbit wind speed slider. See [implementation and QA notes](docs/SCENE_POLISH_2026-10-21.md) and [desktop screenshot](docs/screenshots/scene-polish-2026-10-21.png). The speed-slider interpretation is not claimed to reproduce Marcello's original unavailable Council code.
+
+
+## Right floating LIST + HDRI color match (21 October 2026)
+
+`LIST` now opens a right-side liquid-glass drawer while preserving the active animated Three.js tree, rather than replacing it. Close by clicking `LIST` again, `3D REAL TREE`, `×`, or `Escape`. The list contains demonstrative branch names only.
+
+`ground-blend.js` retains existing stochastic anti-tiling and distance feathering. `scripts/calibrate_ground.py` and the public-safe numeric `assets/calibration/ground-grade.json` apply robust multi-point linear-sRGB terrain/HDRI grading, followed by a restrained left/right color adjustment based on real browser measurements. See [color and interaction notes](docs/RIGHT_LIST_HDRI_COLOR_MATCH.md), [right-drawer screenshot](docs/screenshots/right-list-open-2026-10-21.png), and [calibrated meadow screenshot](docs/screenshots/terrain-hdri-calibrated-2026-10-21.png). The user's original desktop screenshot is **not** published.

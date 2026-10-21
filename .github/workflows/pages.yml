@@ -15,12 +15,24 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          assets = (Path('index.html'), Path('app.js'), Path('style.css'), Path('ez-tree-scene.js'), Path('liquid-glass.css'), Path('scene-polish.css'), Path('ground-blend.js'))
+          assets = (Path('index.html'), Path('app.js'), Path('style.css'), Path('ez-tree-scene.js'), Path('liquid-glass.css'), Path('scene-polish.css'), Path('ground-blend.js'), Path('right-list.css'))
           for p in assets:
               text=p.read_text()
               for forbidden in ('VSTOPIA-Council', 'AUDIOENCE-World', 'OstinDesktopCommander',
                                 'gho_', 'ghp_', 'github_pat_', 'GITHUB_TOKEN', '/api/overview'):
                   assert forbidden not in text, f'Private source string in {p}'
+          calibration=json.loads(Path('assets/calibration/ground-grade.json').read_text())
+          required_calibration={'schema_version','description','sampling_region','photo_ground_srgb',
+                               'render_ground_srgb','linear_rgb_grade','spatial_grade_left',
+                               'spatial_grade_right','spatial_grade_strength','display_roundtrip_samples','note'}
+          assert set(calibration)==required_calibration
+          assert calibration['schema_version']==1
+          assert len(calibration['photo_ground_srgb'])>=4
+          for field in ('linear_rgb_grade','spatial_grade_left','spatial_grade_right'):
+              assert len(calibration[field])==3
+              assert all(type(value) in (float,int) and 0.1<=value<=1.4 for value in calibration[field])
+          for forbidden in ('github_pat_', 'gho_', 'private_repo_name', 'repository_url'):
+              assert forbidden not in json.dumps(calibration)
           assert 'DEMO' in Path('app.js').read_text()
           snapshot=json.loads(Path('snapshot.json').read_text())
           allowed={'schema_version','data_policy','scope','updated_at',
