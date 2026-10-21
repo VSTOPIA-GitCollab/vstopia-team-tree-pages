@@ -67,3 +67,7 @@ A single original MIT [`@specy/liquid-glass-react`](https://www.npmjs.com/packag
 ## Readable collaborators / white glass labels (October 21, 2026)
 
 Both public team cards now use a responsive two-column internal layout: readable 2×2 commit/PR metrics alongside three independent work-status rows and full-width latest-activity dates. The side rail is slightly wider, no child card scroll/clipping is allowed, and the glass overlays display white text (including selected tree labels) with subtle HDRI-safe text shadows. See [implementation notes](docs/TEAM_CARDS_READABILITY_2026-10-21.md) and desktop/mobile screenshots.
+
+## Connected lake, animated cascade and flocking birds (October 21, 2026)
+
+The giant irregular lake and long river now share **one Three.js reflective water surface**, with an animated rocky waterfall, spray and foam, 30 animated birds in three small flocks, and wildflower patches. The redundant supervisor clover was removed. See [implementation and source references](docs/WATERFALL_FLOCKS_CONNECTED_WATER_2026-10-21.md) and the five real browser views linked there.

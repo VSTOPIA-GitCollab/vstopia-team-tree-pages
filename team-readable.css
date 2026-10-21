@@ -153,3 +153,31 @@
 .layout>.inspector :is(.selected-detail,.activity-card,.supervisor-speech){background:rgba(12,43,57,.27)!important}
 .layout>.inspector .work-pill span:nth-child(2){font-size:10.5px!important}
 .layout>.inspector .member-stat small{font-size:10px!important}
+
+/* No clover mascot or redundant supervisor wall of text: prioritize full team metrics. */
+.layout>.inspector>.collaborator{min-height:0!important;padding:7px 9px!important}
+.layout>.inspector>.team-members{padding:8px!important}
+.layout>.inspector>.detail-section{min-height:0!important;padding:8px!important}
+.layout>.inspector{gap:6px!important;padding:8px!important}
+.layout>.inspector .member-card{padding:8px!important;gap:6px 8px!important}
+.layout>.inspector .member-grid{gap:4px!important}
+.layout>.inspector .member-stat{min-height:34px!important;padding:3px!important}
+.layout>.inspector .member-stat strong{font-size:18px!important}
+.layout>.inspector .member-stat small{font-size:9px!important}
+.layout>.inspector .work-pill{min-height:25px!important;padding:3px 6px!important}
+.layout>.inspector .member-last{padding:3px 0 0!important}
+.layout>.inspector .supervisor-speech{line-height:1.3!important;padding:4px 6px!important}
+.layout>.inspector .member-avatar{height:25px!important;width:25px!important;min-width:25px!important}
+/* Recover vertical space after removing the clover; keep all real content visible. */
+@media(min-width:1201px){
+ .layout>.inspector>.inspector-bottom{display:none!important}
+ .layout>.inspector .member-card{padding:6px!important;gap:4px 6px!important}
+ .layout>.inspector .member-grid{gap:4px!important}
+ .layout>.inspector .member-stat{min-height:31px!important;padding:2px!important}
+ .layout>.inspector .member-stat strong{font-size:17px!important}
+ .layout>.inspector .member-stat small{font-size:8.7px!important}
+ .layout>.inspector .work-pill{min-height:23px!important;padding:3px 5px!important}
+ .layout>.inspector .member-last{margin:0!important;padding:2px 0 0!important}
+ .layout>.inspector>.detail-section{padding:6px!important}
+ .layout>.inspector>.collaborator{padding:5px!important}
+}
