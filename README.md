@@ -1,21 +1,22 @@
-# VSTOPIA Team Tree — Public Preview
+# VSTOPIA — GitCollab Public Tree
 
-Static, animated [GitHub Pages](https://pages.github.com/) visualization built with plain HTML, CSS and JavaScript. This **public** repository contains **no private GitHub data, credentials, internal repository names, or collaborator work records**.
+**Public GitHub Pages preview**, with an animated and interactive tree and an encouraging supervisor. The tree's project names and node-level activity are explicitly **illustrative**. They are not private repo names or private contributor activity.
 
-The 12 animated project nodes, counts and missions are **DEMONSTRATION DATA**, not company activity. The banner, labels and inspector mark them as such. Real private statistics require an explicitly approved, scheduled aggregation and publication workflow with an allowlisted JSON schema.
+Five headline metrics are **real aggregated counts** from a narrowly selected subset of VSTOPIA-GitCollab repositories: repositories which both collaborators can access. These counts are intentionally published in `snapshot.json`. The file includes only the schema version, scope label, capture timestamp, repository count, default-branch commit count, open Issue count, open Pull Request count and historical merged Pull Request count. No repository identifiers, commits, messages, author identities, URLs, discussions, review details or credentials are included.
 
-## Safety requirements
+## Static hosting
 
-- Never publish private repository names, commit authors, PR/Issue titles, GitHub commit URLs, personal identifiers, agent records or API tokens.
-- A GitHub Pages site is publicly accessible regardless of private source repositories used by an exporter.
-- The public page must **not** contact private GitHub APIs. Any optional `activity.json` must be static, generated server-side, schema-validated and explicitly whitelisted.
-- Never represent demo numbers as real metrics. Label every published activity total with the period and last updated timestamp.
-- Any private-to-public exporter must live and run in a private repo with separate least-privilege GitHub credentials. Public Actions should only deploy static, pre-sanitized files.
+Publish the root of the public repository with GitHub Pages → Deploy from a branch → `main` → `/ (root)`.
 
-## Local preview
+- `index.html`, `style.css`, `app.js`: browser-only tree and supervisor, no API credentials.
+- `snapshot.json`: deliberately public sanitized aggregates, initially generated from the private source with explicit allowlisting; refreshed by the **private** VSTOPIA Team Tree GitHub Action when owner-provided scoped secrets are configured.
+- Reopening the page checks `snapshot.json` immediately. An open tab re-checks every 5 minutes. The private Action is configured to generate the snapshot hourly; GitHub scheduled workflows may run late.
 
-```bash
-python3 -m http.server 38973 --bind 127.0.0.1
-```
+## Important distinctions
 
-Open http://127.0.0.1:38973/ .
+- The displayed anonymous project labels and their per-node commit/Issue/PR example counts are **demonstration content**, not real data.
+- Only the aggregate cards are backed by `snapshot.json`.
+- All-time merges are a historical count, not merges today or this week.
+- The public snapshot is visible to everyone. GitHub Pages provides no repository-member-only access in this deployment.
+- Do not move the private source backend, personal contributor metrics, private repository names or tokens into this public repository.
+- For private task details and collaborator-specific supervision, use the separately authenticated application, not public GitHub Pages.

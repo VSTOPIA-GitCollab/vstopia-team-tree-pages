@@ -12,6 +12,7 @@
     issues: [4,2,6,1,5,3,2,0,1,4,2,1][i], prs:[2,1,3,0,1,2,0,1,0,2,0,1][i],
     last_commit: {message:['Create a new animation','Refine UI interactions','Improve timeline','Organize next sprint'][i%4], date:'2026-10-15T00:00:00Z',author:'Demo'},
 }));
+  let publicTotals = null;
   const totals = key => repos.reduce((sum,r)=>sum+(r[key]||0),0);
   const state = {selected:repos[0].name,search:'',filter:'all',mode:'tree',ry:.52,rx:.20,zoom:1,drag:null,
     width:1,height:1,hits:[],tour:null};
@@ -19,18 +20,55 @@
   const create = (tag, cls, label) => {const e=document.createElement(tag);if(cls)e.className=cls;if(label!==undefined)e.textContent=label;return e;};
   const visible = () => repos.filter(r=>(r.name+' '+r.description).toLowerCase().includes(state.search) &&
       (state.filter==='all'||(state.filter==='issues'&&r.issues+r.prs>0)||(state.filter==='active'&&r.commits>=30)));
+  const missions = () => publicTotals ? [
+    `IL BOSCO HA ${publicTotals.open_pull_requests} PR APERTE! Una review utile può sbloccare un merge.`,
+    `CRESCITA MISURABILE: ${publicTotals.default_branch_commits} commit sui branch principali. Meglio piccoli passi verificati.`,
+    `SUPERVISORE: ${publicTotals.open_issues} Issue aperte. Individuate i blocchi prioritari, senza mettere pressione su chi fa ricerca.`,
+    `${publicTotals.merged_pull_requests_all_time} PR UNITE NEL TEMPO. Ottimo quando un merge arriva con test e revisione.`,
+    'CHI NON HA FATTO COMMIT? Non basta per misurare l’impegno: contano anche review, prove e documentazione.',
+    'PROSSIMO PASSO: scegli una PR, verifica lo stato e concorda una piccola azione concreta.'
+  ] : [
+    'SUPERVISORE: dati aggregati in caricamento. Nessuna attività privata viene mostrata.',
+    'RICORDA: review, prove e documentazione sono lavoro, anche senza commit.'
+  ];
+  let supervisorIndex=0;
   function supervisor() {
-    const missions = [
-      'MISSIONE DEMO: una PR pronta per il merge? Controlla test e review.',
-      'IL RAMO TI CHIAMA! Un piccolo commit documentato vale più di una promessa vaga.',
-      'SUPERVISORE: prima di fare pressione, controlla anche review, ricerca e blocchi.',
-      'SQUADRA IN MOVIMENTO: chiudi un’Issue solo quando la soluzione è verificata.',
-      'CONSIGLIO DEL BOSCO: se qualcosa blocca il lavoro, segnala il problema in una Issue.',
-      'NUOVA SETTIMANA, NUOVE FOGLIE: concordate un passo concreto e misurabile.'
-    ];
-    const msg=$('supervisorMessage');let idx=0;
-    if (msg){msg.textContent=missions[0];setInterval(()=>{idx=(idx+1)%missions.length;msg.textContent=missions[idx];},7800);}
+    const msg=$('supervisorMessage');
+    if (!msg)return;
+    msg.textContent=missions()[0];
+    setInterval(()=>{const list=missions();supervisorIndex=(supervisorIndex+1)%list.length;msg.textContent=list[supervisorIndex];},7800);
   }
+  function animateNumber(element, target) {
+    if(reducedMotion){element.textContent=number(target);return;}
+    const start=performance.now(), duration=850;
+    const draw=now=>{const p=Math.min(1,(now-start)/duration),eased=1-Math.pow(1-p,3);
+      element.textContent=number(Math.round(target*eased));if(p<1)requestAnimationFrame(draw);};
+    requestAnimationFrame(draw);
+  }
+  async function loadPublicSnapshot() {
+    try {
+      const response=await fetch('./snapshot.json',{cache:'no-store'});
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      const snapshot=await response.json();
+      if(snapshot.schema_version!==1||snapshot.data_policy!=='aggregated-public-numeric-only')throw new Error('Schema non valido');
+      const keys=['repository_count','default_branch_commits','open_issues','open_pull_requests','merged_pull_requests_all_time'];
+      if(!keys.every(k=>Number.isSafeInteger(snapshot[k])&&snapshot[k]>=0))throw new Error('Aggregati non validi');
+      publicTotals=snapshot;
+      for(const [id,key] of [['metricRepos','repository_count'],['metricCommits','default_branch_commits'],
+        ['metricIssues','open_issues'],['metricPrs','open_pull_requests'],['metricMerges','merged_pull_requests_all_time']]){
+        animateNumber($(id),snapshot[key]);
+      }
+      $('syncStatus').textContent='SNAPSHOT AGGIORNATO';
+      $('lastSync').textContent='SYNC '+new Date(snapshot.updated_at).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      $('nodeSummary').textContent=`${number(snapshot.repository_count)} PROGETTI CONDIVISI / ${number(snapshot.open_pull_requests)} PR APERTE · DATI AGGREGATI`;
+      $('supervisorMessage').textContent=missions()[supervisorIndex%missions().length];
+    } catch(err) {
+      $('syncStatus').textContent='GITHUB · SNAPSHOT NON DISPONIBILE';
+      $('lastSync').textContent='IN ATTESA DELLO SNAPSHOT';
+      $('supervisorMessage').textContent='I dati aggregati non sono disponibili. L’albero resta una demo grafica.';
+    }
+  }
+
   function stopTour(){if(state.tour!==null)clearInterval(state.tour);state.tour=null;$('tourButton').textContent='▶ AUTO TOUR';$('tourButton').setAttribute('aria-pressed','false');}
   function select(name,fromTour=false){if(!fromTour)stopTour();state.selected=name;renderSidebar();renderList();renderDetail();}
   function renderSidebar(){const list=$('repoList');list.replaceChildren();const data=visible();$('repoCountLabel').textContent=String(data.length).padStart(2,'0');
@@ -113,14 +151,13 @@
   $('tourButton').addEventListener('click',()=>{if(state.tour!==null){stopTour();return;}const rs=visible();if(!rs.length)return;
     $('tourButton').setAttribute('aria-pressed','true');$('tourButton').textContent='❚❚ STOP TOUR';let i=Math.max(0,rs.findIndex(r=>r.name===state.selected));select(rs[i].name,true);
     state.tour=setInterval(()=>{const items=visible();if(!items.length){stopTour();return;}i=(i+1)%items.length;select(items[i].name,true);if(!reducedMotion)state.ry+=.12;},6500);});
-  $('clock').textContent='PUBLIC DEMO';$('syncStatus').textContent='DEMO · NO PRIVATE DATA';
-  $('metricRepos').textContent=number(repos.length);$('metricCommits').textContent=number(totals('commits'));
-  $('metricIssues').textContent=number(totals('issues'));$('metricPrs').textContent=number(totals('prs'));
-  $('commitsFoot').textContent='Illustrative only';$('lastSync').textContent='DEMO ONLY';
-  $('nodeSummary').textContent=`${repos.length} NODI DEMO / DATI NON REALI`;
+  $('clock').textContent='PUBLIC STATS';$('syncStatus').textContent='LOADING AGGREGATES';
+  $('metricRepos').textContent='—';$('metricCommits').textContent='—';$('metricIssues').textContent='—';$('metricPrs').textContent='—';$('metricMerges').textContent='—';
+  $('commitsFoot').textContent='Aggregato · branch principali';$('lastSync').textContent='IN ATTESA';
+  $('nodeSummary').textContent=`${repos.length} NODI DIMOSTRATIVI / AGGREGATI IN CARICAMENTO`;
   const activity=$('activityFeed');activity.replaceChildren(create('div','activity-kicker','ANIMATED SUPERVISOR · DEMO'));
   const mascot=create('div','supervisor-mascot','♣');mascot.setAttribute('aria-hidden','true');activity.append(mascot);
   activity.append(create('div','activity-message','Questa è una dimostrazione pubblica. I suggerimenti non derivano da attività private.'));
   activity.append(create('div','supervisor-speech',''));activity.lastChild.id='supervisorMessage';
-  supervisor();renderSidebar();renderList();renderDetail();new ResizeObserver(resize).observe(canvas);requestAnimationFrame(frame);
+  supervisor();loadPublicSnapshot();setInterval(loadPublicSnapshot,300000);renderSidebar();renderList();renderDetail();new ResizeObserver(resize).observe(canvas);requestAnimationFrame(frame);
 })();

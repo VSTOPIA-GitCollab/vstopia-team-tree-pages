@@ -16,7 +16,7 @@
         <span class="brand-icon" aria-hidden="true"><span class="brand-v">V</span></span>
         <span class="brand-type"><strong>VSTOPIA<span class="brand-slash"> / </span><em>GITCOLLAB</em></strong><small>INTERACTIVE PUBLIC ECOSYSTEM</small></span>
       </a>
-      <div class="topbar-center" aria-label="Public GitHub only"><span class="pulse-dot"></span> PUBLIC PREVIEW <span class="separator">/</span> <span id="syncStatus">CONNESSIONE…</span></div>
+      <div class="topbar-center" aria-label="Aggregated GitHub data"><span class="pulse-dot"></span> PUBLIC STATS <span class="separator">/</span> <span id="syncStatus">CONNESSIONE…</span></div>
       <div class="topbar-right"><span class="date-tag" id="clock">—</span><a class="top-link" href="https://github.com/orgs/VSTOPIA-GitCollab/repositories" target="_blank" rel="noopener noreferrer">GITHUB <span aria-hidden="true">↗</span></a></div>
     </header>
     <main class="layout">
@@ -28,21 +28,21 @@
           <button class="filter" data-filter="issues" aria-pressed="false">DA FARE</button>
           <button class="filter" data-filter="active" aria-pressed="false">ATTIVI</button>
         </div>
-        <div class="section-divider"><span>DEMO PROJECTS</span><span id="repoCountLabel">00</span></div>
+        <div class="section-divider"><span>SHARED PROJECTS</span><span id="repoCountLabel">00</span></div>
         <div id="repoList" class="repo-list" aria-live="polite"><div class="loading-list">Caricamento repository privati…</div></div>
-        <div class="sidebar-footer"><span class="lock-mark">◇</span><div><strong>PUBLIC PREVIEW · SAFE DATA</strong><p>Sito pubblico. Nessun progetto privato, token o dato riservato viene pubblicato.</p></div></div>
+        <div class="sidebar-footer"><span class="lock-mark">◇</span><div><strong>PUBLIC STATS · AGGREGATES ONLY</strong><p>Sito pubblico. Solo conteggi aggregati autorizzati. Nessun token, nome privato o contenuto dei repository.</p></div></div>
       </aside>
       <section class="workbench" aria-label="Albero interattivo">
         <div class="workbench-top"><div><div class="eyebrow">02 / PROJECT ECOSYSTEM</div><h2>The living tree<span class="headline-dot">.</span></h2></div><div class="view-switch" role="group" aria-label="Vista"><button id="viewTree" class="current" aria-pressed="true">◈ 3D TREE</button><button id="viewList" aria-pressed="false">☷ LIST</button></div></div>
-        <div class="tree-stage" id="treeStage"><div class="tree-grid" aria-hidden="true"></div><div class="stage-coordinate" aria-hidden="true">VSTOPIA // ORGANIZATION TREE <span class="dim">[LIVE DATA]</span></div><canvas id="treeCanvas" aria-label="Albero interattivo dei repository. Trascina per ruotare, scorri per zoom e seleziona i nodi." tabindex="0"></canvas><div id="listView" class="list-view" hidden></div><div class="stage-legend"><span><i class="legend-dot gold"></i> REPOSITORY</span><span><i class="legend-dot mint"></i> ATTIVITÀ</span><span><i class="legend-dot coral"></i> ISSUE / PR</span></div><div class="stage-instructions" id="stageInstructions">DRAG TO ORBIT <span>·</span> SCROLL TO ZOOM <span>·</span> CLICK TO EXPLORE</div></div>
+        <div class="tree-stage" id="treeStage"><div class="tree-grid" aria-hidden="true"></div><div class="stage-coordinate" aria-hidden="true">VSTOPIA // ORGANIZATION TREE <span class="dim">[NODI DEMO]</span></div><canvas id="treeCanvas" aria-label="Albero interattivo dei repository. Trascina per ruotare, scorri per zoom e seleziona i nodi." tabindex="0"></canvas><div id="listView" class="list-view" hidden></div><div class="stage-legend"><span><i class="legend-dot gold"></i> REPOSITORY</span><span><i class="legend-dot mint"></i> ATTIVITÀ</span><span><i class="legend-dot coral"></i> ISSUE / PR</span></div><div class="stage-instructions" id="stageInstructions">DRAG TO ORBIT <span>·</span> SCROLL TO ZOOM <span>·</span> CLICK TO EXPLORE</div></div>
         <div class="workbench-footer"><span id="nodeSummary">Dati pubblici in caricamento</span><div class="stage-buttons"><button id="tourButton" aria-pressed="false">▶ AUTO TOUR</button><button id="resetView">↺ RESET VIEW</button></div></div>
       </section>
       <aside class="inspector" aria-label="Dettagli e attività">
-        <div class="inspector-heading"><div class="eyebrow">03 / LIVE INTELLIGENCE</div><h2>Project pulse<span class="headline-dot">.</span></h2><p class="inspector-caption">Dati dei soli repository GitHub pubblici. I progetti privati non sono mostrati.</p></div>
-        <div class="metrics-grid"><div class="metric"><span>DEMO PROJECTS</span><strong id="metricRepos">—</strong><small>Public GitHub only</small></div><div class="metric"><span>DEMO COMMITS</span><strong id="metricCommits">—</strong><small id="commitsFoot">Default branches</small></div><div class="metric"><span>DEMO ISSUES</span><strong id="metricIssues">—</strong><small>Work to resolve</small></div><div class="metric"><span>DEMO PRs</span><strong id="metricPrs">—</strong><small>Reviews & changes</small></div></div>
-        <div class="inspector-section collaborator"><div class="section-heading"><span>PUBLIC ACTIVITY</span><span class="activity-dot"></span></div><div class="collab-profile"><div class="avatar">GH</div><div><strong>GitHub</strong><small>Attività repository pubblici</small></div></div><div id="activityFeed" class="activity-card"><div class="loading-list">Verifica dei commit pubblici…</div></div></div>
+        <div class="inspector-heading"><div class="eyebrow">03 / LIVE INTELLIGENCE</div><h2>Project pulse<span class="headline-dot">.</span></h2><p class="inspector-caption">Solo conteggi aggregati selezionati. Nomi, commit e attività individuali restano riservati.</p></div>
+        <div class="metrics-grid"><div class="metric"><span>SHARED PROJECTS</span><strong id="metricRepos">—</strong><small>Aggregated GitHub data</small></div><div class="metric"><span>COMMITS</span><strong id="metricCommits">—</strong><small id="commitsFoot">Branch predefiniti · aggregati</small></div><div class="metric"><span>OPEN ISSUES</span><strong id="metricIssues">—</strong><small>Work to resolve</small></div><div class="metric"><span>OPEN PRs</span><strong id="metricPrs">—</strong><small>Reviews & changes</small></div><div class="metric"><span>MERGED PRs</span><strong id="metricMerges">—</strong><small>Storico dei merge</small></div></div>
+        <div class="inspector-section collaborator"><div class="section-heading"><span>TEAM SUPERVISOR</span><span class="activity-dot"></span></div><div class="collab-profile"><div class="avatar">GH</div><div><strong>GitHub</strong><small>Supervisore · dati aggregati</small></div></div><div id="activityFeed" class="activity-card"><div class="loading-list">Verifica dei commit pubblici…</div></div></div>
         <div class="inspector-section detail-section"><div class="section-heading"><span>SELECTED BRANCH</span><span id="selectedIndicator">—</span></div><div id="selectedDetail" class="selected-detail"><div class="empty-select"><div class="empty-symbol">◎</div>Seleziona un nodo nell'albero oppure un repository a sinistra.</div></div></div>
-        <div class="inspector-bottom"><span>STATIC PREVIEW <i>●</i> NO PRIVATE DATA</span><span id="lastSync">—</span></div>
+        <div class="inspector-bottom"><span>PUBLIC SNAPSHOT <i>●</i> AGGREGATE ONLY</span><span id="lastSync">—</span></div>
       </aside>
     </main>
   </div>
