@@ -63,10 +63,10 @@ export function applyTerrainBlending(material, gradeUniform, spatial) {
       // World-space feather blend into the very same HDRI panorama and horizon.
       // Fade begins well outside the working tree; leave the foreground solid.
       float distanceToTree=length(vTerrainWorldPosition.xz);
-      float feather=1.0-smoothstep(35.0,390.0,distanceToTree+(macro-.5)*29.0);
+      float feather=1.0-smoothstep(520.0,3900.0,distanceToTree+(macro-.5)*280.0);
       diffuseColor.a *= feather;
     `);
   };
-  material.customProgramCacheKey=()=> 'vstopia-ground-hdri-sampled-linear-grade-v4';
+  material.customProgramCacheKey=()=> 'vstopia-ground-hdri-sampled-linear-grade-v5';
   material.needsUpdate=true;
 }

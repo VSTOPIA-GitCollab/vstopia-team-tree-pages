@@ -4,10 +4,11 @@ import * as THREE from 'three';
 import {Tree} from '@dgreenheck/ez-tree';
 import {RGBELoader} from './vendor/RGBELoader.js';
 import {applyTerrainBlending} from './ground-blend.js';
+import {addEzTreeShrubs} from './shrub-garden.js';
 
 const stage=document.getElementById('treeStage');
 const fallback=document.getElementById('treeCanvas');
-const stageMode=()=>!stage.hidden; // LIST is now an overlay; it must not pause the WebGL scene.
+const stageMode=()=>!stage.hidden;
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const state={ready:false,orbit:.18,elevation:.16,zoom:1.06,selected:'Audio Playground',drag:null,disposed:false};
 const api={get ready(){return state.ready;}};
@@ -71,6 +72,7 @@ function buildScene(){
  // Center it visually, retaining the roots on the scene's lawn.
  tree.position.x=-center.x;tree.position.z=-center.z;
  const height=size.y;sceneExtent=size.length();
+ const originalTreeBase=new THREE.Box3().setFromObject(tree).min.y;
  const radius=Math.max(size.x,size.z,height*.6);
  target=new THREE.Vector3(0,height*.52,0);
  camera=new THREE.PerspectiveCamera(32,1,.1,16000);
@@ -78,11 +80,11 @@ function buildScene(){
  camera.lookAt(target);
  // A genuinely opaque, shaded and displaced terrain mesh. Its outer slopes
  // disappear toward the photographed HDRI horizon, never exposing a transparent disc.
- const terrainGeometry=new THREE.PlaneGeometry(12000,12000,256,256);
+ const terrainGeometry=new THREE.PlaneGeometry(16000,16000,320,320);
  const vertices=terrainGeometry.attributes.position;
  for(let i=0;i<vertices.count;i++){
   const x=vertices.getX(i),z=vertices.getY(i),dist=Math.hypot(x,z);
-  const ramp=1-Math.exp(-Math.pow(dist/55,2));
+  const ramp=(1-Math.exp(-Math.pow(dist/55,2)))*(1-THREE.MathUtils.smoothstep(dist,750,3200));
   const relief=(Math.sin(x*.013)*6+Math.cos(z*.015)*5+
        Math.sin(x*.027+z*.018)*2.6+Math.cos(z*.038-x*.02)*1.6)*ramp;
   vertices.setZ(i,relief);
@@ -112,6 +114,10 @@ function buildScene(){
  terrain.rotation.x=-Math.PI/2;
  terrain.receiveShadow=true;terrain.position.y=-.055;
  scene.add(terrain);ground=terrain;
+ // Align the physical trunk base to the terrain surface, not to the model's pivot.
+ tree.position.y+=terrain.position.y+.025-originalTreeBase;
+ stage.dataset.treeBaseAligned=String(Math.abs((new THREE.Box3().setFromObject(tree)).min.y-(terrain.position.y+.025))<.05);
+ const shrubGarden=addEzTreeShrubs({THREE,scene,tree,terrain,center,stage});
  // One uninterrupted mesh extends all the way to the visible world horizon.
  // No overlapping opaque LOD layers: they previously caused z-intersection artifacts.
  stage.dataset.terrain='opaque-pbr-mesh';
@@ -122,9 +128,9 @@ function buildScene(){
  haze.addColorStop(0,'rgba(18,34,13,.60)');haze.addColorStop(.42,'rgba(14,31,12,.25)');haze.addColorStop(1,'rgba(11,28,16,0)');
  cx.fillStyle=haze;cx.fillRect(0,0,256,256);
  const contact=new THREE.CanvasTexture(contactCanvas);contact.colorSpace=THREE.SRGBColorSpace;
- const shadow=new THREE.Mesh(new THREE.PlaneGeometry(radius*.75,radius*.75),
+ const shadow=new THREE.Mesh(new THREE.PlaneGeometry(radius*.66,radius*.66),
   new THREE.MeshBasicMaterial({map:contact,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));
- shadow.rotation.x=-Math.PI/2;shadow.position.y=.034;scene.add(shadow);
+ shadow.rotation.x=-Math.PI/2;shadow.position.y=.01;scene.add(shadow);
  // Self-hosted CC0 grass/soil PBR map, normal and roughness from one Poly Haven material.
  const loader=new THREE.TextureLoader();
  const base='assets/environment/grass_ground_';
