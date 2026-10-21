@@ -1,0 +1,76 @@
+/* VSTOPIA Council-inspired layout pass: center stage gets the width; live intelligence is a bottom glass strip. */
+:root{--intel-height:216px}
+.app-shell{height:100dvh;min-height:0}
+.layout{display:grid;grid-template-columns:clamp(195px,15vw,255px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) var(--intel-height);min-height:0;flex:1}
+.layout>.sidebar{grid-column:1;grid-row:1/3;min-height:0;border-right:1px solid rgba(255,255,255,.72);overflow:hidden}
+.layout>.workbench{grid-column:2;grid-row:1;min-width:0;min-height:0}
+.layout>.inspector{position:relative;grid-column:2;grid-row:2;display:grid;grid-template-columns:minmax(285px,1.05fr) minmax(430px,1.55fr) minmax(182px,.7fr) minmax(208px,.8fr);grid-template-rows:30px minmax(0,1fr);column-gap:6px;overflow-x:auto;overflow-y:hidden;width:100%;height:var(--intel-height);min-height:0;border-left:0;border-top:1px solid rgba(255,255,255,.82);padding:4px 7px 7px;background:linear-gradient(100deg,rgba(238,249,252,.75),rgba(211,240,245,.53));scrollbar-width:thin;scrollbar-color:#9dced6 transparent;align-items:stretch}
+.inspector>.inspector-heading{grid-column:1/4;grid-row:1;display:flex;align-items:center;gap:15px;padding:0 10px;min-height:26px;border:0;white-space:nowrap}
+.inspector>.inspector-heading .eyebrow{font-size:9px}
+.inspector>.inspector-heading h2{font-size:18px;margin:0}
+.inspector>.inspector-heading .inspector-caption{font-size:9px;margin:0;overflow:hidden;text-overflow:ellipsis}
+.inspector>.metrics-grid{grid-column:1;grid-row:2;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:1fr;gap:5px;padding:0;margin:0;min-width:0;align-self:stretch}
+.inspector .metric{min-width:0;border-radius:12px;padding:15px 5px 9px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
+.inspector .metric span{font-size:8px;white-space:normal;line-height:1.4;min-height:22px}
+.inspector .metric strong{font-size:clamp(19px,2.25vw,33px);margin:0;line-height:1.06}
+.inspector .metric small{font-size:8px;line-height:1.3;max-height:26px;overflow:hidden}
+.inspector>.team-members{grid-column:2;grid-row:2;min-width:0;min-height:0;padding:0 3px;border:0;overflow:auto;scrollbar-width:thin}
+.inspector>.team-members .section-heading{font-size:8px;margin:1px 0 4px}
+.inspector .member-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0}
+.inspector .member-card{min-width:0;padding:7px 8px;border-radius:12px;overflow:hidden}
+.inspector .member-top{gap:5px}
+.inspector .member-avatar{width:25px;height:25px;font-size:11px}
+.inspector .member-top a{font-size:11px}
+.inspector .member-top small{font-size:8px;margin-top:1px}
+.inspector .member-grid{gap:3px;margin:5px 0 0}
+.inspector .member-stat{padding:3px 1px;border-radius:5px}
+.inspector .member-stat strong{font-size:16px}
+.inspector .member-stat small{font-size:7px;margin:0}
+.inspector .member-work{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;margin:5px 0 0}
+.inspector .work-pill{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;min-width:0;min-height:34px;padding:3px 1px;letter-spacing:0;line-height:1.05;text-align:center;border-radius:5px}
+.inspector .work-pill span:nth-child(2){font-size:6.5px;overflow-wrap:normal}
+.inspector .work-pill .work-leaf{display:none}
+.inspector .work-pill strong{font-size:13px;line-height:1}
+.inspector .member-last{font-size:8px;margin:5px 0 0;padding:5px 0 0;line-height:1.2;white-space:normal}
+.inspector .member-last>div{display:inline;margin-left:4px}
+.inspector .garden-note,.inspector .activity-disclaimer{display:none}
+.inspector>.collaborator{grid-column:3;grid-row:2;min-width:0;min-height:0;padding:0 5px;border:0;overflow:hidden}
+.inspector>.collaborator .section-heading{font-size:8px;margin:0 0 5px}
+.inspector>.collaborator .collab-profile{display:none}
+.inspector>.collaborator .activity-card{height:calc(100% - 17px);padding:9px 7px;overflow:auto;border-radius:12px}
+.inspector>.collaborator .supervisor-mascot{font-size:20px;width:32px;height:32px;margin:3px auto}
+.inspector>.collaborator .activity-kicker{font-size:7px}
+.inspector>.collaborator .activity-message{font-size:8px}
+.inspector>.collaborator .supervisor-speech{font-size:9px;min-height:0;line-height:1.35;padding:6px;margin:5px 0 0}
+.inspector>.detail-section{grid-column:4;grid-row:2;min-width:0;min-height:0;padding:0 5px;border:0;overflow:auto}
+.inspector>.detail-section .section-heading{font-size:8px}
+.inspector>.detail-section .selected-detail{padding-top:5px;font-size:9px}
+.inspector>.detail-section .detail-title{font-size:13px;margin:0 0 5px}
+.inspector>.detail-section .detail-desc{font-size:9px;line-height:1.35;margin:0}
+.inspector>.detail-section .detail-badges{margin:6px 0;gap:3px}
+.inspector>.detail-section .detail-badge{padding:4px;font-size:7px}
+.inspector>.detail-section .detail-divider{margin:7px 0}
+.inspector>.detail-section .detail-label{font-size:8px;margin:4px 0}
+.inspector>.detail-section .detail-commit,.inspector>.detail-section .detail-meta{font-size:9px}
+.inspector>.detail-section .detail-links{margin-top:9px}
+.inspector>.detail-section .detail-links a{font-size:8px;padding:7px}
+.inspector>.inspector-bottom{position:absolute;right:17px;top:8px;display:flex;gap:10px;align-items:center;border:0;background:transparent;box-shadow:none;padding:0;color:#376477;font-size:8px}
+.tree-stage{min-height:280px}
+.workbench-top{padding:12px 20px 10px}
+.workbench h2{font-size:29px}
+.workbench-footer{min-height:48px;padding:6px 15px}
+.stage-coordinate{font-size:9px}
+/* Mascots are small actionable endpoints of the actual animation speed control. */
+.forest-speed-control{position:absolute;z-index:8;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:7px;align-items:center;padding:5px 10px;border-radius:19px;background:rgba(230,247,252,.65);border:1px solid rgba(255,255,255,.9);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:0 8px 20px rgba(14,76,94,.18);color:#265e6e}
+.forest-speed-control img{width:26px;height:29px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(20,80,70,.18));animation:none}
+.forest-speed-control label{display:flex;flex-direction:column;align-items:center;gap:1px;font:700 8px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;white-space:nowrap}
+.forest-speed-control input{width:clamp(110px,12vw,180px);accent-color:#478d78;cursor:pointer}
+.forest-speed-control output{color:#205a5a;font-size:8px;min-width:34px;text-align:center}
+.forest-character{display:none!important}
+.stage-legend{bottom:12px;left:15px;padding:6px 9px}
+.stage-instructions{bottom:56px;font-size:8px;white-space:normal;text-align:center}
+.sun-halo{position:absolute;z-index:0;left:25%;top:4%;width:min(30%,280px);aspect-ratio:1;pointer-events:none;border-radius:50%;background:radial-gradient(circle,rgba(255,244,190,.7) 0,rgba(255,228,163,.28) 25%,rgba(255,248,218,0) 70%);mix-blend-mode:screen}
+@media(max-width:1150px){:root{--intel-height:232px}.layout{grid-template-columns:200px minmax(0,1fr)}.inspector>.inspector-heading .inspector-caption{display:none}.layout>.inspector{grid-template-columns:minmax(280px,.9fr) minmax(385px,1.4fr) minmax(172px,.7fr) minmax(190px,.7fr)}.inspector>.inspector-bottom{display:none}}
+@media(max-width:750px){body{overflow:auto}.app-shell{height:auto;min-height:100dvh}.layout{display:flex;flex-direction:column;height:auto;min-height:0}.layout>.sidebar{order:0;max-height:220px;min-height:0;overflow:auto;border-right:0;border-bottom:1px solid rgba(255,255,255,.65)}.layout>.sidebar .repo-list{max-height:120px}.layout>.sidebar .sidebar-footer{display:none}.layout>.workbench{order:1;height:70vh;min-height:480px}.layout>.inspector{order:2;display:flex;flex-direction:column;gap:9px;height:auto;max-height:none;overflow:visible}.inspector>.inspector-heading{display:flex;min-height:40px}.inspector>.metrics-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}.inspector>.team-members,.inspector>.collaborator,.inspector>.detail-section{overflow:visible;padding:5px}.inspector>.inspector-bottom{display:none}.inspector .member-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.inspector .metric{padding:12px 2px}.inspector .metric strong{font-size:24px}.stage-instructions{display:none}}
+@media(max-width:440px){.inspector .member-cards{grid-template-columns:1fr}.inspector>.metrics-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.workbench h2{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.forest-speed-control img{animation:none}}

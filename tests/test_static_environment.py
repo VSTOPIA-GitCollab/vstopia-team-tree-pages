@@ -26,9 +26,11 @@ class EnvironmentTests(unittest.TestCase):
         self.assertIn('texture.mapping=THREE.EquirectangularReflectionMapping',SRC)
         self.assertTrue((ROOT/'assets/environment/kloppenheim_03_tonemapped.jpg').is_file())
 
-    def test_tree_animation_is_frozen(self):
+    def test_hdri_is_static_but_sway_animation_is_user_controlled(self):
         self.assertIn('tree.update(0);',SRC)
-        self.assertNotIn('tree.update(t*.001)',SRC)
+        self.assertIn('tree.update(windPhase)',SRC)
+        self.assertIn('animationSpeed>0',SRC)
+        self.assertNotIn('scene.rotation.y',SRC)
         self.assertIn('if(!requiresRender)return;',SRC)
         self.assertIn('invalidate();',SRC)
 

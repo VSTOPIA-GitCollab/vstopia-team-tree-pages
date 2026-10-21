@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="108" viewBox="0 0 140 108" role="img" aria-label="Lumaca del bosco, ritmo lento">
+ <defs><radialGradient id="shell" cx="28%" cy="24%" r="89%"><stop stop-color="#dcecc8"/><stop offset=".35" stop-color="#c6b58a"/><stop offset=".72" stop-color="#8f946e"/><stop offset="1" stop-color="#496b61"/></radialGradient><linearGradient id="skin" x2=".5" y2="1"><stop stop-color="#d6f2c8"/><stop offset="1" stop-color="#68a98f"/></linearGradient></defs>
+ <ellipse cx="68" cy="96" rx="59" ry="8" fill="#418769" opacity=".20"/>
+ <path d="M12 84q9-13 25-12l68-5q16 2 26 20 3 11-14 13H28Q7 101 12 84Z" fill="url(#skin)" stroke="#659d81" stroke-width="2"/>
+ <path d="M92 76q9-25 19-27 6 0 11 14l4 24Z" fill="url(#skin)" stroke="#659d81" stroke-width="2"/>
+ <path d="M101 55q-2-16-9-24m21 24q3-20 14-24" stroke="#669a82" stroke-width="5" fill="none" stroke-linecap="round"/>
+ <circle cx="91" cy="28" r="7" fill="#c9e7b3" stroke="#7ca28a" stroke-width="2"/><circle cx="128" cy="28" r="7" fill="#c9e7b3" stroke="#7ca28a" stroke-width="2"/>
+ <circle cx="93" cy="28" r="3" fill="#2c5145"/><circle cx="126" cy="28" r="3" fill="#2c5145"/>
+ <path d="M101 77q8 6 15-2" stroke="#47745c" stroke-width="2" fill="none" stroke-linecap="round"/>
+ <circle cx="57" cy="58" r="40" fill="url(#shell)" stroke="#73907b" stroke-width="3"/>
+ <path d="M82 40q-10-13-27-12-22 1-28 23-5 26 19 34 25 7 34-15 9-22-8-34-19-13-32 3-11 14-2 26 9 12 22 5 11-6 7-19-3-9-13-8-7 2-6 10 0 5 6 6" fill="none" stroke="#61775c" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+ <path d="M27 76q-8-18-2-36" fill="none" stroke="#f3f3d0" stroke-width="3" opacity=".55"/>
+ <circle cx="120" cy="60" r="2" fill="#f3ffdc"/><path d="M31 25l4-8 4 8-4 8Z" fill="#d3f4be" opacity=".85"/>
+</svg>
