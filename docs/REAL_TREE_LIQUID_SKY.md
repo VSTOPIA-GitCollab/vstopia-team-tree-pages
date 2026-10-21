@@ -23,3 +23,8 @@ This scene uses the public EZ-Tree engine referenced at `https://threejsroadmap.
 - Headless Chrome with WebGL enabled: `data-tree-kind=real-ez-tree-threejs`, `has-webgl-tree`, large visible oak, correct sky photo and translucent panels.
 - DOM smoke: 12 project anchor buttons, selection updates sidebar, filter/list/reset switch without losing data, aggregate panel keeps `snapshot.json` counters.
 - GitHub Pages: verify build Action PASS and live static assets return HTTP 200. Do not claim VERIFIED until a real deployed-site browser screenshot is inspected.
+
+
+## Updated 2026-10-21: static 3D ground and HDRI
+
+The original photographic CSS sky and transparent radial ground have been superseded by a real CC0 HDRI with horizon and opaque PBR terrain. See [HDRI/PBR terrain runbook](STATIC_HDRI_PBR_TERRAIN.md).
