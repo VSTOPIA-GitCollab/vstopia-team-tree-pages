@@ -33,13 +33,13 @@ class GardenTests(unittest.TestCase):
         self.assertIn('lake.material.uniforms.time.value+=dt',ENV)
         self.assertIn('river.renderOrder=15',ENV)
     def test_terrain_carved_below_real_water_level(self):
-        self.assertIn('return relief*(1-cut*.98)-cut*4.2;',ENV)
+        self.assertIn('return relief*(1-cut*.98)-cut*4.9;',ENV)
         self.assertIn('terrainElevation(x,z)',TREE)
         self.assertIn('vertices.setXYZ(i,x,-z,terrainElevation(x,z));',TREE)
-        self.assertIn('const LAKE={x:69,z:-129,rx:40,rz:27,water:-.46}',ENV)
+        self.assertIn('const LAKE={x:-145,z:-210,rx:62,rz:44,water:-.46}',ENV)
     def test_scattered_grass_stones_bushes_batched(self):
-        self.assertIn('InstancedMesh(rockGeo,rockMat,180)',ENV)
-        self.assertIn('InstancedMesh(grassGeo,grassMat,10000)',ENV)
+        self.assertIn('InstancedMesh(rockGeo,rockMat,280)',ENV)
+        self.assertIn('InstancedMesh(grassGeo,grassMat,33000)',ENV)
         self.assertIn('for(let blade=0;blade<5;blade++)',ENV)
         self.assertIn('stage.dataset.waterRocks',ENV)
         self.assertIn('stage.dataset.waterGrass',ENV)

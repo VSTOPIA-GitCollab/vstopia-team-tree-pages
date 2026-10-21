@@ -15,7 +15,7 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          assets = (Path('index.html'), Path('app.js'), Path('style.css'), Path('ez-tree-scene.js'), Path('liquid-glass.css'), Path('scene-polish.css'), Path('ground-blend.js'), Path('apple-glass.css'), Path('shrub-garden.js'), Path('water-environment.js'), Path('water-garden.css'), Path('vendor/addons/Water.js'), Path('glass-react-source/glass-island.jsx'))
+          assets = (Path('index.html'), Path('app.js'), Path('style.css'), Path('ez-tree-scene.js'), Path('liquid-glass.css'), Path('scene-polish.css'), Path('ground-blend.js'), Path('apple-glass.css'), Path('shrub-garden.js'), Path('water-environment.js'), Path('water-garden.css'), Path('vendor/addons/Water.js'), Path('glass-react-source/glass-island.jsx'), Path('glass-react-source/specy-header.jsx'))
           for p in assets:
               text=p.read_text()
               for forbidden in ('VSTOPIA-Council', 'AUDIOENCE-World', 'OstinDesktopCommander',
@@ -34,6 +34,8 @@ jobs:
           for forbidden in ('github_pat_', 'gho_', 'private_repo_name', 'repository_url'):
               assert forbidden not in json.dumps(calibration)
           assert Path('vendor/vstopia-liquid-glass-island.mjs').stat().st_size > 80000
+          assert Path('vendor/vstopia-specy-header.mjs').stat().st_size > 150000
+          assert Path('vendor/legal/specy-liquid-glass-MIT.txt').is_file()
           assert not Path('glass-react-source/node_modules').exists()
           assert 'id="viewList"' not in Path('index.html').read_text()
           assert 'id="listDrawer"' not in Path('index.html').read_text()

@@ -16,15 +16,17 @@
   <script type="module" src="./ez-tree-scene.js"></script>
   <script src="./app.js" defer></script>
   <script type="module" src="./vendor/vstopia-liquid-glass-island.mjs"></script>
+  <script type="module" src="./vendor/vstopia-specy-header.mjs"></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
+      <div id="specyGlassHeader" aria-hidden="true"></div>
       <a class="brand" href="./" aria-label="VSTOPIA Team Tree">
         <span class="brand-icon" aria-hidden="true"><span class="brand-v">V</span></span>
         <span class="brand-type"><strong>VSTOPIA<span class="brand-slash"> / </span><em>GITCOLLAB</em></strong><small>INTERACTIVE PUBLIC ECOSYSTEM</small></span>
       </a>
-      <div class="topbar-center" aria-label="Aggregated GitHub data"><span class="pulse-dot"></span> PUBLIC STATS <span class="separator">/</span> <span id="syncStatus">CONNESSIONE…</span></div>
+      <div class="topbar-center" aria-live="polite"><span id="syncStatus">CONNESSIONE…</span></div>
       <div class="topbar-right"><span class="date-tag" id="clock">—</span><a class="top-link" href="https://github.com/orgs/VSTOPIA-GitCollab/repositories" target="_blank" rel="noopener noreferrer">GITHUB <span aria-hidden="true">↗</span></a></div>
     </header>
     <main class="layout">
@@ -38,7 +40,7 @@
         </div>
         <div class="section-divider"><span>DEMO PROJECTS</span><span id="repoCountLabel">00</span></div>
         <div id="repoList" class="repo-list" aria-live="polite"><div class="loading-list">Caricamento repository privati…</div></div>
-        <div class="sidebar-footer"><span class="lock-mark">◇</span><div><strong>PUBLIC STATS · AGGREGATES ONLY</strong><p>Sito pubblico. Solo conteggi aggregati autorizzati. Nessun token, nome privato o contenuto dei repository.</p></div></div>
+
       </aside>
       <section class="workbench" aria-label="Albero interattivo">
         <div class="workbench-top"><div><div class="eyebrow">02 / PROJECT ECOSYSTEM</div><h2>The living tree<span class="headline-dot">.</span></h2></div></div>
@@ -50,7 +52,7 @@
         <div class="inspector-section team-members"><div class="section-heading"><span>OUR TEAM / VERIFIED CONTRIBUTIONS</span><span class="activity-dot"></span></div><div id="memberCards" class="member-cards"><div class="loading-list">Caricamento attività dei collaboratori…</div></div><div class="activity-disclaimer">Commit: branch predefiniti. PR e merge: totali storici. Push: eventi osservati negli ultimi 30 giorni, possibili limiti API.</div></div>
         <div class="inspector-section collaborator"><div class="section-heading"><span>TEAM SUPERVISOR</span><span class="activity-dot"></span></div><div class="collab-profile"><div class="avatar">GH</div><div><strong>GitHub</strong><small>Supervisore · dati aggregati</small></div></div><div id="activityFeed" class="activity-card"><div class="loading-list">Caricamento supervisore…</div></div></div>
         <div class="inspector-section detail-section"><div class="section-heading"><span>SELECTED BRANCH</span><span id="selectedIndicator">—</span></div><div id="selectedDetail" class="selected-detail"><div class="empty-select"><div class="empty-symbol">◎</div>Seleziona un nodo nell'albero oppure un repository a sinistra.</div></div></div>
-        <div class="inspector-bottom"><span>PUBLIC SNAPSHOT <i>●</i> AGGREGATE ONLY</span><span id="lastSync">—</span></div>
+        <div class="inspector-bottom"><span id="lastSync">—</span></div>
       </aside>
       <section class="bottom-metrics" aria-label="Statistiche principali del team">
         <div class="metrics-grid"><div class="metric"><span>SHARED PROJECTS</span><strong id="metricRepos">—</strong><small>Aggregated GitHub data</small></div><div class="metric"><span>COMMITS</span><strong id="metricCommits">—</strong><small id="commitsFoot">Branch predefiniti · aggregati</small></div><div class="metric"><span>OPEN ISSUES</span><strong id="metricIssues">—</strong><small>Work to resolve</small></div><div class="metric"><span>OPEN PRs</span><strong id="metricPrs">—</strong><small>Reviews & changes</small></div><div class="metric"><span>MERGED PRs</span><strong id="metricMerges">—</strong><small>Storico dei merge</small></div></div>

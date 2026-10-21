@@ -55,3 +55,10 @@ The Three.js tree now displays **only clickable project name labels** in its sce
 ## Living Garden V2 — water and breathable glass UI (21 Oct 2026)
 
 Wide Three.js stage with a reflective HDRI lake and continuously flowing creek, real carved shore geometry, stones, 10,000 five-leaf grass tufts plus 28 EZ-Tree-derived shrubs. Right inspector now contains branch details, team supervisor and verified member summaries; below is only a five-metric liquid glass strip. Read [technical notes and upstream sources](docs/WATER_GARDEN_2026-10-21.md).
+
+
+## Living Garden V3 — irregular remote lake, full-length river and actual glass underlay
+
+The public Three.js canvas now extends **behind** the header and glass UI panels. The redundant public-aggregates disclaimer block was removed from the sidebar while backend privacy validation remains. The lake is an irregular triangulated polygon away from the main EZ-Tree, now visible on the left; its feeding creek starts near the 16 km terrain's western edge, with wider banks and physically carved riverbed. More meadow and natural riverbank grass groups (33,000 five-blade tufts), angular deformed boulders scattered throughout the landscape (~220 visible instances), and no pebble ring around the lake. The large right inspector presents both members and task cards without nested scrolling.
+
+A single original MIT [`@specy/liquid-glass-react`](https://www.npmjs.com/package/@specy/liquid-glass-react) WebGL island provides the header's optical refraction; other containers use existing self-hosted liquid-glass-react optical surfaces and low-opacity backdrop glass. Avoid spawning a WebGL renderer for every small card. Full V3 build/QA notes and multiple rotated screenshots: [Natural Garden V3](docs/NATURAL_GARDEN_V3_2026-10-21.md).
