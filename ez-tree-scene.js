@@ -5,6 +5,7 @@ import {Tree} from '@dgreenheck/ez-tree';
 import {RGBELoader} from './vendor/RGBELoader.js';
 import {applyTerrainBlending} from './ground-blend.js';
 import {addEzTreeShrubs} from './shrub-garden.js';
+import {addWaterGarden,terrainElevation} from './water-environment.js';
 
 const stage=document.getElementById('treeStage');
 const fallback=document.getElementById('treeCanvas');
@@ -14,7 +15,7 @@ const state={ready:false,orbit:.18,elevation:.16,zoom:1.06,selected:'Audio Playg
 const api={get ready(){return state.ready;}};
 window.VstopiaEzTree=api;
 
-let renderer, camera, scene, tree, ground, holder, markerLayer, target, frameId;
+let renderer, camera, scene, tree, ground, holder, markerLayer, target, frameId,waterGarden;
 let sceneExtent=0;
 const spatialGrade={left:new THREE.Vector3(1.20,1.13,1.07),right:new THREE.Vector3(1.005,.94,.926),width:{value:1}};
 let requiresRender=true;
@@ -167,16 +168,17 @@ function buildScene(){
  // disappear toward the photographed HDRI horizon, never exposing a transparent disc.
  const terrainGeometry=new THREE.PlaneGeometry(16000,16000,320,320);
  const vertices=terrainGeometry.attributes.position;
+ // Adaptive world subdivision: dense vertex spacing around the stream/lake,
+ // sparse vertices near the 16-km horizon. Carved basins are real geometry.
  for(let i=0;i<vertices.count;i++){
-  const x=vertices.getX(i),z=vertices.getY(i),dist=Math.hypot(x,z);
-  const ramp=(1-Math.exp(-Math.pow(dist/55,2)))*(1-THREE.MathUtils.smoothstep(dist,750,3200));
-  const relief=(Math.sin(x*.013)*6+Math.cos(z*.015)*5+
-       Math.sin(x*.027+z*.018)*2.6+Math.cos(z*.038-x*.02)*1.6)*ramp;
-  vertices.setZ(i,relief);
+  const bx=vertices.getX(i),by=vertices.getY(i);
+  const spread=value=>Math.sign(value)*Math.pow(Math.abs(value)/8000,1.65)*8000;
+  const x=spread(bx), z=-spread(by);
+  vertices.setXYZ(i,x,-z,terrainElevation(x,z));
  }
  vertices.needsUpdate=true;terrainGeometry.computeVertexNormals();
  const terrainMaterial=new THREE.MeshStandardMaterial({color:0x8c977a,roughness:1,metalness:0,side:THREE.FrontSide});
- const terrainGrade=new THREE.Vector3(.2653,.2223,.2290);
+ const terrainGrade=new THREE.Vector3(.402,.337,.348);
  applyTerrainBlending(terrainMaterial, terrainGrade, spatialGrade);
  // Rehydrate a precomputed robust six-pair calibration; never fetch the private screenshot.
  fetch('./assets/calibration/ground-grade.json',{cache:'force-cache'}).then(r=>{
@@ -185,7 +187,7 @@ function buildScene(){
    if(profile.schema_version!==1 || !Array.isArray(profile.linear_rgb_grade) ||
       profile.linear_rgb_grade.length!==3 || !profile.linear_rgb_grade.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>.1&&x<=1.4))
      throw new Error('invalid color calibration');
-   terrainGrade.set(...profile.linear_rgb_grade);
+   terrainGrade.set(...profile.linear_rgb_grade).multiplyScalar(1.52);
    if(Array.isArray(profile.spatial_grade_left)&&Array.isArray(profile.spatial_grade_right)){
      const strength=Math.min(.8,Math.max(0,Number(profile.spatial_grade_strength)||0));
      const adapt=a=>a.map(value=>1+(value-1)*strength);
@@ -203,6 +205,21 @@ function buildScene(){
  tree.position.y+=terrain.position.y+.025-originalTreeBase;
  stage.dataset.treeBaseAligned=String(Math.abs((new THREE.Box3().setFromObject(tree)).min.y-(terrain.position.y+.025))<.05);
  const shrubGarden=addEzTreeShrubs({THREE,scene,tree,terrain,center,stage});
+ waterGarden=addWaterGarden({scene,renderer,terrain,stage,reduceMotion});
+ window.VstopiaGardenProject=(x,y,z)=>{
+  const r=stage.getBoundingClientRect(),v=new THREE.Vector3(x,y,z).project(camera);
+  return [Math.round((v.x*.5+.5)*r.width),Math.round((-.5*v.y+.5)*r.height)];
+ };
+ window.VstopiaGardenDebug=()=>{
+  const rect=stage.getBoundingClientRect();
+  return ['lake','river'].map(type=>{
+    const o=waterGarden[type],v=new THREE.Vector3();
+    if(type==='lake')v.set(69,-.46,-129);else v.set(-60,-.39,-115);
+    v.project(camera);
+    return {type,screenX:Math.round((v.x*.5+.5)*rect.width),screenY:Math.round((-.5*v.y+.5)*rect.height),
+      stageW:Math.round(rect.width),stageH:Math.round(rect.height),camera:camera.position.toArray().map(x=>Math.round(x))};
+  });
+ };
  // One uninterrupted mesh extends all the way to the visible world horizon.
  // No overlapping opaque LOD layers: they previously caused z-intersection artifacts.
  stage.dataset.terrain='opaque-pbr-mesh';
@@ -229,7 +246,7 @@ function buildScene(){
   },undefined,reject);
  }))).then(textures=>{
   for(const [field,texture] of textures)terrainMaterial[field]=texture;
-  terrainMaterial.color.set(0x899777);
+  terrainMaterial.color.set(0xb1b99e);
   terrainMaterial.normalScale.set(.32,.32);
   terrainMaterial.needsUpdate=true;
   stage.dataset.pbr='diffuse-normal-roughness-ready';
@@ -273,6 +290,7 @@ function render(t){
    const dt=previousWindTime?Math.min(.12,(t-previousWindTime)*.001):0;
    windPhase+=dt*animationSpeed;
    tree.update(windPhase);requiresRender=true;
+   if(waterGarden)waterGarden.update(dt);
  }
  previousWindTime=t;
  if(t-lastWindTelemetry>700){stage.dataset.windPhase=windPhase.toFixed(3);lastWindTelemetry=t;}
@@ -333,6 +351,7 @@ function build(){
   texture.mapping=THREE.EquirectangularReflectionMapping;
   scene.background=texture;scene.environment=texture;
   scene.backgroundIntensity=1.0;scene.environmentIntensity=1.20;
+  if(waterGarden)waterGarden.setEnvironment(texture);
   stage.dataset.hdri='kloppenheim_03_2k';invalidate();
  },undefined,error=>console.error('[VSTOPIA HDRI] Could not load environment',error));
  scene.add(new THREE.HemisphereLight(0xedfaff,0x829264,1.42));

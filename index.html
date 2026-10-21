@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="./liquid-glass.css">
   <link rel="stylesheet" href="./scene-polish.css">
   <link rel="stylesheet" href="./apple-glass.css">
+  <link rel="stylesheet" href="./water-garden.css">
   <script src="./forest-renderer.js" defer></script>
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js","@dgreenheck/ez-tree":"./vendor/ez-tree.es.js"}}</script>
   <script type="module" src="./ez-tree-scene.js"></script>
@@ -45,13 +46,15 @@
 
       </section>
       <aside class="inspector" aria-label="Dettagli e attività">
-        <div class="inspector-heading"><div class="eyebrow">03 / LIVE INTELLIGENCE</div><h2>Project pulse<span class="headline-dot">.</span></h2><p class="inspector-caption">Statistiche del team e profili Agostino / Marcello; dettagli dei repository riservati.</p></div>
-        <div class="metrics-grid"><div class="metric"><span>SHARED PROJECTS</span><strong id="metricRepos">—</strong><small>Aggregated GitHub data</small></div><div class="metric"><span>COMMITS</span><strong id="metricCommits">—</strong><small id="commitsFoot">Branch predefiniti · aggregati</small></div><div class="metric"><span>OPEN ISSUES</span><strong id="metricIssues">—</strong><small>Work to resolve</small></div><div class="metric"><span>OPEN PRs</span><strong id="metricPrs">—</strong><small>Reviews & changes</small></div><div class="metric"><span>MERGED PRs</span><strong id="metricMerges">—</strong><small>Storico dei merge</small></div></div>
+        <div class="inspector-heading"><div class="eyebrow">03 / LIVE INTELLIGENCE</div><h2>Team activity<span class="headline-dot">.</span></h2><p class="inspector-caption">Statistiche del team e profili Agostino / Marcello; dettagli dei repository riservati.</p></div>
         <div class="inspector-section team-members"><div class="section-heading"><span>OUR TEAM / VERIFIED CONTRIBUTIONS</span><span class="activity-dot"></span></div><div id="memberCards" class="member-cards"><div class="loading-list">Caricamento attività dei collaboratori…</div></div><div class="activity-disclaimer">Commit: branch predefiniti. PR e merge: totali storici. Push: eventi osservati negli ultimi 30 giorni, possibili limiti API.</div></div>
         <div class="inspector-section collaborator"><div class="section-heading"><span>TEAM SUPERVISOR</span><span class="activity-dot"></span></div><div class="collab-profile"><div class="avatar">GH</div><div><strong>GitHub</strong><small>Supervisore · dati aggregati</small></div></div><div id="activityFeed" class="activity-card"><div class="loading-list">Caricamento supervisore…</div></div></div>
         <div class="inspector-section detail-section"><div class="section-heading"><span>SELECTED BRANCH</span><span id="selectedIndicator">—</span></div><div id="selectedDetail" class="selected-detail"><div class="empty-select"><div class="empty-symbol">◎</div>Seleziona un nodo nell'albero oppure un repository a sinistra.</div></div></div>
         <div class="inspector-bottom"><span>PUBLIC SNAPSHOT <i>●</i> AGGREGATE ONLY</span><span id="lastSync">—</span></div>
       </aside>
+      <section class="bottom-metrics" aria-label="Statistiche principali del team">
+        <div class="metrics-grid"><div class="metric"><span>SHARED PROJECTS</span><strong id="metricRepos">—</strong><small>Aggregated GitHub data</small></div><div class="metric"><span>COMMITS</span><strong id="metricCommits">—</strong><small id="commitsFoot">Branch predefiniti · aggregati</small></div><div class="metric"><span>OPEN ISSUES</span><strong id="metricIssues">—</strong><small>Work to resolve</small></div><div class="metric"><span>OPEN PRs</span><strong id="metricPrs">—</strong><small>Reviews & changes</small></div><div class="metric"><span>MERGED PRs</span><strong id="metricMerges">—</strong><small>Storico dei merge</small></div></div>
+      </section>
     </main>
   </div>
 </body>

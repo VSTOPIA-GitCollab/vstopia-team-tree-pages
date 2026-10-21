@@ -6,10 +6,14 @@ export function addEzTreeShrubs({THREE,scene,tree,terrain,center,stage}){
  const samples=[[-42,-46,.165,.082],[48,-44,.185,.091],[-65,28,.149,.078],
  [67,29,.172,.085],[-29,66,.155,.076],[35,76,.149,.080],
  [-92,-74,.153,.078],[105,-78,.167,.087],[-88,108,.119,.065],
- [85,111,.126,.066],[-40,-99,.146,.072],[44,-110,.138,.071]];
+ [85,111,.126,.066],[-40,-99,.146,.072],[44,-110,.138,.071],
+ [-136,20,.11,.058],[-147,74,.13,.072],[-169,-48,.14,.074],[-185,132,.105,.057],
+ [-16,154,.108,.060],[14,173,.11,.061],[-130,-142,.13,.075],[-175,-98,.12,.06],
+ [163,-130,.13,.069],[201,-85,.10,.06],[185,0,.14,.08],[167,124,.11,.07],
+ [-81,183,.10,.06],[-207,62,.12,.073],[229,83,.11,.068],[-221,-118,.13,.07]];
  const garden=new THREE.Group();garden.name='EZ-Tree botanically clustered garden';
  const leafGeometry=new THREE.IcosahedronGeometry(1,0);
- const leafMat=new THREE.MeshStandardMaterial({color:0x829b69,roughness:.94,metalness:0,flatShading:true,side:THREE.DoubleSide});
+ const leafMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.94,metalness:0,flatShading:true,side:THREE.DoubleSide});
  const leaves=new THREE.InstancedMesh(leafGeometry,leafMat,samples.length*260);
  leaves.name='leaf-lobe-canopies';
  const colorA=new THREE.Color('#49673d'),colorB=new THREE.Color('#688850'),colorC=new THREE.Color('#8aa56d');

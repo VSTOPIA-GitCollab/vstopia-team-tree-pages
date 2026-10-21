@@ -1,0 +1,63 @@
+/* Layout: left explorer / wide 3D workbench / readable right inspector, with only metrics below. */
+:root{--garden-side:clamp(256px,20vw,320px);--metrics-height:126px;--garden-glass:rgba(235,248,250,.32);--garden-line:rgba(255,255,255,.71)}
+.app-shell{height:100dvh;min-height:0;overflow:hidden}
+.layout{display:grid!important;grid-template-columns:clamp(187px,14vw,236px) minmax(0,1fr) var(--garden-side)!important;grid-template-rows:minmax(0,1fr) var(--metrics-height)!important;min-height:0;overflow:hidden;gap:0;flex:1}
+.layout>.sidebar{grid-column:1;grid-row:1/3;min-height:0;overflow:hidden}
+.layout>.workbench{grid-column:2;grid-row:1;min-height:0;min-width:0;display:flex;flex-direction:column}
+.layout>.workbench>.tree-stage{flex:1 1 auto;min-height:0}
+.layout>.inspector{grid-column:3!important;grid-row:1!important;display:flex!important;flex-direction:column!important;gap:8px!important;min-width:0;min-height:0;height:auto!important;max-height:none;overflow-y:auto;overflow-x:hidden;padding:10px!important;scrollbar-width:thin;border-left:1px solid var(--garden-line);border-top:0}
+.layout>.inspector>.inspector-heading{grid-area:auto!important;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:0 5px 7px!important;min-height:0;flex:0 0 auto;border:0}
+.inspector>.inspector-heading h2{font-size:21px!important}
+.inspector>.inspector-heading .inspector-caption{display:none}
+.inspector>.team-members,.inspector>.collaborator,.inspector>.detail-section{grid-area:auto!important;display:block!important;flex:0 0 auto;overflow:visible!important;border:1px solid rgba(255,255,255,.69)!important;border-radius:16px;padding:10px!important;background:linear-gradient(120deg,rgba(251,254,255,.36),rgba(226,243,247,.15));box-shadow:inset 0 1px 1px rgba(255,255,255,.75),0 8px 28px rgba(35,91,109,.055);-webkit-backdrop-filter:blur(20px) saturate(115%);backdrop-filter:blur(20px) saturate(115%)}
+.layout>.inspector>.detail-section{order:1}
+.layout>.inspector>.collaborator{order:2}
+.layout>.inspector>.team-members{order:3}
+.inspector>.inspector-bottom{position:static!important;order:4;display:flex!important;margin-top:auto;justify-content:space-between;padding:5px 7px!important;flex-wrap:wrap;gap:5px}
+.inspector>.team-members .member-cards{display:flex;flex-direction:column;gap:7px}
+.inspector>.team-members .member-card{padding:9px;overflow:visible}
+.inspector>.team-members .member-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.inspector>.team-members .member-stat strong{font-size:14px!important}
+.inspector>.team-members .member-work{grid-template-columns:repeat(3,minmax(0,1fr))}
+.inspector>.collaborator .activity-card{height:auto;max-height:140px;min-height:74px;overflow:auto}
+.inspector>.detail-section .selected-detail{font-size:11px;line-height:1.6}
+.inspector .section-heading{font-size:9px!important;margin:0 0 7px!important}
+.bottom-metrics{grid-column:2/4;grid-row:2;min-width:0;min-height:0;display:flex;align-items:stretch;padding:8px 12px;border-top:1px solid rgba(255,255,255,.68);background:linear-gradient(122deg,rgba(250,253,255,.35),rgba(220,243,247,.19)),rgba(235,249,251,.17);box-shadow:inset 0 1px 1px rgba(255,255,255,.76);-webkit-backdrop-filter:blur(22px) saturate(120%);backdrop-filter:blur(22px) saturate(120%)}
+.bottom-metrics .metrics-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:1fr;width:100%;gap:9px;margin:0!important;padding:0!important}
+.bottom-metrics .metric{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;padding:9px 8px!important;background:linear-gradient(125deg,rgba(255,255,255,.38),rgba(220,242,248,.11))!important;border:1px solid rgba(255,255,255,.74)!important;border-radius:16px!important;box-shadow:inset 0 1px 1px rgba(255,255,255,.85),0 6px 19px rgba(51,110,120,.055);-webkit-backdrop-filter:blur(19px) saturate(115%);backdrop-filter:blur(19px) saturate(115%)}
+.bottom-metrics .metric span{font-size:9px!important;min-height:0;color:#3a7380}
+.bottom-metrics .metric strong{font-size:28px!important;line-height:1.05}
+.bottom-metrics .metric small{font-size:8px!important;line-height:1.3;max-height:23px;overflow:hidden;text-align:center;color:#4f7882}
+/* Unified translucent surfaces, including cards formerly resembling solid cloud blocks. */
+.sidebar,.inspector,.topbar,.workbench-top,.bottom-metrics,.metric,.member-card,.work-pill,.member-stat,.activity-card,.selected-detail,.supervisor-speech,.sidebar-footer,.filter,.repo-item,.search-field,.detail-links a,.detail-badge,.avatar,.member-avatar,.collab-profile,.stage-legend,.stage-instructions{
+ -webkit-backdrop-filter:blur(20px) saturate(112%);backdrop-filter:blur(20px) saturate(112%);
+}
+.inspector .member-card,.inspector .activity-card,.inspector .supervisor-speech,.inspector .selected-detail,.inspector .member-stat,.inspector .work-pill{background:linear-gradient(138deg,rgba(255,255,255,.37),rgba(213,239,242,.16))!important;border-color:rgba(255,255,255,.71)!important;box-shadow:inset 0 1px 1px rgba(255,255,255,.63),0 3px 12px rgba(32,85,105,.055)!important}
+/* Soft champagne instead of opaque saturated yellow, while preserving readable contrast. */
+.living-node.selected .living-node-label,.member-stat.needs-attention,.work-pill.needs-attention,.detail-badge em,.brand-type em{color:#8a7048!important}
+.living-node.selected .living-node-label{background:rgba(253,248,232,.52)!important;border-color:rgba(254,243,212,.66)!important;box-shadow:0 4px 20px rgba(147,119,60,.09),inset 0 1px rgba(255,255,255,.72)!important;-webkit-backdrop-filter:blur(17px);backdrop-filter:blur(17px)}
+.living-node-label{background:rgba(248,255,251,.59)!important;border-color:rgba(255,255,255,.76)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.inspector .work-pill.needs-attention{background:rgba(246,247,219,.18)!important;border-color:rgba(237,224,177,.48)!important}
+@media(max-width:1100px){:root{--garden-side:238px;--metrics-height:122px}.layout{grid-template-columns:175px minmax(0,1fr) var(--garden-side)!important}.inspector>.team-members .member-grid{gap:2px}}
+@media(max-width:760px){body{overflow:auto}.app-shell{height:auto;min-height:100dvh;overflow:visible}.layout{display:flex!important;flex-direction:column;min-height:0;overflow:visible}.layout>.sidebar{order:0;max-height:190px}.layout>.workbench{order:1;height:68vh;min-height:400px}.layout>.bottom-metrics{order:2;padding:8px 6px;min-height:108px}.bottom-metrics .metrics-grid{gap:4px}.bottom-metrics .metric{padding:7px 2px!important}.bottom-metrics .metric strong{font-size:20px!important}.bottom-metrics .metric span{font-size:7px!important;letter-spacing:0!important}.bottom-metrics .metric small{display:none}.layout>.inspector{order:3;height:auto!important;max-height:none;padding:10px!important;overflow:visible;display:flex!important}.inspector>.team-members .member-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.inspector>.collaborator .activity-card{max-height:none}}
+@media(max-width:440px){.inspector>.team-members .member-cards{grid-template-columns:1fr}}
+/* Both contributors must remain readable without a tall sidebar full of nested tiles. */
+.inspector>.team-members{padding:8px!important}
+.inspector>.team-members .member-cards{gap:5px}
+.inspector>.team-members .member-card{padding:6px 7px!important;border-radius:11px!important}
+.inspector>.team-members .member-top{margin-bottom:0;gap:4px}
+.inspector>.team-members .member-avatar{width:22px!important;height:22px!important}
+.inspector>.team-members .member-top a{font-size:10px!important}
+.inspector>.team-members .member-top small{font-size:7px!important}
+.inspector>.team-members .member-grid{margin:3px 0 0;gap:3px}
+.inspector>.team-members .member-stat{min-height:30px;padding:2px 1px!important}
+.inspector>.team-members .member-stat strong{font-size:13px!important;line-height:1}
+.inspector>.team-members .member-stat small{font-size:6.7px!important;line-height:1.05}
+.inspector>.team-members .member-work{margin:4px 0 0;gap:3px}
+.inspector>.team-members .work-pill{min-height:29px;padding:2px 1px!important}
+.inspector>.team-members .work-pill strong{font-size:11px!important}
+.inspector>.team-members .work-pill span{font-size:6.5px!important;line-height:1.1}
+.inspector>.team-members .member-last{display:none}
+.inspector>.collaborator .activity-card{min-height:65px;max-height:100px;padding:6px!important}
+.inspector>.collaborator .supervisor-speech{padding:5px;font-size:9px!important}
+.inspector>.detail-section{max-height:160px;overflow:auto!important}
