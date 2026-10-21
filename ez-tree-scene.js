@@ -2,6 +2,7 @@
    If WebGL isn't available, the existing interactive 2D forest remains available. */
 import * as THREE from 'three';
 import {Tree} from '@dgreenheck/ez-tree';
+import {RGBELoader} from './vendor/RGBELoader.js';
 
 const stage=document.getElementById('treeStage');
 const fallback=document.getElementById('treeCanvas');
@@ -13,6 +14,8 @@ window.VstopiaEzTree=api;
 
 let renderer, camera, scene, tree, ground, holder, markerLayer, target, frameId;
 let sceneExtent=0;
+let requiresRender=true;
+const invalidate=()=>{requiresRender=true;};
 const buttons=[];
 const names=['Audio Playground','Creative Engine','Motion Lab','Plugin Workshop','Research Garden','Release Pipeline','Community Space','Design Studio','Sample Library','Collaboration Hub','Prototype Station','Knowledge Base'];
 const colorMap={warm:'#fff5c4',green:'#d2ffdf'};
@@ -66,32 +69,66 @@ function buildScene(){
  camera=new THREE.PerspectiveCamera(32,1,.1,Math.max(200,height*12));
  camera.position.set(0,target.y+height*.1,Math.max(24,radius*2.45));
  camera.lookAt(target);
- // Soft photographic contact shadow: alpha-faded at the edge, no flat circular platform.
- const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
- const cx=canvas.getContext('2d');
- const haze=cx.createRadialGradient(128,128,12,128,128,127);
- haze.addColorStop(0,'rgba(18,70,29,.58)');
- haze.addColorStop(.37,'rgba(45,103,43,.27)');
- haze.addColorStop(.75,'rgba(38,115,51,.08)');
- haze.addColorStop(1,'rgba(38,115,51,0)');
+ // A genuinely opaque, shaded and displaced terrain mesh. Its outer slopes
+ // disappear toward the photographed HDRI horizon, never exposing a transparent disc.
+ const terrainGeometry=new THREE.PlaneGeometry(1100,1100,96,96);
+ const vertices=terrainGeometry.attributes.position;
+ for(let i=0;i<vertices.count;i++){
+  const x=vertices.getX(i),z=vertices.getY(i),dist=Math.hypot(x,z);
+  const ramp=1-Math.exp(-Math.pow(dist/55,2));
+  const relief=(Math.sin(x*.013)*6+Math.cos(z*.015)*5+
+       Math.sin(x*.027+z*.018)*2.6+Math.cos(z*.038-x*.02)*1.6)*ramp;
+  vertices.setZ(i,relief);
+ }
+ vertices.needsUpdate=true;terrainGeometry.computeVertexNormals();
+ const terrainMaterial=new THREE.MeshStandardMaterial({color:0xc6d6ba,roughness:.96,metalness:0,side:THREE.FrontSide});
+ const terrain=new THREE.Mesh(terrainGeometry,terrainMaterial);
+ terrain.rotation.x=-Math.PI/2;
+ terrain.receiveShadow=true;terrain.position.y=-.055;
+ scene.add(terrain);ground=terrain;
+ stage.dataset.terrain='opaque-pbr-mesh';
+ // Local contact occlusion to make the trunk meet the actual solid ground.
+ const contactCanvas=document.createElement('canvas');contactCanvas.width=256;contactCanvas.height=256;
+ const cx=contactCanvas.getContext('2d');
+ const haze=cx.createRadialGradient(128,128,8,128,128,126);
+ haze.addColorStop(0,'rgba(18,34,13,.60)');haze.addColorStop(.42,'rgba(14,31,12,.25)');haze.addColorStop(1,'rgba(11,28,16,0)');
  cx.fillStyle=haze;cx.fillRect(0,0,256,256);
- const contact=new THREE.CanvasTexture(canvas);contact.colorSpace=THREE.SRGBColorSpace;
- const soil=new THREE.Mesh(new THREE.PlaneGeometry(radius*1.5,radius*1.5),
-  new THREE.MeshBasicMaterial({map:contact,transparent:true,opacity:.85,depthWrite:false,side:THREE.DoubleSide}));
- soil.rotation.x=-Math.PI/2;soil.position.y=.013;scene.add(soil);ground=soil;
+ const contact=new THREE.CanvasTexture(contactCanvas);contact.colorSpace=THREE.SRGBColorSpace;
+ const shadow=new THREE.Mesh(new THREE.PlaneGeometry(radius*.75,radius*.75),
+  new THREE.MeshBasicMaterial({map:contact,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));
+ shadow.rotation.x=-Math.PI/2;shadow.position.y=.034;scene.add(shadow);
+ // Self-hosted CC0 grass/soil PBR map, normal and roughness from one Poly Haven material.
+ const loader=new THREE.TextureLoader();
+ const base='assets/environment/grass_ground_';
+ const maps=[['map','diff_1k.jpg'],['normalMap','nor_gl_1k.jpg'],['roughnessMap','rough_1k.jpg']];
+ Promise.all(maps.map(([field,file])=>new Promise((resolve,reject)=>{
+  loader.load('./'+base+file,texture=>{
+   texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+   texture.repeat.set(field==='normalMap'?48:28,field==='normalMap'?48:28);texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+   if(field==='map')texture.colorSpace=THREE.SRGBColorSpace;
+   resolve([field,texture]);
+  },undefined,reject);
+ }))).then(textures=>{
+  for(const [field,texture] of textures)terrainMaterial[field]=texture;
+  terrainMaterial.color.set(0xa6b497);
+  terrainMaterial.normalScale.set(.58,.58);
+  terrainMaterial.needsUpdate=true;
+  stage.dataset.pbr='diffuse-normal-roughness-ready';invalidate();
+ }).catch(error=>console.error('[VSTOPIA Ground] PBR texture load failed',error));
  // Sparse grass at the foot of the trunk improves scale and avoids a floating-tree appearance.
  const grassGeo=new THREE.ConeGeometry(.14,.86,3);grassGeo.translate(0,.43,0);
- const grassMat=new THREE.MeshLambertMaterial({color:0x579c48,side:THREE.DoubleSide});
- const blades=new THREE.InstancedMesh(grassGeo,grassMat,320);
+ const grassMat=new THREE.MeshLambertMaterial({color:0xa7b08c,side:THREE.DoubleSide});
+ const blades=new THREE.InstancedMesh(grassGeo,grassMat,1500);
  const dummy=new THREE.Object3D();let seed=312711;
  const next=()=>{seed=(Math.imul(seed,1664525)+1013904223)|0;return (seed>>>0)/4294967296;};
- for(let i=0;i<320;i++){
+ const tuftColors=[new THREE.Color(0x7f9560),new THREE.Color(0x9a9a5a),new THREE.Color(0x748b4c)];
+ for(let i=0;i<1500;i++){
   const a=next()*Math.PI*2,r=Math.sqrt(next())*radius*.46;
   dummy.position.set(Math.cos(a)*r,.014,Math.sin(a)*r);
   dummy.rotation.set((next()-.5)*.3,next()*Math.PI*2,(next()-.5)*.3);
-  const stretch=.5+next()*1.5;dummy.scale.set(stretch,stretch,stretch);dummy.updateMatrix();blades.setMatrixAt(i,dummy.matrix);
+  const stretch=.5+next()*1.5;dummy.scale.set(stretch,stretch,stretch);dummy.updateMatrix();blades.setMatrixAt(i,dummy.matrix);blades.setColorAt(i,tuftColors[Math.floor(next()*tuftColors.length)]);
  }
- blades.instanceMatrix.needsUpdate=true;scene.add(blades);
+ blades.instanceMatrix.needsUpdate=true;blades.instanceColor.needsUpdate=true;scene.add(blades);
  const points=[];
  names.forEach((name,i)=>{
   const theta=i*Math.PI*(3-Math.sqrt(5));
@@ -120,7 +157,9 @@ function render(t){
  if(t-lastTick<(reduceMotion?140:48))return;
  lastTick=t;
  if(!stageMode())return;
- if(!reduceMotion)tree.update(t*.001);
+ // No automatic movement: tree, atmosphere and grass remain motionless.
+ if(!requiresRender)return;
+ requiresRender=false;
  setOrbit();
  renderer.render(scene,camera);
  updateMarkers();
@@ -132,24 +171,24 @@ function resize(){
  const dpr=Math.min(window.devicePixelRatio||1,1.75);
  renderer.setPixelRatio(dpr);
  renderer.setSize(r.width,r.height,false);
- camera.aspect=r.width/r.height;camera.updateProjectionMatrix();
+ camera.aspect=r.width/r.height;camera.updateProjectionMatrix();invalidate();
 }
 function pointerDown(e){if(e.button!==0||e.target.closest('.living-node'))return;state.drag={x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY};holder.setPointerCapture(e.pointerId);}
 function pointerMove(e){if(!state.drag)return;const s=state.drag;const dx=e.clientX-s.px,dy=e.clientY-s.py;
- state.orbit+=dx*.008;state.elevation=Math.max(-.32,Math.min(.61,state.elevation+dy*.004));s.px=e.clientX;s.py=e.clientY;}
+ state.orbit+=dx*.008;state.elevation=Math.max(-.32,Math.min(.61,state.elevation+dy*.004));s.px=e.clientX;s.py=e.clientY;invalidate();}
 function pointerUp(){state.drag=null;}
 function setupInteractions(){
  holder.addEventListener('pointerdown',pointerDown);
  holder.addEventListener('pointermove',pointerMove);
  holder.addEventListener('pointerup',pointerUp);holder.addEventListener('pointercancel',pointerUp);
- holder.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.min(2.1,Math.max(.63,state.zoom*(e.deltaY>0?.94:1.06)));},{passive:false});
+ holder.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.min(2.1,Math.max(.63,state.zoom*(e.deltaY>0?.94:1.06)));invalidate();},{passive:false});
  holder.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')state.orbit-=.12;else if(e.key==='ArrowRight')state.orbit+=.12;
  else if(e.key==='ArrowUp')state.elevation-=.08;else if(e.key==='ArrowDown')state.elevation+=.08;
  else if(e.key==='+'||e.key==='=')state.zoom=Math.min(2.1,state.zoom*1.1);
- else if(e.key==='-')state.zoom=Math.max(.63,state.zoom/1.1);else return;e.preventDefault();});
- window.addEventListener('vstopia:reset',()=>{state.orbit=.18;state.elevation=.16;state.zoom=1.06;});
+ else if(e.key==='-')state.zoom=Math.max(.63,state.zoom/1.1);else return;e.preventDefault();invalidate();});
+ window.addEventListener('vstopia:reset',()=>{state.orbit=.18;state.elevation=.16;state.zoom=1.06;invalidate();});
  window.addEventListener('vstopia:select-changed',e=>{state.selected=e.detail.name;updateMarkers();});
- window.addEventListener('vstopia:mode',e=>{holder.hidden=e.detail.mode!=='tree';markerLayer.hidden=e.detail.mode!=='tree';});
+ window.addEventListener('vstopia:mode',e=>{holder.hidden=e.detail.mode!=='tree';markerLayer.hidden=e.detail.mode!=='tree';invalidate();});
  window.addEventListener('vstopia:filters',e=>{for(const b of buttons)b.el.style.opacity=e.detail.visible.includes(b.name)?'1':'.22';});
  new ResizeObserver(resize).observe(stage);
 }
@@ -163,13 +202,24 @@ function build(){
  renderer.setClearColor(0x000000,0);
  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;
  scene=new THREE.Scene();
- scene.add(new THREE.HemisphereLight(0xe4faff,0x777b56,3.1));
- const sun=new THREE.DirectionalLight(0xffefc9,3.0);sun.position.set(-14,35,24);scene.add(sun);
- const rim=new THREE.DirectionalLight(0xa0f5d8,1.7);rim.position.set(20,17,-20);scene.add(rim);
+ // PBR environment and visible panorama share the *same* static HDRI, so their light/horizon stays aligned.
+ scene.background=new THREE.Color(0xb3ccd6);
+ scene.fog=new THREE.Fog(0xb8beb5,210,690);
+ const hdriLoader=new RGBELoader();
+ hdriLoader.setDataType(THREE.HalfFloatType);
+ hdriLoader.load('./assets/environment/kloppenheim_03_2k.hdr',texture=>{
+  texture.mapping=THREE.EquirectangularReflectionMapping;
+  scene.background=texture;scene.environment=texture;
+  scene.backgroundIntensity=1.0;scene.environmentIntensity=.82;
+  stage.dataset.hdri='kloppenheim_03_2k';invalidate();
+ },undefined,error=>console.error('[VSTOPIA HDRI] Could not load environment',error));
+ scene.add(new THREE.HemisphereLight(0xcce2ee,0x8d805b,.68));
+ const sun=new THREE.DirectionalLight(0xfff6db,1.85);sun.position.set(-18,60,35);scene.add(sun);
+ const rim=new THREE.DirectionalLight(0xd3e7e6,.35);rim.position.set(20,17,-20);scene.add(rim);
  tree=new Tree();tree.loadPreset('Oak Large');
  tree.options.seed=58123;
  tree.options.bark.flatShading=false;
- tree.generate();scene.add(tree);
+ tree.generate();tree.update(0);scene.add(tree);
  buildScene();setupInteractions();resize();emitReady();frameId=requestAnimationFrame(render);
 }
 try{build();}catch(error){

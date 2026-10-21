@@ -182,7 +182,7 @@
     const nodes=world(), projected=new Map();
     for(const node of nodes)projected.set(node.id,project(node,t));
     state.hits=[];
-    window.VstopiaForest.draw(backCtx,{w:state.width,h:state.height,t,motion:!reducedMotion,
+    window.VstopiaForest.draw(backCtx,{w:state.width,h:state.height,t:0,motion:false,
       world:nodes,projected,selected:state.selected,hits:state.hits});
     // Compositing is atomic: keep the previous complete tree until this one is ready.
     ctx.clearRect(0,0,state.width,state.height);
