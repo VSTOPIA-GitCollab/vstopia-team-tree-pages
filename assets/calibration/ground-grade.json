@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "description": "Multi-point HDRI photographed field vs PBR terrain; sRGB-linear robust median with 12% nearfield headroom",
+  "sampling_region": "Six separated unoccluded meadow patches spanning both sides of the HDRI and CG meadow",
+  "photo_ground_srgb": [
+    [
+      88,
+      79,
+      61
+    ],
+    [
+      85,
+      76,
+      56
+    ],
+    [
+      86,
+      77,
+      55
+    ],
+    [
+      72,
+      64,
+      42
+    ],
+    [
+      72,
+      65,
+      42
+    ],
+    [
+      72,
+      65,
+      42
+    ]
+  ],
+  "render_ground_srgb": [
+    [
+      153,
+      151,
+      108
+    ],
+    [
+      156,
+      154,
+      110
+    ],
+    [
+      156,
+      155,
+      110
+    ],
+    [
+      155,
+      152,
+      106
+    ],
+    [
+      154,
+      151,
+      105
+    ],
+    [
+      154,
+      150,
+      106
+    ]
+  ],
+  "linear_rgb_grade": [
+    0.2653,
+    0.2223,
+    0.229
+  ],
+  "spatial_grade_left": [
+    1.4,
+    1.2599,
+    1.1441
+  ],
+  "spatial_grade_right": [
+    1.0111,
+    0.8799,
+    0.8516
+  ],
+  "spatial_grade_strength": 0.5,
+  "display_roundtrip_samples": {
+    "photo_left": [
+      [
+        108,
+        96,
+        69
+      ],
+      [
+        107,
+        94,
+        68
+      ]
+    ],
+    "ground_left": [
+      [
+        91,
+        85,
+        64
+      ],
+      [
+        92,
+        85,
+        64
+      ]
+    ],
+    "photo_right": [
+      [
+        99,
+        87,
+        66
+      ],
+      [
+        96,
+        85,
+        64
+      ]
+    ],
+    "ground_right": [
+      [
+        97,
+        91,
+        70
+      ],
+      [
+        97,
+        92,
+        71
+      ]
+    ]
+  },
+  "note": "Aggregated color triples only. The private desktop screenshot is not published."
+}

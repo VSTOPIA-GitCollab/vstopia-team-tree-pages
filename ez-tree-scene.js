@@ -7,7 +7,7 @@ import {applyTerrainBlending} from './ground-blend.js';
 
 const stage=document.getElementById('treeStage');
 const fallback=document.getElementById('treeCanvas');
-const stageMode=()=>document.getElementById('viewList')?.getAttribute('aria-pressed')!=='true';
+const stageMode=()=>!stage.hidden; // LIST is now an overlay; it must not pause the WebGL scene.
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const state={ready:false,orbit:.18,elevation:.16,zoom:1.06,selected:'Audio Playground',drag:null,disposed:false};
 const api={get ready(){return state.ready;}};
@@ -15,6 +15,7 @@ window.VstopiaEzTree=api;
 
 let renderer, camera, scene, tree, ground, holder, markerLayer, target, frameId;
 let sceneExtent=0;
+const spatialGrade={left:new THREE.Vector3(1.20,1.13,1.07),right:new THREE.Vector3(1.005,.94,.926),width:{value:1}};
 let requiresRender=true;
 let windPhase=0;
 let previousWindTime=0;
@@ -88,7 +89,25 @@ function buildScene(){
  }
  vertices.needsUpdate=true;terrainGeometry.computeVertexNormals();
  const terrainMaterial=new THREE.MeshStandardMaterial({color:0x8c977a,roughness:1,metalness:0,side:THREE.FrontSide});
- applyTerrainBlending(terrainMaterial);
+ const terrainGrade=new THREE.Vector3(.2653,.2223,.2290);
+ applyTerrainBlending(terrainMaterial, terrainGrade, spatialGrade);
+ // Rehydrate a precomputed robust six-pair calibration; never fetch the private screenshot.
+ fetch('./assets/calibration/ground-grade.json',{cache:'force-cache'}).then(r=>{
+   if(!r.ok)throw new Error('calibration file unavailable');return r.json();
+ }).then(profile=>{
+   if(profile.schema_version!==1 || !Array.isArray(profile.linear_rgb_grade) ||
+      profile.linear_rgb_grade.length!==3 || !profile.linear_rgb_grade.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>.1&&x<=1.4))
+     throw new Error('invalid color calibration');
+   terrainGrade.set(...profile.linear_rgb_grade);
+   if(Array.isArray(profile.spatial_grade_left)&&Array.isArray(profile.spatial_grade_right)){
+     const strength=Math.min(.8,Math.max(0,Number(profile.spatial_grade_strength)||0));
+     const adapt=a=>a.map(value=>1+(value-1)*strength);
+     spatialGrade.left.set(...adapt(profile.spatial_grade_left));
+     spatialGrade.right.set(...adapt(profile.spatial_grade_right));
+   }
+   stage.dataset.groundCalibration='six-pair-linear-rgb';
+   invalidate();
+ }).catch(e=>console.warn('[Ground calibration] Using bundled backup values',e));
  const terrain=new THREE.Mesh(terrainGeometry,terrainMaterial);
  terrain.rotation.x=-Math.PI/2;
  terrain.receiveShadow=true;terrain.position.y=-.055;
@@ -188,7 +207,9 @@ function resize(){
  const dpr=Math.min(window.devicePixelRatio||1,1.75);
  renderer.setPixelRatio(dpr);
  renderer.setSize(r.width,r.height,false);
- camera.aspect=r.width/r.height;camera.updateProjectionMatrix();invalidate();
+ camera.aspect=r.width/r.height;camera.updateProjectionMatrix();
+ if(typeof spatialGrade!=='undefined')spatialGrade.width.value=renderer.domElement.width;
+ invalidate();
 }
 function pointerDown(e){if(e.button!==0||e.target.closest('.living-node'))return;state.drag={x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY};holder.setPointerCapture(e.pointerId);}
 function pointerMove(e){if(!state.drag)return;const s=state.drag;const dx=e.clientX-s.px,dy=e.clientY-s.py;
