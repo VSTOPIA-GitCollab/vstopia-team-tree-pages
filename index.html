@@ -28,7 +28,7 @@
           <button class="filter" data-filter="issues" aria-pressed="false">DA FARE</button>
           <button class="filter" data-filter="active" aria-pressed="false">ATTIVI</button>
         </div>
-        <div class="section-divider"><span>SHARED PROJECTS</span><span id="repoCountLabel">00</span></div>
+        <div class="section-divider"><span>DEMO PROJECTS</span><span id="repoCountLabel">00</span></div>
         <div id="repoList" class="repo-list" aria-live="polite"><div class="loading-list">Caricamento repository privati…</div></div>
         <div class="sidebar-footer"><span class="lock-mark">◇</span><div><strong>PUBLIC STATS · AGGREGATES ONLY</strong><p>Sito pubblico. Solo conteggi aggregati autorizzati. Nessun token, nome privato o contenuto dei repository.</p></div></div>
       </aside>
@@ -38,9 +38,10 @@
         <div class="workbench-footer"><span id="nodeSummary">Dati pubblici in caricamento</span><div class="stage-buttons"><button id="tourButton" aria-pressed="false">▶ AUTO TOUR</button><button id="resetView">↺ RESET VIEW</button></div></div>
       </section>
       <aside class="inspector" aria-label="Dettagli e attività">
-        <div class="inspector-heading"><div class="eyebrow">03 / LIVE INTELLIGENCE</div><h2>Project pulse<span class="headline-dot">.</span></h2><p class="inspector-caption">Solo conteggi aggregati selezionati. Nomi, commit e attività individuali restano riservati.</p></div>
+        <div class="inspector-heading"><div class="eyebrow">03 / LIVE INTELLIGENCE</div><h2>Project pulse<span class="headline-dot">.</span></h2><p class="inspector-caption">Statistiche del team e profili Agostino / Marcello; dettagli dei repository riservati.</p></div>
         <div class="metrics-grid"><div class="metric"><span>SHARED PROJECTS</span><strong id="metricRepos">—</strong><small>Aggregated GitHub data</small></div><div class="metric"><span>COMMITS</span><strong id="metricCommits">—</strong><small id="commitsFoot">Branch predefiniti · aggregati</small></div><div class="metric"><span>OPEN ISSUES</span><strong id="metricIssues">—</strong><small>Work to resolve</small></div><div class="metric"><span>OPEN PRs</span><strong id="metricPrs">—</strong><small>Reviews & changes</small></div><div class="metric"><span>MERGED PRs</span><strong id="metricMerges">—</strong><small>Storico dei merge</small></div></div>
-        <div class="inspector-section collaborator"><div class="section-heading"><span>TEAM SUPERVISOR</span><span class="activity-dot"></span></div><div class="collab-profile"><div class="avatar">GH</div><div><strong>GitHub</strong><small>Supervisore · dati aggregati</small></div></div><div id="activityFeed" class="activity-card"><div class="loading-list">Verifica dei commit pubblici…</div></div></div>
+        <div class="inspector-section team-members"><div class="section-heading"><span>OUR TEAM / VERIFIED CONTRIBUTIONS</span><span class="activity-dot"></span></div><div id="memberCards" class="member-cards"><div class="loading-list">Caricamento attività dei collaboratori…</div></div><div class="activity-disclaimer">Commit: branch predefiniti. PR e merge: totali storici. Push: eventi osservati negli ultimi 30 giorni, possibili limiti API.</div></div>
+        <div class="inspector-section collaborator"><div class="section-heading"><span>TEAM SUPERVISOR</span><span class="activity-dot"></span></div><div class="collab-profile"><div class="avatar">GH</div><div><strong>GitHub</strong><small>Supervisore · dati aggregati</small></div></div><div id="activityFeed" class="activity-card"><div class="loading-list">Caricamento supervisore…</div></div></div>
         <div class="inspector-section detail-section"><div class="section-heading"><span>SELECTED BRANCH</span><span id="selectedIndicator">—</span></div><div id="selectedDetail" class="selected-detail"><div class="empty-select"><div class="empty-symbol">◎</div>Seleziona un nodo nell'albero oppure un repository a sinistra.</div></div></div>
         <div class="inspector-bottom"><span>PUBLIC SNAPSHOT <i>●</i> AGGREGATE ONLY</span><span id="lastSync">—</span></div>
       </aside>

@@ -21,6 +21,13 @@
   const visible = () => repos.filter(r=>(r.name+' '+r.description).toLowerCase().includes(state.search) &&
       (state.filter==='all'||(state.filter==='issues'&&r.issues+r.prs>0)||(state.filter==='active'&&r.commits>=30)));
   const missions = () => publicTotals ? [
+    ...((publicTotals.people||[]).flatMap(person => {
+      const items=[];
+      if(person.reviews_requested>0) items.push(`NEL GIARDINO DI ${person.name.toUpperCase()} CI SONO ${person.reviews_requested} REVIEW DA FARE. Una review accurata fa crescere il progetto!`);
+      const assignments=person.assigned_open_issues+person.assigned_open_prs;
+      if(assignments>0) items.push(`${person.name.toUpperCase()} HA ${assignments} ATTIVITÀ ASSEGNATE. Un piccolo passo alla volta: la foresta cresce!`);
+      return items;
+    })),
     `IL BOSCO HA ${publicTotals.open_pull_requests} PR APERTE! Una review utile può sbloccare un merge.`,
     `CRESCITA MISURABILE: ${publicTotals.default_branch_commits} commit sui branch principali. Meglio piccoli passi verificati.`,
     `SUPERVISORE: ${publicTotals.open_issues} Issue aperte. Individuate i blocchi prioritari, senza mettere pressione su chi fa ricerca.`,
@@ -45,15 +52,74 @@
       element.textContent=number(Math.round(target*eased));if(p<1)requestAnimationFrame(draw);};
     requestAnimationFrame(draw);
   }
+  const activityDescriptions={commit:'Commit',push:'Push', 'pull request':'Pull request',
+    'merge PR':'Merge PR',revisione:'Review',commento:'Commento',issue:'Issue',
+    'commento review':'Commento review', 'creazione branch':'Branch creato'};
+  function updatePeople(people) {
+    const root=$('memberCards');
+    root.replaceChildren();
+    for(const person of people){
+      const card=create('div','member-card');
+      const top=create('div','member-top'),avatar=create('div','member-avatar',person.name==='Agostino'?'AG':'MR');
+      const profile=create('div','');
+      const githubLink=create('a','',person.name);githubLink.href='https://github.com/'+encodeURIComponent(person.github);
+      githubLink.target='_blank';githubLink.rel='noopener noreferrer';
+      profile.append(githubLink,create('small','',`@${person.github}`));top.append(avatar,profile);card.append(top);
+      const metrics=create('div','member-grid');
+      for(const [name,key] of [['COMMITS','commits'],['PR CREATE','prs_opened_all_time'],
+        ['MERGE','prs_merged_all_time'],['PUSH 30G','push_events_observed_30d']]){
+        const stat=create('div','member-stat'),value=create('strong','','0');
+        stat.append(value,create('small','',name));metrics.append(stat);animateNumber(value,person[key]);
+      }
+      card.append(metrics);
+      const work = create('div','member-work');
+      const waiting=[
+        ['REVIEWS IN ATTESA',person.reviews_requested,'review-leaf'],
+        ['ISSUE ASSEGNATE',person.assigned_open_issues,'issue-leaf'],
+        ['PR ASSEGNATE',person.assigned_open_prs,'pr-leaf']
+      ];
+      for(const [label,amount,leaf] of waiting){
+        const pill=create('div','work-pill'+(amount>0?' needs-attention':' settled'));
+        const visual=create('span','work-leaf '+leaf,amount>0?'❧':'✓');
+        visual.setAttribute('aria-hidden','true');
+        pill.append(visual,create('span','',label),create('strong','',String(amount)));
+        work.append(pill);
+      }
+      card.append(work);
+      const assigned=person.reviews_requested+person.assigned_open_issues+person.assigned_open_prs;
+      const note=create('div','garden-note',assigned>0 ?
+        `Nel giardino di ${person.name} ci sono ${assigned} foglie da seguire: nessuna urgenza inventata, soltanto richieste GitHub reali.` :
+        `Il giardino di ${person.name} è in ordine: nessuna assegnazione o review individuale pendente.`);
+      card.append(note);
+      let dateText='Nessuna interazione rilevata';
+      if(person.last_interaction_at){
+        const when=new Date(person.last_interaction_at);
+        if(!Number.isNaN(when.valueOf()))
+          dateText=when.toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'});
+      }
+      const last=create('div','member-last','ULTIMA ATTIVITÀ: ');
+      last.append(create('strong','',dateText));
+      last.append(create('div','',activityDescriptions[person.last_interaction_type] || person.last_interaction_type || 'Evento non specificato'));
+      card.append(last);root.append(card);
+    }
+  }
   async function loadPublicSnapshot() {
     try {
       const response=await fetch('./snapshot.json',{cache:'no-store'});
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const snapshot=await response.json();
-      if(snapshot.schema_version!==1||snapshot.data_policy!=='aggregated-public-numeric-only')throw new Error('Schema non valido');
+      if(snapshot.schema_version!==2||snapshot.data_policy!=='public-authorized-team-summary')throw new Error('Schema non valido');
       const keys=['repository_count','default_branch_commits','open_issues','open_pull_requests','merged_pull_requests_all_time'];
       if(!keys.every(k=>Number.isSafeInteger(snapshot[k])&&snapshot[k]>=0))throw new Error('Aggregati non validi');
+      if(!Array.isArray(snapshot.people)||snapshot.people.length!==2 ||
+        !['ostinsolo','InnovateSN'].every(id=>snapshot.people.some(p=>p.github===id)))
+        throw new Error('Profili collaboratori non disponibili');
+      for(const person of snapshot.people){
+        if(!['commits','prs_opened_all_time','prs_merged_all_time','push_events_observed_30d','assigned_open_issues','assigned_open_prs','reviews_requested'].every(
+          k=>Number.isSafeInteger(person[k])&&person[k]>=0))throw new Error('Contatori profili non validi');
+      }
       publicTotals=snapshot;
+      updatePeople(snapshot.people);
       for(const [id,key] of [['metricRepos','repository_count'],['metricCommits','default_branch_commits'],
         ['metricIssues','open_issues'],['metricPrs','open_pull_requests'],['metricMerges','merged_pull_requests_all_time']]){
         animateNumber($(id),snapshot[key]);
@@ -66,6 +132,7 @@
       $('syncStatus').textContent='GITHUB · SNAPSHOT NON DISPONIBILE';
       $('lastSync').textContent='IN ATTESA DELLO SNAPSHOT';
       $('supervisorMessage').textContent='I dati aggregati non sono disponibili. L’albero resta una demo grafica.';
+      $('memberCards').replaceChildren(create('div','loading-list','I dati dei collaboratori non sono disponibili.'));
     }
   }
 
@@ -157,7 +224,7 @@
   $('nodeSummary').textContent=`${repos.length} NODI DIMOSTRATIVI / AGGREGATI IN CARICAMENTO`;
   const activity=$('activityFeed');activity.replaceChildren(create('div','activity-kicker','ANIMATED SUPERVISOR · DEMO'));
   const mascot=create('div','supervisor-mascot','♣');mascot.setAttribute('aria-hidden','true');activity.append(mascot);
-  activity.append(create('div','activity-message','Questa è una dimostrazione pubblica. I suggerimenti non derivano da attività private.'));
+  activity.append(create('div','activity-message','Il supervisore controlla le review richieste e le attività assegnate. Suggerimenti amichevoli, senza classifiche di produttività.'));
   activity.append(create('div','supervisor-speech',''));activity.lastChild.id='supervisorMessage';
   supervisor();loadPublicSnapshot();setInterval(loadPublicSnapshot,300000);renderSidebar();renderList();renderDetail();new ResizeObserver(resize).observe(canvas);requestAnimationFrame(frame);
 })();

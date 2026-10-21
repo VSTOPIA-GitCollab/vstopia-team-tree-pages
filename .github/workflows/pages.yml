@@ -1,4 +1,4 @@
-name: Deploy public demo to GitHub Pages
+name: Deploy public VSTOPIA Team Tree
 on:
   push:
     branches: [main]
@@ -10,17 +10,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify no private GitHub API integration or secrets
+      - name: Verify public-only assets and strictly allowlisted GitHub summary
         run: |
           python3 - <<'PY'
+          import json
           from pathlib import Path
-          forbidden = ('InnovateSN','Marcello','ostinsolo','VSTOPIA-Council','gho_', 'GITHUB_TOKEN', '/api/overview')
-          for p in (Path('index.html'), Path('app.js'), Path('style.css')):
-              content = p.read_text()
-              for token in forbidden:
-                  assert token not in content, f'Forbidden public string in {p}: {token}'
-          assert 'DEMO' in Path('index.html').read_text()
-          print('PASS: public-only allowlist')
+          assets = (Path('index.html'), Path('app.js'), Path('style.css'))
+          for p in assets:
+              text=p.read_text()
+              for forbidden in ('VSTOPIA-Council', 'AUDIOENCE-World', 'OstinDesktopCommander',
+                                'gho_', 'ghp_', 'github_pat_', 'GITHUB_TOKEN', '/api/overview'):
+                  assert forbidden not in text, f'Private source string in {p}'
+          assert 'DEMO' in Path('app.js').read_text()
+          snapshot=json.loads(Path('snapshot.json').read_text())
+          allowed={'schema_version','data_policy','scope','updated_at',
+                   'repository_count','default_branch_commits','open_issues',
+                   'open_pull_requests','merged_pull_requests_all_time',
+                   'people','push_count_policy','personal_counts_policy','workload_policy'}
+          assert set(snapshot)==allowed, f'Unexpected public snapshot field: {set(snapshot)-allowed}'
+          assert snapshot['schema_version']==2
+          assert snapshot['data_policy']=='public-authorized-team-summary'
+          assert type(snapshot['people']) is list and len(snapshot['people'])==2
+          valid_people={'ostinsolo','InnovateSN'}
+          fields={'name','github','commits','prs_opened_all_time','prs_merged_all_time',
+                  'push_events_observed_30d','last_interaction_at','last_interaction_type',
+                  'event_coverage_partial','assigned_open_issues','assigned_open_prs','reviews_requested'}
+          assert {p['github'] for p in snapshot['people']}==valid_people
+          for p in snapshot['people']:
+              assert set(p)==fields
+              for k in fields-{'name','github','last_interaction_at','last_interaction_type','event_coverage_partial'}:
+                  assert type(p[k]) is int and p[k]>=0
+              assert p['name'] in ('Marcello','Agostino')
+          payload=json.dumps(snapshot)
+          for forbidden in ('VSTOPIA-Council','AUDIOENCE-World','OstinDesktopCommander',
+                            'gho_','ghp_','github_pat_','private_repo_name','repository_url'):
+              assert forbidden not in payload
+          print('PASS: only preapproved aggregate totals and two collaborator profiles')
           PY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

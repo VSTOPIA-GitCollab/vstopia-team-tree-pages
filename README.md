@@ -2,7 +2,9 @@
 
 **Public GitHub Pages preview**, with an animated and interactive tree and an encouraging supervisor. The tree's project names and node-level activity are explicitly **illustrative**. They are not private repo names or private contributor activity.
 
-Five headline metrics are **real aggregated counts** from a narrowly selected subset of VSTOPIA-GitCollab repositories: repositories which both collaborators can access. These counts are intentionally published in `snapshot.json`. The file includes only the schema version, scope label, capture timestamp, repository count, default-branch commit count, open Issue count, open Pull Request count and historical merged Pull Request count. No repository identifiers, commits, messages, author identities, URLs, discussions, review details or credentials are included.
+Five headline metrics are **real aggregated counts** from a narrowly selected subset of VSTOPIA-GitCollab repositories: repositories which both collaborators can access. These counts are intentionally published in `snapshot.json`. The file includes schema/version, scope, capture timestamp, aggregate organizational counts, and only the two user-authorized personal contribution and task-queue summaries. No repository identifiers, commit messages, PR titles, repository URLs, discussions, review details or credentials are included. **The owner explicitly approved public display** of the two collaborator names and GitHub handles, their total default-branch mapped commit counts, authored PR count, merged-by PR count, observed push events during the last 30 days, and the date/type of last recorded interaction. These personal aggregates are now intentionally public.
+
+Push counts are **observed GitHub Events API PushEvent records for the last 30 days** and may not be complete if event history is truncated; they are not an all-time push count. The last recorded interaction is based on observable GitHub events, with a mapped commit timestamp fallback. Service account `VSTOPIA` contributions are **not** silently attributed to `ostinsolo`. These figures must not be presented as measures of effort or productivity.
 
 ## Static hosting
 
@@ -20,3 +22,7 @@ Publish the root of the public repository with GitHub Pages → Deploy from a br
 - The public snapshot is visible to everyone. GitHub Pages provides no repository-member-only access in this deployment.
 - Do not move the private source backend, personal contributor metrics, private repository names or tokens into this public repository.
 - For private task details and collaborator-specific supervision, use the separately authenticated application, not public GitHub Pages.
+
+## Assigned work and review requests
+
+The public collaborator cards include aggregated **open issues assigned**, **open PRs assigned** and **explicit individual pending review requests** from GitHub. Draft PRs are excluded from the review-request tally. Issue and PR assignments are counted separately. A PR is not considered a review obligation merely because it is open; the user must be in its `requested_reviewers` collection. These counts are a pending work queue, **not** a productivity rating, deadline, or inference from lack of commits. Node names and individual per-project activity remain illustrative, not real.

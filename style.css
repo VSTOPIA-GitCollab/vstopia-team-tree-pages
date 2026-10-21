@@ -7,3 +7,35 @@
 .supervisor-speech{margin-top:13px;padding:12px;border:1px solid #70916a;border-radius:8px;background:#243b2b;color:#e5e0bb;font:11px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;min-height:68px}
 @keyframes supervisor-float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
 @media(prefers-reduced-motion:reduce){.supervisor-mascot{animation:none}}
+
+/* Deliberately public per-collaborator metrics, with no private repository details. */
+.member-cards{display:grid;grid-template-columns:1fr;gap:10px;margin-top:16px}
+.member-card{border:1px solid #425f49;border-radius:7px;background:linear-gradient(135deg,#1b3726,#0c2419);padding:13px}
+.member-top{display:flex;align-items:center;gap:10px}
+.member-avatar{display:grid;place-items:center;border:1px solid #b89b69;color:#e7d5ab;border-radius:50%;width:36px;height:36px;flex:none;background:#4f4830;font:15px Georgia,serif}
+.member-top a{display:block;font-size:12px;font-weight:700;color:#e6eddf;text-decoration:none}
+.member-top a:hover{text-decoration:underline;color:var(--gold)}
+.member-top small{display:block;font:9px ui-monospace,SFMono-Regular,Consolas,monospace;color:#8fbc9a;margin-top:4px}
+.member-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:13px}
+.member-stat{border:1px solid #37533e;background:#0b2318;text-align:center;border-radius:4px;padding:8px 2px 9px}
+.member-stat strong{display:block;font:20px Georgia,serif;color:#e5d2a1;font-weight:400}
+.member-stat small{display:block;font:700 8px ui-monospace,SFMono-Regular,Consolas,monospace;color:#8cad91;letter-spacing:.03em;margin-top:4px}
+.member-last{border-top:1px solid #395542;margin-top:12px;padding-top:10px;font:10px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;color:#9bc2a6}
+.member-last strong{color:#e6d49c}
+.activity-disclaimer{font:9px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;color:#7a9b86;margin-top:12px}
+@media(max-width:620px){.member-cards{grid-template-columns:1fr}}
+
+/* Living, gentle activity reminders: leaf signals correspond to actual GitHub assignments. */
+.member-work{display:grid;gap:6px;margin-top:12px}
+.work-pill{display:grid;grid-template-columns:19px minmax(0,1fr) auto;align-items:center;gap:6px;min-height:31px;border:1px solid #436146;border-radius:5px;padding:5px 10px;background:#0f2c1c;color:#a0c0a4;font:700 9px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.02em}
+.work-pill strong{font:18px Georgia,serif;color:#d8d3a1;font-weight:400}
+.work-pill.needs-attention{background:linear-gradient(120deg,#173b24,#223c25);border-color:#74976b}
+.work-pill.needs-attention strong{color:#e8d09b}
+.work-pill.settled{opacity:.69}
+.work-leaf{font-size:17px;color:#91d5a3;display:inline-block;transform-origin:bottom center}
+.needs-attention .work-leaf{animation:leaf-sway 3.6s ease-in-out infinite}
+.work-pill:nth-child(2) .work-leaf{animation-delay:.8s}
+.work-pill:nth-child(3) .work-leaf{animation-delay:1.4s}
+.garden-note{font:10px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:10px;color:#a4bca5}
+@keyframes leaf-sway{0%,100%{transform:rotate(-12deg) translateY(0)}50%{transform:rotate(15deg) translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){.needs-attention .work-leaf{animation:none}}

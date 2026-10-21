@@ -1,11 +1,44 @@
 {
-  "schema_version": 1,
-  "data_policy": "aggregated-public-numeric-only",
+  "schema_version": 2,
+  "data_policy": "public-authorized-team-summary",
   "scope": "repositories-readable-by-both-collaborators",
-  "updated_at": "2026-10-21T05:34:07.657014+00:00",
+  "updated_at": "2026-10-21T05:50:58.015753+00:00",
   "repository_count": 13,
   "default_branch_commits": 973,
   "open_issues": 34,
   "open_pull_requests": 11,
-  "merged_pull_requests_all_time": 60
+  "merged_pull_requests_all_time": 60,
+  "people": [
+    {
+      "name": "Agostino",
+      "github": "ostinsolo",
+      "commits": 295,
+      "prs_opened_all_time": 60,
+      "prs_merged_all_time": 48,
+      "push_events_observed_30d": 264,
+      "assigned_open_issues": 2,
+      "assigned_open_prs": 0,
+      "reviews_requested": 1,
+      "last_interaction_at": "2026-10-21T05:33:35Z",
+      "last_interaction_type": "commit",
+      "event_coverage_partial": false
+    },
+    {
+      "name": "Marcello",
+      "github": "InnovateSN",
+      "commits": 8,
+      "prs_opened_all_time": 7,
+      "prs_merged_all_time": 2,
+      "push_events_observed_30d": 25,
+      "assigned_open_issues": 6,
+      "assigned_open_prs": 0,
+      "reviews_requested": 6,
+      "last_interaction_at": "2026-10-20T22:24:06Z",
+      "last_interaction_type": "issue",
+      "event_coverage_partial": false
+    }
+  ],
+  "push_count_policy": "Observed GitHub PushEvent records in last 30 days; counts may be incomplete due to event pagination and retention.",
+  "personal_counts_policy": "Commits on default branch by mapped GitHub user; PRs authored or merged by account, across collaborator-accessible repositories.",
+  "workload_policy": "Open issues and PRs assigned, plus explicit individual pending review requests. Draft PR review requests excluded."
 }
