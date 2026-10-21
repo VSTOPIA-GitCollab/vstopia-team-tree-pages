@@ -71,3 +71,17 @@ Both public team cards now use a responsive two-column internal layout: readable
 ## Connected lake, animated cascade and flocking birds (October 21, 2026)
 
 The giant irregular lake and long river now share **one Three.js reflective water surface**, with an animated rocky waterfall, spray and foam, 30 animated birds in three small flocks, and wildflower patches. The redundant supervisor clover was removed. See [implementation and source references](docs/WATERFALL_FLOCKS_CONNECTED_WATER_2026-10-21.md) and the five real browser views linked there.
+
+## Local visual experiment — user-supplied Stillwater scene × VSTOPIA
+
+The current local-only branch `feat/stillwater-base-integration-local-20261021` uses the **user's original Stillwater — Ancient Grove v1.1** scene, not the earlier procedural EZ-Tree or Alpine mockup. The original Three.js r180 renderer, ancient tree, physical sky/PMREM, planar-reflected lake, rocks, mountains, foreground grass, camera and Atmosphere sliders remain under `stillwater/`; VSTOPIA appears as translucent glass UI around it. The public GitHub Pages app is unchanged.
+
+On the main Mac:
+
+```sh
+python3 -m http.server 38995 --bind 127.0.0.1
+```
+
+Open [the combined local VSTOPIA website](http://127.0.0.1:38995/) or [the original full-screen Stillwater scene](http://127.0.0.1:38995/stillwater/). In the integration, **wind starts at 2/2 and light at 1/1**, the source sliders remain available through **The atmosphere** dropdown, the old bushes/short grasses/flocks are integrated, and 12 actual bark-vertex project labels can be revealed with **SHOW 12 BRANCHES**. The website still uses public-only GitHub statistics; there are no private repo tokens or backend dependencies. Controls remain original: drag orbit, right/Shift-drag pan, wheel zoom, `F` home and `H` native UI. No merges or deploy without owner approval.
+
+**Full audited architecture, source provenance, differences, test evidence and next review steps:** [Stillwater source and local integration](docs/STILLWATER_SOURCE_ARCHITECTURE_LOCAL_2026-10-22.md).

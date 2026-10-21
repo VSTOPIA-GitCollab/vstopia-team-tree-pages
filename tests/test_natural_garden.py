@@ -35,10 +35,17 @@ class NaturalGardenTests(unittest.TestCase):
   self.assertIn('background:rgba(234,249,253,.12)',CSS)
   self.assertIn('background:rgba(247,251,255,.17)',CSS)
   self.assertIn('max-height:none!important',CSS)
- def test_single_original_specy_glass_island(self):
+ def test_single_compatible_optical_glass_island(self):
   self.assertIn("from '@specy/liquid-glass-react'",GLASS)
-  self.assertEqual(UI.count('id="specyGlassHeader"'),1)
-  self.assertIn('vendor/vstopia-specy-header.mjs',UI)
   self.assertGreater((R/'vendor/vstopia-specy-header.mjs').stat().st_size,150000)
   self.assertEqual(json.loads((R/'glass-react-source/package.json').read_text())['dependencies']['@specy/liquid-glass-react'],'1.0.2')
+  if 'stillwater-integration.js' in UI:
+   # r180 lake and optical rdev island are the two allowed WebGL contexts.
+   # The legacy @specy header canvas is retained as a source but not started.
+   self.assertIn('vendor/vstopia-liquid-glass-island.mjs',UI)
+   self.assertNotIn('src="./vendor/vstopia-specy-header.mjs"',UI)
+  else:
+   # Historical r167 stage, with original third-party refraction header.
+   self.assertEqual(UI.count('id="specyGlassHeader"'),1)
+   self.assertIn('src="./vendor/vstopia-specy-header.mjs"',UI)
 if __name__=='__main__':unittest.main()

@@ -12,12 +12,13 @@
   <link rel="stylesheet" href="./apple-glass.css">
   <link rel="stylesheet" href="./water-garden.css">
   <link rel="stylesheet" href="./team-readable.css">
+  <link rel="stylesheet" href="./stillwater-integration.css">
   <script src="./forest-renderer.js" defer></script>
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js","@dgreenheck/ez-tree":"./vendor/ez-tree.es.js"}}</script>
-  <script type="module" src="./ez-tree-scene.js"></script>
+  <script type="module" src="./stillwater-integration.js"></script>
   <script src="./app.js" defer></script>
   <script type="module" src="./vendor/vstopia-liquid-glass-island.mjs"></script>
-  <script type="module" src="./vendor/vstopia-specy-header.mjs"></script>
+  <!-- Retain our liquid glass CSS and optical island; avoid a third concurrent WebGL renderer (specy header) beside Stillwater. -->
 </head>
 <body>
   <div class="app-shell">
