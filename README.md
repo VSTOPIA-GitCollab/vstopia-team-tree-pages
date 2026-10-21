@@ -51,3 +51,7 @@ The redundant LIST drawer has been removed (the searchable sidebar remains the c
 ## Project labels attached to actual branches (October 21, 2026)
 
 The Three.js tree now displays **only clickable project name labels** in its scene. It has no extra legend, instructions, rhythm slider or mascots; the redundant footer counts and Auto Tour/Reset View controls have been removed to enlarge the scene and the lower intelligence panel. Wind animates at a fixed maximum 2×, while the user may still orbit/zoom with pointer, wheel and keyboard. Each label now anchors to a real vertex on EZ-Tree's bark mesh (`tree.branchesMesh`) and is reprojected with the world/camera matrices every frame, rather than using imaginary spherical coordinates or screen edge clamps. See [the technical correction](docs/SCENE_LABEL_ANCHOR_FIX.md), [desktop screenshot](docs/screenshots/anchored-project-branches-2026-10-21.png), and [mobile screenshot](docs/screenshots/anchored-project-branches-mobile-2026-10-21.png).
+
+## Living Garden V2 — water and breathable glass UI (21 Oct 2026)
+
+Wide Three.js stage with a reflective HDRI lake and continuously flowing creek, real carved shore geometry, stones, 10,000 five-leaf grass tufts plus 28 EZ-Tree-derived shrubs. Right inspector now contains branch details, team supervisor and verified member summaries; below is only a five-metric liquid glass strip. Read [technical notes and upstream sources](docs/WATER_GARDEN_2026-10-21.md).
