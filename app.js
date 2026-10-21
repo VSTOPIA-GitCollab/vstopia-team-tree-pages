@@ -202,8 +202,8 @@
   $('metricRepos').textContent='—';$('metricCommits').textContent='—';$('metricIssues').textContent='—';$('metricPrs').textContent='—';$('metricMerges').textContent='—';
   $('commitsFoot').textContent='Aggregato · branch principali';$('lastSync').textContent='IN ATTESA';
   const activity=$('activityFeed');activity.replaceChildren(create('div','activity-kicker','ANIMATED SUPERVISOR · DEMO'));
-  const mascot=create('div','supervisor-mascot','♣');mascot.setAttribute('aria-hidden','true');activity.append(mascot);
-  activity.append(create('div','activity-message','Il supervisore controlla le review richieste e le attività assegnate. Suggerimenti amichevoli, senza classifiche di produttività.'));
+  // Removed decorative clover: reserve visible height for both team profiles.
+
   activity.append(create('div','supervisor-speech',''));activity.lastChild.id='supervisorMessage';
   supervisor();loadPublicSnapshot();setInterval(loadPublicSnapshot,300000);renderSidebar();renderDetail();new ResizeObserver(resize).observe(canvas);requestAnimationFrame(frame);
 })();

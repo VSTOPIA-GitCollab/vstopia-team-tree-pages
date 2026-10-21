@@ -6,6 +6,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
 import {applyTerrainBlending} from './ground-blend.js';
 import {addEzTreeShrubs} from './shrub-garden.js';
 import {addWaterGarden,terrainElevation} from './water-environment.js';
+import {addLivingWildlife} from './garden-wildlife.js';
 
 const stage=document.getElementById('treeStage');
 const fallback=document.getElementById('treeCanvas');
@@ -15,7 +16,7 @@ const state={ready:false,orbit:.18,elevation:.16,zoom:1.06,selected:'Audio Playg
 const api={get ready(){return state.ready;}};
 window.VstopiaEzTree=api;
 
-let renderer, camera, scene, tree, ground, holder, markerLayer, target, frameId,waterGarden;
+let renderer, camera, scene, tree, ground, holder, markerLayer, target, frameId,waterGarden,livingWildlife;
 let sceneExtent=0;
 const spatialGrade={left:new THREE.Vector3(1.20,1.13,1.07),right:new THREE.Vector3(1.005,.94,.926),width:{value:1}};
 let requiresRender=true;
@@ -206,6 +207,7 @@ function buildScene(){
  stage.dataset.treeBaseAligned=String(Math.abs((new THREE.Box3().setFromObject(tree)).min.y-(terrain.position.y+.025))<.05);
  const shrubGarden=addEzTreeShrubs({THREE,scene,tree,terrain,center,stage});
  waterGarden=addWaterGarden({scene,renderer,terrain,stage,reduceMotion});
+ livingWildlife=addLivingWildlife({scene,stage,reducedMotion:reduceMotion});
  window.VstopiaGardenProject=(x,y,z)=>{
   const r=stage.getBoundingClientRect(),v=new THREE.Vector3(x,y,z).project(camera);
   return [Math.round((v.x*.5+.5)*r.width),Math.round((-.5*v.y+.5)*r.height)];
@@ -214,7 +216,7 @@ function buildScene(){
   const rect=stage.getBoundingClientRect();
   return ['lake','river'].map(type=>{
     const o=waterGarden[type],v=new THREE.Vector3();
-    if(type==='lake')v.set(69,-.46,-129);else v.set(-60,-.39,-115);
+    if(type==='lake')v.set(-135,-.46,-325);else v.set(-260,-.46,-220);
     v.project(camera);
     return {type,screenX:Math.round((v.x*.5+.5)*rect.width),screenY:Math.round((-.5*v.y+.5)*rect.height),
       stageW:Math.round(rect.width),stageH:Math.round(rect.height),camera:camera.position.toArray().map(x=>Math.round(x))};
@@ -291,6 +293,7 @@ function render(t){
    windPhase+=dt*animationSpeed;
    tree.update(windPhase);requiresRender=true;
    if(waterGarden)waterGarden.update(dt);
+   if(livingWildlife)livingWildlife.update(dt);
  }
  previousWindTime=t;
  if(t-lastWindTelemetry>700){stage.dataset.windPhase=windPhase.toFixed(3);lastWindTelemetry=t;}

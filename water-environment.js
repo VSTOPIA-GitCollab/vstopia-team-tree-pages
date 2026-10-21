@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import {Water} from './vendor/addons/Water.js';
 
 // Irregular, distant lake; creek spans almost all 16 km of real world terrain.
-const LAKE={x:-145,z:-210,rx:62,rz:44,water:-.46};
-const CHANNEL=[[-7950,-430],[-6100,-408],[-3900,-366],[-2150,-343],[-1320,-315],[-940,-285],[-620,-265],[-480,-255],[-390,-247],[-300,-225],[-262,-205],[-238,-214],[-211,-221],[-187,-210],[-164,-209]];
+const LAKE={x:-135,z:-325,rx:215,rz:168,water:-.46};
+const CHANNEL=[[-7950,-430],[-6100,-408],[-3900,-366],[-2150,-343],[-1320,-315],[-940,-285],[-620,-265],[-480,-255],[-390,-247],[-300,-225],[-262,-205],[-238,-214],[-211,-221],[-187,-210],[-175,-222]];
 const smooth=(a,b,v)=>{const t=THREE.MathUtils.clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
 const rand=n=>{const v=Math.sin(n*78.233+13.183)*43758.5453;return v-Math.floor(v)};
 const lakeEdge=a=>1+.16*Math.sin(a*3+.6)+.095*Math.sin(a*5-1.1)+.07*Math.cos(a*9+.25);
@@ -50,76 +50,49 @@ function makeRiverGeometry(){
  if(i<N){const n=i*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(indices);g.computeVertexNormals();return g;
 }
-function makeStreamMaterial(){
- // A fast original flowmap-style stream shader: animated wave phase and
- // equirectangular sampling from the same HDRI that illuminates the forest.
- // Avoids a second expensive full-scene reflection render every frame.
- return new THREE.ShaderMaterial({
-  name:'VSTOPIA HD sky stream flow',transparent:true,depthWrite:false,
-  side:THREE.DoubleSide,toneMapped:false,
-  uniforms:{uTime:{value:0},uSky:{value:null}},
-  vertexShader:`
-   varying vec2 vFlowUv;
-   varying float vStreamDistance;
-   void main(){
-    vFlowUv=uv;
-    vStreamDistance=length((modelMatrix*vec4(position,1.0)).xz);
-    gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
-   }`,
-  fragmentShader:`
-   uniform float uTime;
-   uniform sampler2D uSky;
-   varying vec2 vFlowUv;
-   varying float vStreamDistance;
-   void main(){
-    float t=uTime;
-    float r1=sin(vFlowUv.x*42.0-t*3.0+sin(vFlowUv.y*9.0+t*.9)*.7);
-    float r2=sin(vFlowUv.x*96.0-t*7.0+vFlowUv.y*17.0)*.33;
-    float noise=(r1+r2)*.5;
-    vec2 skyUV=vec2(.25+vFlowUv.x*.025+noise*.002,.24+noise*.008);
-    vec3 hdr=texture2D(uSky,skyUV).rgb;
-    vec3 sky=hdr/(hdr+vec3(1.0));
-    vec3 base=mix(vec3(.033,.17,.19),sky*.53, .34);
-    vec3 foam=vec3(.09,.16,.15)*pow(max(0.0,noise),5.0);
-    float edge=smoothstep(.02,.20,vFlowUv.y)*(1.0-smoothstep(.82,.98,vFlowUv.y));
-    float ripple=sin(vFlowUv.x*29.0+t*2.1)*.5+.5;
-    vec3 color=base*(.91+.16*ripple)+foam;
-    gl_FragColor=vec4(color, .95*edge*(1.0-smoothstep(350.0,1350.0,vStreamDistance)));
-    #include <colorspace_fragment>
-   }`
- });
-}
 export function addWaterGarden({scene,renderer,terrain,stage,reduceMotion}){
  const normals=createWaterNormals();
- const lakeGeo=makeLakeGeometry();
- const lake=new Water(lakeGeo,{
+ const waterOptions={
   textureWidth:128,textureHeight:128,waterNormals:normals,
   sunDirection:new THREE.Vector3(-32,77,42).normalize(),
   sunColor:0x8c9b93,waterColor:0x397e83,distortionScale:.65,
-  alpha:.93,fog:false
- });
- // Calm lake: preserve true reflected sky but do not clip white HDR highlights.
+  alpha:.96,fog:false
+ };
+ // A SINGLE reflecting Water object for river and lake: same shaders, same
+ // reflection render-target, same normals, same wave clock and color at seam.
+ // The polygons deliberately overlap inside the lake; the shared material
+ // eliminates the old two-water color mismatch and duplicate GPU reflection pass.
+ const lakeGeo=makeLakeGeometry(),creekGeo=makeRiverGeometry();
+ const lakeAttr=lakeGeo.getAttribute('position'),riverAttr=creekGeo.getAttribute('position');
+ const lakeUV=lakeGeo.getAttribute('uv'),riverUV=creekGeo.getAttribute('uv');
+ const joinedPositions=[],joinedUV=[],joinedIndices=[];
+ for(let i=0;i<lakeAttr.count;i++){
+  joinedPositions.push(lakeAttr.getX(i)+LAKE.x,lakeAttr.getY(i)-LAKE.z,0);
+  joinedUV.push(lakeUV.getX(i),lakeUV.getY(i));
+ }
+ for(let i=0;i<riverAttr.count;i++){
+  joinedPositions.push(riverAttr.getX(i),riverAttr.getY(i),0);
+  joinedUV.push(riverUV.getX(i),riverUV.getY(i));
+ }
+ for(const index of lakeGeo.index.array)joinedIndices.push(index);
+ for(const index of creekGeo.index.array)joinedIndices.push(index+lakeAttr.count);
+ const waterGeometry=new THREE.BufferGeometry();
+ waterGeometry.setAttribute('position',new THREE.Float32BufferAttribute(joinedPositions,3));
+ waterGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(joinedUV,2));
+ waterGeometry.setIndex(joinedIndices);waterGeometry.computeVertexNormals();
+ const lake=new Water(waterGeometry,waterOptions);
+ lake.name='Giant lake and river: ONE connected reflected water surface';
  lake.material.fragmentShader=lake.material.fragmentShader
   .replace('float rf0 = 0.3;', 'float rf0 = 0.32;')
   .replace('vec3( 0.1 ) + reflectionSample * 0.9 + reflectionSample * specularLight',
-           'vec3( 0.025, 0.076, 0.10 ) + clamp(reflectionSample, 0.0, 1.0) * vec3( 0.28, 0.42, 0.52 ) + reflectionSample * specularLight * 0.08');
- lake.material.transparent=true;
- lake.material.depthWrite=true;
- // Ground uses transparency near the HDRI; force water compositing after terrain.
- // Otherwise the clear terrain shader overdraws and hides water completely.
- lake.renderOrder=14;
- lake.material.needsUpdate=true;
- lake.rotation.x=-Math.PI/2;
-
- lake.position.set(LAKE.x,LAKE.water,LAKE.z);
- scene.add(lake);lake.name='Reflective HDRI lake';
- const riverMaterial=makeStreamMaterial();
- const river=new THREE.Mesh(makeRiverGeometry(),riverMaterial);
- river.rotation.x=-Math.PI/2;
- river.position.y=-.39;
-
- river.name='Flowing stream';
- river.renderOrder=15;scene.add(river);
+   'vec3( 0.025, 0.076, 0.10 ) + clamp(reflectionSample, 0.0, 1.0) * vec3( 0.28, 0.42, 0.52 ) + reflectionSample * specularLight * 0.08');
+ lake.material.transparent=true;lake.material.depthWrite=true;lake.material.needsUpdate=true;
+ lake.rotation.x=-Math.PI/2;lake.position.y=LAKE.water;
+ lake.renderOrder=14;scene.add(lake);
+ // Preserve the public debug interface, but never spawn a second Water mesh.
+ const river=lake;
+ stage.dataset.waterDrawCalls='one-connected-surface';
+ stage.dataset.waterReflectionPasses='1';
  // Distorted angular boulders, scattered across meadow and along creek.
  const rockGeo=new THREE.IcosahedronGeometry(1,1),rp=rockGeo.attributes.position;
  for(let i=0;i<rp.count;i++){const x=rp.getX(i),y=rp.getY(i),z=rp.getZ(i),v=1+.23*Math.sin(x*9.3+y*4.1+z*2.3)+.12*Math.cos(z*13.7-x*6.1);rp.setXYZ(i,x*v,y*v,z*v);}rockGeo.computeVertexNormals();
@@ -173,21 +146,22 @@ export function addWaterGarden({scene,renderer,terrain,stage,reduceMotion}){
  grass.receiveShadow=true;scene.add(grass);
  stage.dataset.waterTopology='irregular-lake-wide-long-river';
  stage.dataset.waterLongRiver=String(Math.abs(CHANNEL[0][0]-CHANNEL[CHANNEL.length-1][0]));
+ stage.dataset.waterShader='single-water-js-reflection';
+ stage.dataset.waterLakeSize='giant-irregular-215x168';
  stage.dataset.waterLake='hdr-reflective-threejs-water';
  stage.dataset.waterStream='animated-physical-ripple';
  stage.dataset.waterRocks=String(rockCount);
  stage.dataset.waterGrass=String(placed);
  window.VstopiaWaterDebug=()=>({
   lakeTime:lake.material.uniforms.time.value,
-  streamTime:riverMaterial.uniforms.uTime.value,
-  lakeReflectsScene:lake.isWater===true,
+  streamTime:lake.material.uniforms.time.value,
+  lakeReflectsScene:lake.isWater===true,riverReflectsScene:river.isWater===true,
   rockInstances:rocks.count,grassInstances:grass.count,
-  lakePosition:lake.position.toArray(),riverPosition:river.position.toArray(),topology:gardenTopology
+  lakePosition:[LAKE.x,LAKE.water,LAKE.z],riverPosition:[CHANNEL[CHANNEL.length-1][0],LAKE.water,CHANNEL[CHANNEL.length-1][1]],topology:gardenTopology
  });
  function update(dt){
   if(reduceMotion)return;
-  lake.material.uniforms.time.value+=dt*.72;
-  riverMaterial.uniforms.uTime.value+=dt;
+  lake.material.uniforms.time.value+=dt*.78;
  }
- return {update,lake,river,rocks,grass,setEnvironment:t=>{riverMaterial.uniforms.uSky.value=t;}};
+ return {update,lake,river,rocks,grass,setEnvironment:t=>{}};
 }

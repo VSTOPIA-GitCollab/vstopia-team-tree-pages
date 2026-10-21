@@ -13,7 +13,7 @@ class NaturalGardenTests(unittest.TestCase):
   self.assertIn('const creekCurve=new THREE.CatmullRomCurve3',W)
   self.assertIn('makeRiverGeometry()',W)
  def test_lake_irregular_and_away_from_tree(self):
-  self.assertIn('const LAKE={x:-145,z:-210,rx:62,rz:44',W)
+  self.assertIn('const LAKE={x:-135,z:-325,rx:215,rz:168',W)
   self.assertIn('const lakeEdge=a=>1+.16*Math.sin(a*3+',W)
   self.assertIn('makeLakeGeometry()',W)
   self.assertNotIn('lake.scale.set',W)

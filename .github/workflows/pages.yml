@@ -15,7 +15,7 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          assets = (Path('index.html'), Path('app.js'), Path('style.css'), Path('ez-tree-scene.js'), Path('liquid-glass.css'), Path('scene-polish.css'), Path('ground-blend.js'), Path('apple-glass.css'), Path('shrub-garden.js'), Path('water-environment.js'), Path('water-garden.css'), Path('team-readable.css'), Path('vendor/addons/Water.js'), Path('glass-react-source/glass-island.jsx'), Path('glass-react-source/specy-header.jsx'))
+          assets = (Path('index.html'), Path('app.js'), Path('style.css'), Path('ez-tree-scene.js'), Path('liquid-glass.css'), Path('scene-polish.css'), Path('ground-blend.js'), Path('apple-glass.css'), Path('shrub-garden.js'), Path('water-environment.js'), Path('garden-wildlife.js'), Path('water-garden.css'), Path('team-readable.css'), Path('vendor/addons/Water.js'), Path('glass-react-source/glass-island.jsx'), Path('glass-react-source/specy-header.jsx'))
           for p in assets:
               text=p.read_text()
               for forbidden in ('VSTOPIA-Council', 'AUDIOENCE-World', 'OstinDesktopCommander',
