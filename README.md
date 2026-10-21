@@ -26,3 +26,8 @@ Publish the root of the public repository with GitHub Pages → Deploy from a br
 ## Assigned work and review requests
 
 The public collaborator cards include aggregated **open issues assigned**, **open PRs assigned** and **explicit individual pending review requests** from GitHub. Draft PRs are excluded from the review-request tally. Issue and PR assignments are counted separately. A PR is not considered a review obligation merely because it is open; the user must be in its `requested_reviewers` collection. These counts are a pending work queue, **not** a productivity rating, deadline, or inference from lack of commits. Node names and individual per-project activity remain illustrative, not real.
+
+
+## Realistic 3D scene & glass UI
+
+The optional, self-hosted EZ-Tree / Three.js oak uses a licensed sky photograph and liquid-glass CSS. See [the scene runbook](docs/REAL_TREE_LIQUID_SKY.md) and vendored MIT licenses. Browser without WebGL continues to receive the prior animated Canvas tree. The visible project labels are synthetic; public GitHub activity is aggregated and must never expose private repository contents.

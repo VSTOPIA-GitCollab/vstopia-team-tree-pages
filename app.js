@@ -137,8 +137,8 @@
   }
 
   function stopTour(){if(state.tour!==null)clearInterval(state.tour);state.tour=null;$('tourButton').textContent='▶ AUTO TOUR';$('tourButton').setAttribute('aria-pressed','false');}
-  function select(name,fromTour=false){if(!fromTour)stopTour();state.selected=name;renderSidebar();renderList();renderDetail();}
-  function renderSidebar(){const list=$('repoList');list.replaceChildren();const data=visible();$('repoCountLabel').textContent=String(data.length).padStart(2,'0');
+  function select(name,fromTour=false){if(!fromTour)stopTour();state.selected=name;renderSidebar();renderList();renderDetail();window.dispatchEvent(new CustomEvent('vstopia:select-changed',{detail:{name}}));}
+  function renderSidebar(){const list=$('repoList');list.replaceChildren();const data=visible();window.dispatchEvent(new CustomEvent('vstopia:filters',{detail:{visible:data.map(r=>r.name)}}));$('repoCountLabel').textContent=String(data.length).padStart(2,'0');
     for(const r of data){const b=create('button','repo-item'+(r.name===state.selected?' selected':''));b.type='button';
       b.setAttribute('aria-pressed',String(r.name===state.selected));b.append(create('span','repo-glyph','⌁'));
       const copy=create('span','repo-copy');copy.append(create('strong','',r.name),create('small','',number(r.commits)+' DEMO COMMITS · '+r.issues+' ISSUES'));
@@ -155,7 +155,7 @@
     root.append(badges,create('div','detail-divider'),create('div','detail-label','ESEMPIO DI ATTIVITÀ'));
     root.append(create('div','detail-commit',r.last_commit.message));root.append(create('div','detail-meta','Dati simulati: non rappresentano persone o attività reali.'));
   }
-  function setMode(mode){state.mode=mode;canvas.hidden=mode!=='tree';$('listView').hidden=mode!=='list';
+  function setMode(mode){state.mode=mode;canvas.hidden=mode!=='tree';window.dispatchEvent(new CustomEvent('vstopia:mode',{detail:{mode}}));$('listView').hidden=mode!=='list';
     $('viewTree').classList.toggle('current',mode==='tree');$('viewList').classList.toggle('current',mode==='list');
     $('viewTree').setAttribute('aria-pressed',String(mode==='tree'));$('viewList').setAttribute('aria-pressed',String(mode==='list'));
     $('stageInstructions').textContent=mode==='tree'?'DRAG TO ORBIT · SCROLL TO ZOOM · CLICK TO EXPLORE':'SELECT A DEMO PROJECT';}
@@ -175,6 +175,7 @@
   const backCtx=backCanvas.getContext('2d');
   let lastForestPaint=0;
   function frame(t){
+    if(window.VstopiaEzTree?.ready){requestAnimationFrame(frame);return;}
     if(t-lastForestPaint<70){requestAnimationFrame(frame);return;}
     lastForestPaint=t;
     if(state.mode!=='tree'){requestAnimationFrame(frame);return;}
@@ -202,11 +203,12 @@
     else if(e.key==='ArrowUp')state.rx-=.15;else if(e.key==='ArrowDown')state.rx+=.15;else if(e.key==='+'||e.key==='=')state.zoom=Math.min(2.3,state.zoom*1.1);
     else if(e.key==='-')state.zoom=Math.max(.5,state.zoom/1.1);
     else if(e.key==='Enter'||e.key===' '){const rs=visible();if(rs.length)select(rs[(rs.findIndex(r=>r.name===state.selected)+1)%rs.length].name);}else return;e.preventDefault();});
+  window.addEventListener('vstopia:select',event=>select(event.detail.name));
   $('repoSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase().trim();renderSidebar();renderList();});
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('repoSearch').focus();}});
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>{state.filter=b.dataset.filter;for(const n of document.querySelectorAll('[data-filter]')){n.classList.toggle('active',n===b);n.setAttribute('aria-pressed',String(n===b));}renderSidebar();renderList();});
   $('viewTree').addEventListener('click',()=>setMode('tree'));$('viewList').addEventListener('click',()=>setMode('list'));
-  $('resetView').addEventListener('click',()=>{state.ry=.52;state.rx=.20;state.zoom=1;});
+  $('resetView').addEventListener('click',()=>{state.ry=.52;state.rx=.20;state.zoom=1;window.dispatchEvent(new Event('vstopia:reset'));});
   $('tourButton').addEventListener('click',()=>{if(state.tour!==null){stopTour();return;}const rs=visible();if(!rs.length)return;
     $('tourButton').setAttribute('aria-pressed','true');$('tourButton').textContent='❚❚ STOP TOUR';let i=Math.max(0,rs.findIndex(r=>r.name===state.selected));select(rs[i].name,true);
     state.tour=setInterval(()=>{const items=visible();if(!items.length){stopTour();return;}i=(i+1)%items.length;select(items[i].name,true);if(!reducedMotion)state.ry+=.12;},6500);});
