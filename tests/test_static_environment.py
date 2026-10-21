@@ -7,7 +7,7 @@ SRC=(ROOT/'ez-tree-scene.js').read_text()
 
 class EnvironmentTests(unittest.TestCase):
     def test_solid_geometry_and_pbr_material(self):
-        self.assertIn('new THREE.PlaneGeometry(1100,1100,96,96)',SRC)
+        self.assertIn('new THREE.PlaneGeometry(12000,12000,256,256)',SRC)
         self.assertIn('new THREE.MeshStandardMaterial',SRC)
         self.assertIn("stage.dataset.terrain='opaque-pbr-mesh'",SRC)
         self.assertIn('terrainGeometry.computeVertexNormals()',SRC)

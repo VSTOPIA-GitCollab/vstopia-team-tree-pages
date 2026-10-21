@@ -66,12 +66,12 @@ function buildScene(){
  const height=size.y;sceneExtent=size.length();
  const radius=Math.max(size.x,size.z,height*.6);
  target=new THREE.Vector3(0,height*.52,0);
- camera=new THREE.PerspectiveCamera(32,1,.1,Math.max(200,height*12));
+ camera=new THREE.PerspectiveCamera(32,1,.1,16000);
  camera.position.set(0,target.y+height*.1,Math.max(24,radius*2.45));
  camera.lookAt(target);
  // A genuinely opaque, shaded and displaced terrain mesh. Its outer slopes
  // disappear toward the photographed HDRI horizon, never exposing a transparent disc.
- const terrainGeometry=new THREE.PlaneGeometry(1100,1100,96,96);
+ const terrainGeometry=new THREE.PlaneGeometry(12000,12000,256,256);
  const vertices=terrainGeometry.attributes.position;
  for(let i=0;i<vertices.count;i++){
   const x=vertices.getX(i),z=vertices.getY(i),dist=Math.hypot(x,z);
@@ -86,6 +86,8 @@ function buildScene(){
  terrain.rotation.x=-Math.PI/2;
  terrain.receiveShadow=true;terrain.position.y=-.055;
  scene.add(terrain);ground=terrain;
+ // One uninterrupted mesh extends all the way to the visible world horizon.
+ // No overlapping opaque LOD layers: they previously caused z-intersection artifacts.
  stage.dataset.terrain='opaque-pbr-mesh';
  // Local contact occlusion to make the trunk meet the actual solid ground.
  const contactCanvas=document.createElement('canvas');contactCanvas.width=256;contactCanvas.height=256;
@@ -104,7 +106,7 @@ function buildScene(){
  Promise.all(maps.map(([field,file])=>new Promise((resolve,reject)=>{
   loader.load('./'+base+file,texture=>{
    texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
-   texture.repeat.set(field==='normalMap'?48:28,field==='normalMap'?48:28);texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+   texture.repeat.set(field==='normalMap'?480:300,field==='normalMap'?480:300);texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
    if(field==='map')texture.colorSpace=THREE.SRGBColorSpace;
    resolve([field,texture]);
   },undefined,reject);
@@ -204,7 +206,7 @@ function build(){
  scene=new THREE.Scene();
  // PBR environment and visible panorama share the *same* static HDRI, so their light/horizon stays aligned.
  scene.background=new THREE.Color(0xb3ccd6);
- scene.fog=new THREE.Fog(0xb8beb5,210,690);
+ scene.fog=new THREE.Fog(0xa8ada6,2100,12500);
  const hdriLoader=new RGBELoader();
  hdriLoader.setDataType(THREE.HalfFloatType);
  hdriLoader.load('./assets/environment/kloppenheim_03_2k.hdr',texture=>{
