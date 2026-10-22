@@ -45,3 +45,14 @@ The Atmosphere panel now scrolls if its expanded contents exceed the viewport. E
 - Responsive 430×930 viewport: mobile WebGL profile active, 20 waterfall plants; expanded panel measured 190×416 and fit inside the iframe (top 192, bottom 608). Rain slider worked; no captured browser errors. Viewport override reset afterward.
 
 Limitations: rain is an efficient visual particle effect, not a physical weather simulation. The storm sky and waterfall flow are procedural. Responsive Chrome testing does not constitute a physical iPhone/Safari performance test. No live GitHub Pages deployment was performed.
+
+
+## Public release verification — 22 October 2026
+
+Original source commit: `8887ee18684fea899fb5664b3dddf36cdb586788` ("Add mountain waterfall and day-night rain controls"). This document's earlier "local only" language describes the initial test state, not the final release.
+
+**PUSHED / MERGED / DEPLOYED / VERIFIED:** included in GitHub `main` at `bb64a50985c609edd7af7542babe64db9498eb8a`. GitHub Pages run **39828236994** completed with **success**. Live HTTP 200 checked for `atmosphere.js?v=waterfall-weather-v1`, `mountain-waterfall.js?v=waterfall-weather-v1`, root page and integrated scene.
+
+Real browser smoke test on the public HTTPS release (Chrome desktop and mobile emulation): day slider 0.14 and rain slider 0.85 produced observed values near 0.142/0.848; water, moving clouds and scene rendered; 20 labels and 20 anchors; 48 waterfall plants desktop / 20 mobile, no captured JS/GLSL exceptions. **Physical iOS Safari not verified.**
+
+Full scene release documentation: `docs/LAKE_LIFE_MOUNTAIN_WOODLAND_2026-10-22.md`.

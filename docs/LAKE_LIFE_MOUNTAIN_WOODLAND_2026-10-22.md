@@ -138,3 +138,16 @@ It **passed** on Mac ARM with the vendored Three.js module. Earlier
 
 The source code and screenshots here are CODED/TESTED. Public deployment
 status must be added after GitHub Actions and live HTTPS verification.
+
+
+## Public GitHub Pages release ledger — 22 October 2026
+
+- **CODED & TESTED:** waterfall/weather `8887ee1`, lake trout/woodland `bb64a50`; all developed in the sole canonical checkout on `main` with no new branches or worktrees.
+- **TESTED:** `scripts/check_weather_waterfall.mjs`, `scripts/check_lake_life.mjs`, `scripts/check_surface_detail.mjs`, 115 Python regressions, public GitHub snapshot allowlist and JavaScript syntax checks all PASS.
+- **PUSHED / MERGED:** GitHub `VSTOPIA-GitCollab/vstopia-team-tree-pages` `main` at full SHA `bb64a50985c609edd7af7542babe64db9498eb8a` (both commits in one fast-forward).
+- **DEPLOYED:** GitHub Pages workflow `39828236994`, `completed/success`, published from SHA `bb64a50`.
+- **VERIFIED:** public HTTPS asset chain root → integration JS → iframe → `stillwater/scene.js`, `stillwater/lake-life.js`, `stillwater/atmosphere.js`, `stillwater/mountain-waterfall.js` and these docs returned HTTP 200 with expected markers.
+- **VERIFIED:** Chrome browser navigated to the *public GitHub Pages site*, on desktop and 430×930 mobile emulation. Live scene had 20 labels/20 3D anchors, sky ready, 2,600/900 mountain plants, 48/20 waterfall plants, moving frame counters, fish jump counter reaching 1, working Day/Night and Rain inputs, and **zero captured runtime JavaScript exceptions**.
+- **NOT VERIFIED:** real physical iPhone/Safari animation and frame-rate parity; weather effects remain artistic procedural approximations.
+
+Published page: https://vstopia-gitcollab.github.io/vstopia-team-tree-pages/?release=bb64a50
