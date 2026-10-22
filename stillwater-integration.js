@@ -6,7 +6,7 @@ const fallback=document.getElementById('treeCanvas');
 const frame=document.createElement('iframe');
 frame.id='stillwaterFrame';
 frame.title='Interactive 3D living tree and mountain lake';
-frame.src='./stillwater/index.html?embedded=1';
+frame.src='./stillwater/index.html?embedded=1&v=ios-frame-20261022';
 frame.allow='fullscreen';
 frame.setAttribute('loading','eager');
 const labelLayer=document.createElement('div');labelLayer.id='stillwaterLabels';
@@ -174,3 +174,39 @@ frame.addEventListener('load',()=>{
 frame.addEventListener('error',()=>{
  loading.hidden=false;loading.textContent='Stillwater 3D did not load.';
 });
+
+// Opt-in diagnostics for an ACTUAL iPhone: append ?iosdebug=1 to the public
+// page URL. Never display diagnostics in the normal customer experience.
+// Read-only; reports whether RAF, water uniform and bird matrices progress.
+// No private GitHub repository data, device identifiers or network logging.
+if(new URLSearchParams(location.search).get('iosdebug')==='1'){
+ const diag=document.createElement('output');
+ diag.id='iosAnimationDiagnostics';
+ diag.setAttribute('aria-label','Live iOS 3D animation diagnostics');
+ Object.assign(diag.style,{
+  position:'absolute',top:'10px',left:'10px',zIndex:'40',pointerEvents:'none',
+  background:'rgba(8,26,32,.82)',color:'#eef8ff',borderRadius:'8px',
+  padding:'8px',font:'11px/1.45 ui-monospace,monospace',
+  whiteSpace:'pre-line',maxWidth:'calc(100% - 20px)'
+ });
+ stage.append(diag);
+ let lastFrames=null,lastWater=null,lastBird=null;
+ const paint=()=>{
+  let x=null;
+  try{x=frame.contentWindow?.VstopiaStillwaterDebug?.()||null}catch(_){}
+  if(!x){diag.textContent='iOS diagnostic: waiting for WebGL scene';return;}
+  const f=x.frameStats||{},bird=x.firstBirdPosition||null;
+  const moving=f.frames!=null&&lastFrames!=null?f.frames>lastFrames:false;
+  const waterMoving=lastWater!=null?x.waterTime>lastWater:false;
+  const birdsMoving=bird&&lastBird?bird.some((v,i)=>Math.abs(v-lastBird[i])>.0001):false;
+  diag.textContent='iOS 3D | '+(x.lowPower?'mobile':'desktop')+
+   '\nframes '+String(f.frames??'?')+(lastFrames!=null?' (moving '+(moving?'YES':'NO')+')':'')+
+   '\nwater '+Number(x.waterTime).toFixed(2)+(lastWater!=null?' (moving '+(waterMoving?'YES':'NO')+')':'')+
+   '\nbirds '+String(x.birds??'?')+(lastBird?' (moving '+(birdsMoving?'YES':'NO')+')':'')+
+   '\npaused '+String(x.paused)+' | GL lost '+String(!!f.webglLost)+
+   '\nvisible '+String(f.documentVisible)+' | frame age '+String(f.frameAgeMs??'?')+'ms';
+  lastFrames=f.frames;lastWater=x.waterTime;
+  lastBird=bird?[...bird]:null;
+ };
+ paint();setInterval(paint,2500);
+}
