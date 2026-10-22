@@ -79,81 +79,120 @@ function canvasTexture(w,h,draw){const c=document.createElement('canvas');c.widt
 const bark=canvasTexture(512,1024,(ctx,w,h)=>{const im=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const n=fbm(x*.10,y*.008),fine=noise(x*.7,y*.10),groove=Math.pow(Math.abs(Math.sin(x*.15+noise(x*.015,y*.006)*9)),14);const c=68+n*58+fine*19-groove*38;const i=(y*w+x)*4;im.data[i]=c*1.03;im.data[i+1]=c*.89;im.data[i+2]=c*.72;im.data[i+3]=255;}ctx.putImageData(im,0,0);});bark.repeat.set(2,2);
 const rockTex=canvasTexture(1024,1024,(ctx,w,h)=>{const im=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){let n=fbm(x*.018,y*.018),fine=noise(x*.6,y*.6),ridge=Math.abs(noise(x*.07,y*.07)-.5);const c=66+n*102+fine*24-ridge*25,i=(y*w+x)*4;const moss=noise(x*.025+60,y*.025)> .69;im.data[i]=moss?c*.70:c;im.data[i+1]=moss?c*.79:c*.99;im.data[i+2]=moss?c*.43:c*.91;im.data[i+3]=255;}ctx.putImageData(im,0,0);});
 const groundTex=new THREE.TextureLoader().load('./assets/ground.jpg');groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(55,55);groundTex.colorSpace=THREE.SRGBColorSpace;groundTex.anisotropy=8;
-const terrainGeo=new THREE.PlaneGeometry(340,340,lowPower?170:300,lowPower?170:300);terrainGeo.rotateX(-Math.PI/2);
-const tp=terrainGeo.attributes.position,colors=[];const tc=new THREE.Color();
-for(let i=0;i<tp.count;i++){const x=tp.getX(i),z=tp.getZ(i),h=height(x,z);tp.setY(i,h);const n=fbm(x*.22,z*.22);tc.set(h<.25?'#5b5946':h<.8?'#80836b':'#78816a');tc.multiplyScalar(.8+n*.5);colors.push(tc.r,tc.g,tc.b);}terrainGeo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));terrainGeo.computeVertexNormals();
-const terrain=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({map:groundTex,bumpMap:groundTex,bumpScale:.23,vertexColors:true,roughness:1}));terrain.receiveShadow=true;scene.add(terrain);
-// User's original lake-scene 2 mountains, exact original layered ridge
-// geometry and positions. Color only is 12% darker than source.
-scene.add(createDistantMountains());
-// Shared surface elevation for the distant meadow and every grass root.
+// One continuous radial terrain mesh topology with a shared, irregular
+// inside/outside edge. Unlike PlaneGeometry(340,340), there are NO square
+// corners to show from high orbit angles. The terrain UV basis is world XZ.
+const tc=new THREE.Color(); // reused by foliage, stone and flower materials
+const FAR_MEADOW_RADIUS=9600;
 function distantMeadowHeight(x,z){
  const r=Math.hypot(x,z),nearH=height(x,z)-.38;
  const farH=6.4+(fbm(x*.012,z*.012)-.43)*13+
    (Math.sin(x*.004+z*.003)*3.2+Math.cos(z*.006)*2.8);
  return THREE.MathUtils.lerp(nearH,farH,THREE.MathUtils.smoothstep(r,250,800));
 }
-// Seamless terrain continuation: the old RingGeometry began at Y=1 while
-// the meadow edge was higher. It also lacked ground texture/vertex colors,
-// creating a pale band behind the grass and a visible discontinuity.
-// Use exactly the same world-space color/UV basis as the near ground.
-const FAR_MEADOW_RADIUS=9600; // Extensive matte terrestrial meadow, well beyond all source mountain ridges
-const farGroundGeo=new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,lowPower?180:448,lowPower?95:240);
-// RingGeometry starts on XY (Z=0). Rotate it onto world XZ before reading
-// vertex Z for the radially redistributed meadow. Without this rotation every
-// vertex collapses to z=0, making an edge-on, streaking black terrain strip.
-farGroundGeo.rotateX(-Math.PI/2);
-const fgp=farGroundGeo.attributes.position, fgu=farGroundGeo.attributes.uv;
-const farColors=[];
-for(let i=0;i<fgp.count;i++){
- const oldX=fgp.getX(i),oldZ=fgp.getZ(i),oldR=Math.hypot(oldX,oldZ);
- const t=THREE.MathUtils.clamp((oldR-144)/(FAR_MEADOW_RADIUS-144),0,1);
- const r=144+(FAR_MEADOW_RADIUS-144)*Math.pow(t,1.44);
- const x=oldX*(r/Math.max(.001,oldR)),z=oldZ*(r/Math.max(.001,oldR));
- fgp.setXYZ(i,x,distantMeadowHeight(x,z),z);
- // Near ground's PlaneGeometry(340m) has UV=(x+170)/340 and repeat=55.
- // The *texture itself* already repeats 55x. Repeating this UV 55x too would
- // create 3025 tiny tiles across the field and alias the distant meadow.
- fgu.setXY(i,(x+170)/340,(170-z)/340);
- const n=fbm(x*.22,z*.22),h=height(x,z);
- tc.set(h<.25?'#5b5946':h<.8?'#80836b':'#78816a');
- tc.multiplyScalar(.8+n*.5);
- farColors.push(tc.r,tc.g,tc.b);
+// Several nonharmonic frequencies, periodic in theta. No hard circular border
+// and no geometry outside the original 340m near-terrain footprint.
+function meadowSeamRadius(theta){
+ return 162+8*Math.sin(theta*3+1.2)+6*Math.sin(theta*7-.9)+
+   4*Math.cos(theta*11+2.4)+3*Math.sin(theta*17+.4);
 }
-farGroundGeo.setAttribute('color',new THREE.Float32BufferAttribute(farColors,3));
-farGroundGeo.computeVertexNormals();
-// Blender-style landscape mapping: reuse the exact foreground UV/photograph,
-// fade its sub-pixel tiling with distance, and add low-frequency, world-space
-// macro color variation. Near the 144m join the surface uses the identical
-// foreground Standard BRDF, so the 9.6km ring is not a dark Lambert strip.
-// Distance tint remains diffuse/matte and does not create a second lake.
-const farMeadowMat=new THREE.MeshStandardMaterial({
+function makeMeadowGeometry(isNear){
+ const sides=lowPower?180:448;
+ const radialBands=isNear?(lowPower?115:170):(lowPower?95:240);
+ const mesh=new THREE.RingGeometry(0,1,sides,radialBands);
+ mesh.rotateX(-Math.PI/2);
+ const pts=mesh.attributes.position,uv=mesh.attributes.uv;
+ const colors=[],shade=new THREE.Color();
+ for(let i=0;i<pts.count;i++){
+  const originalX=pts.getX(i),originalZ=pts.getZ(i);
+  const t=THREE.MathUtils.clamp(Math.hypot(originalX,originalZ),0,1);
+  // At the first radial band RingGeometry has every vertex at (0,0).
+  // atan2(0,0) collapses the FAR inner circumference to one point and
+  // produces giant fan triangles above the central lake. Keep ring sectors.
+  const angle=t<.000001?-2*Math.PI*(i%(sides+1))/sides:
+    Math.atan2(originalZ,originalX);
+  const edge=meadowSeamRadius(angle);
+  const radial=isNear?edge*t:edge+(FAR_MEADOW_RADIUS-edge)*Math.pow(t,1.44);
+  const x=radial*Math.cos(angle),z=radial*Math.sin(angle);
+  const fade=isNear?THREE.MathUtils.smoothstep(radial,115,edge):1;
+  const y=isNear?THREE.MathUtils.lerp(height(x,z),distantMeadowHeight(x,z),fade):
+    distantMeadowHeight(x,z);
+  pts.setXYZ(i,x,y,z);
+  uv.setXY(i,(x+170)/340,(170-z)/340);
+  const n=fbm(x*.22,z*.22),h=height(x,z);
+  shade.set(h<.25?'#5b5946':h<.8?'#80836b':'#78816a');
+  shade.multiplyScalar(.8+n*.5);
+  colors.push(shade.r,shade.g,shade.b);
+ }
+ mesh.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ mesh.computeVertexNormals();
+ return mesh;
+}
+const terrainGeo=makeMeadowGeometry(true),farGroundGeo=makeMeadowGeometry(false);
+// Genuine texture anti-repetition, inspired by Blender random UV mapping /
+// Noise Texture / Mix nodes and terrain domain warping:
+//  - TWO decorrelated rotated samples even on mobile; THREE on desktop.
+//  - Smooth world-space noise controls the stochastic blend.
+//  - A small macro-tone modulation is applied to *diffuseColor before PBR
+//    lighting*, NOT to outgoingLight; no white/bright surface overlay.
+// Near and far literally share the same shader/material instance.
+const terrainMat=new THREE.MeshStandardMaterial({
  map:groundTex,vertexColors:true,roughness:1,metalness:0,
- envMapIntensity:.24,fog:false
+ envMapIntensity:.40,fog:true
 });
-farMeadowMat.onBeforeCompile=shader=>{
- shader.vertexShader='varying vec2 vFarMeadowXZ;\n'+shader.vertexShader;
+terrainMat.onBeforeCompile=shader=>{
+ shader.vertexShader='varying vec2 vTerrainWorldXZ;\n'+shader.vertexShader;
  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',
-  '#include <begin_vertex>\n vFarMeadowXZ=(modelMatrix*vec4(transformed,1.0)).xz;');
- shader.fragmentShader='varying vec2 vFarMeadowXZ;\n'+shader.fragmentShader;
- shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
-  // A Blender Noise -> ColorRamp -> Mix analogue, based on world coordinates.
-  // Blends out unresolvable photographic repeats at grazing distances.
-  float meadowR=length(vFarMeadowXZ);
-  float meadowFade=smoothstep(165.0,640.0,meadowR);
-  float macroA=sin(vFarMeadowXZ.x*.006+sin(vFarMeadowXZ.y*.004)*1.2);
-  float macroB=cos(vFarMeadowXZ.y*.008-vFarMeadowXZ.x*.0027);
-  float macroC=sin(vFarMeadowXZ.x*.0019+vFarMeadowXZ.y*.0031);
-  float macroMix=(macroA*.45+macroB*.35+macroC*.20);
-  vec3 sunlitGrass=vec3(.26,.38,.21)+macroMix*vec3(.030,.042,.027);
-  outgoingLight=mix(outgoingLight,sunlitGrass,meadowFade*.86);
-  #include <opaque_fragment>`);
+  '#include <begin_vertex>\n vTerrainWorldXZ=(modelMatrix*vec4(transformed,1.0)).xz;');
+ shader.fragmentShader=`varying vec2 vTerrainWorldXZ;
+ float terrainHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+ float terrainNoise(vec2 p){
+  vec2 q=floor(p),f=fract(p);
+  f=f*f*(3.0-2.0*f);
+  return mix(mix(terrainHash(q),terrainHash(q+vec2(1.,0.)),f.x),
+    mix(terrainHash(q+vec2(0.,1.)),terrainHash(q+vec2(1.,1.)),f.x),f.y);
+ }
+ `+shader.fragmentShader;
+ const mobile=lowPower;
+ shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`
+  #ifdef USE_MAP
+   // Map UV from the source's world XZ coordinates via mapTransform.
+   vec2 w=vTerrainWorldXZ;
+   vec2 warp=vec2(terrainNoise(w*.052+vec2(9.,2.)),
+                  terrainNoise(w*.049+vec2(4.,13.)))-.5;
+   vec2 uvA=vMapUv+warp*.56;
+   vec2 uvB=vec2(-vMapUv.y,vMapUv.x)*.91+vec2(8.13,17.71)-warp*.35;
+   vec4 sampleA=texture2D(map,uvA);
+   vec4 sampleB=texture2D(map,uvB);
+   float maskA=smoothstep(.17,.83,terrainNoise(w*.024+vec2(31.,7.)));
+   vec4 sampleGrass=mix(sampleA,sampleB,maskA*.64);
+   ${mobile?'':`
+   vec2 uvC=vec2(vMapUv.x*.71+vMapUv.y*.71,
+                   -vMapUv.x*.71+vMapUv.y*.71)*1.06+
+                   vec2(29.3,2.7)+warp*.23;
+   vec4 sampleC=texture2D(map,uvC);
+   float maskB=smoothstep(.21,.79,terrainNoise(w*.014+vec2(18.,42.)));
+   sampleGrass=mix(sampleGrass,sampleC,maskB*.27);
+   `}
+   #ifdef DECODE_VIDEO_TEXTURE
+    sampleGrass=vec4(pow(sampleGrass.rgb,vec3(2.2)),sampleGrass.a);
+   #endif
+   diffuseColor*=sampleGrass;
+  #endif
+  float macro=terrainNoise(vTerrainWorldXZ*.0046+vec2(17.,11.));
+  diffuseColor.rgb*=mix(.94,1.06,macro);
+ `);
 };
-farMeadowMat.customProgramCacheKey=()=> 'vstopia-meadow-blender-macroblend-v1';
-const farGround=new THREE.Mesh(farGroundGeo,farMeadowMat);
-farGround.name='9.6km non-reflective grass meadow to the mountain horizon';
-farGround.receiveShadow=true;
-scene.add(farGround);
+terrainMat.customProgramCacheKey=()=>lowPower?
+ 'vstopia-world-antitile-v2-mobile':'vstopia-world-antitile-v2-desktop';
+const terrain=new THREE.Mesh(terrainGeo,terrainMat);
+terrain.name='Irregular near meadow, shared grass shader';
+terrain.receiveShadow=true;scene.add(terrain);
+// Original exact mountain model/colors untouched.
+scene.add(createDistantMountains());
+const farGround=new THREE.Mesh(farGroundGeo,terrainMat);
+farGround.name='9.6km outer meadow, irregular shared radial boundary';
+farGround.receiveShadow=true;scene.add(farGround);
 // All tree limbs are swept, tapered and ridged; no foliage spheres or billboards.
 class MeshBuilder{
  constructor(){this.p=[];this.n=[];this.uv=[];this.idx=[];}

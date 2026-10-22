@@ -41,10 +41,10 @@ class IOSRecoveryContract(unittest.TestCase):
   self.assertIn('webglLost:glContextLost',SCENE)
 
  def test_busted_nested_modules_for_ios_safari_cache(self):
-  self.assertIn('stillwater-integration.js?v=meadow-color-20261022',INDEX)
-  self.assertIn('scene.js?v=meadow-color-20261022',CHILD)
+  self.assertIn('stillwater-integration.js?v=antitile-seam-20261022',INDEX)
+  self.assertIn('scene.js?v=antitile-seam-20261022',CHILD)
   self.assertIn('vstopia-bridge.js?v=ios-frame-20261022',SCENE)
   self.assertIn('vstopia-ecology.js?v=ios-frame-20261022',BRIDGE)
-  self.assertIn('embedded=1&v=meadow-color-20261022',PARENT)
+  self.assertIn('embedded=1&v=antitile-seam-20261022',PARENT)
 
 if __name__=='__main__':unittest.main()
