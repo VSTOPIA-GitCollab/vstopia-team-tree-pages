@@ -6,7 +6,7 @@ import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createMysticTree, createDistantMountains } from './nature.js?v=fish-woodland-v1';
 import {createSurfaceMaps,displaceBarkGeometry,canopyOcclusion} from './surface-detail.js?v=surface-depth-20261022';
 import {createAtmosphere,atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1';
-import {createLakeFish,addMountainVegetation} from './lake-life.js?v=fish-woodland-v1';
+import {createLakeFish,addMountainVegetation} from './lake-life.js?v=fish-woodland-v1-splash-v2';
 import {addMountainWaterfall} from './mountain-waterfall.js?v=waterfall-weather-v1';
 import {makeMovingCloudSky} from './moving-cloud-sky.js?v=moving-clouds-v1';
 import { mountVstopiaTreeBridge } from './vstopia-bridge.js?v=ios-frame-20261022';

@@ -26,6 +26,26 @@ for (const lowPower of [false,true]){
  const clock={value:0};
  const fish=createLakeFish({scene,clock,height:()=>-.8,lowPower});
  assert.equal(fish.actors.length,3);
+ // Two distinct disturbances per fish (launch and landing), not a shared
+ // smooth precipitation ring. Sample geometry to prove irregular shoreline.
+ for(const actor of fish.actors){
+  for(const impact of [actor.launch,actor.landing]){
+   assert.equal(impact.waves.length,2);
+   assert.equal(impact.foam.geometry.attributes.position.count,lowPower?12:22);
+   assert.equal(impact.velocities.length,lowPower?16:28);
+   for(const wave of impact.waves){
+    const pos=wave.geometry.attributes.position;
+    const r=[];
+    for(let i=0;i<pos.count;i+=4)r.push(Math.hypot(pos.getX(i),pos.getZ(i)));
+    assert(Math.max(...r)-Math.min(...r)>.12,'fish ring must be rough, not a regular rain circle');
+    assert(wave.material.fragmentShader.includes('float broken'),'foam arc shader must be discontinuous');
+    assert(wave.material.uniforms.uAtmosphereLight,'foam should dim naturally at night');
+   }
+   assert(impact.spray.material.map.isDataTexture,'rounded alpha spray sprite');
+   assert(impact.foam.material.map===impact.spray.material.map,'shared white sprite/texture budget');
+  }
+ }
+
  assert.equal(scene.getObjectByName('Occasional jumping lake trout').children.length,9);
  fish.update();
  assert.equal(document.body.dataset.fishVisible,'0');
@@ -36,6 +56,15 @@ for (const lowPower of [false,true]){
    'same simulation time must never add a new event');
  clock.value=5.6;fish.update();
  assert(fish.actors.some(a=>a.group.visible),'at least one fish mid-flight');
+ const started=fish.actors.find(a=>a.site);
+ assert(started.launch.group.visible,'take-off has its own splash');
+ assert(!started.landing.group.visible,'landing effects must not appear mid-jump');
+ clock.value=started.start+started.duration+.15;fish.update();
+ assert(started.landing.group.visible,'second strong impact at the landing position');
+ const startCenter=started.launch.waves[0].position;
+ const landCenter=started.landing.waves[0].position;
+ assert(Math.hypot(startCenter.x-landCenter.x,startCenter.z-landCenter.z)>2,'separate impact centres');
+ clock.value=5.6;fish.update();
  const saved=+document.body.dataset.fishJumps;
  fish.update();assert.equal(+document.body.dataset.fishJumps,saved);
 

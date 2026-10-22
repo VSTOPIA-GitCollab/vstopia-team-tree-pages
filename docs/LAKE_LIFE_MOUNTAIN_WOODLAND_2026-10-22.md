@@ -151,3 +151,63 @@ status must be added after GitHub Actions and live HTTPS verification.
 - **NOT VERIFIED:** real physical iPhone/Safari animation and frame-rate parity; weather effects remain artistic procedural approximations.
 
 Published page: https://vstopia-gitcollab.github.io/vstopia-team-tree-pages/?release=bb64a50
+
+
+## Fish impact VFX v2 — irregular waves and white splashes (22 October 2026)
+
+**Request:** the fish must disturb the lake noticeably more than rain, with
+noisy ripples and small white splashes inspired by real-time game effects.
+
+**Sources researched**
+- [Epic Unreal Engine Water Examples: Splash and Ripple Effects](https://dev.epicgames.com/documentation/en-us/unreal-engine/water-examples?application_version=4.27):
+  separates the impact into droplet, upward spray and outward wave emitters,
+  with opacity fading throughout particle lifetime
+- [Epic real-time waterfall VFX: Niagara splash emitter setup](https://dev.epicgames.com/community/learning/tutorials/9X5n/crafting-cinematic-waterfalls-part-3-unreal-engine-setup-and-real-time-integration):
+  uses randomized impact positions/angles and synchronizes splash animation
+  to the particle lifetime
+- [Unity VFX Graph rain splash](https://discussions.unity.com/t/create-2d-special-effects-in-unity-with-the-vfx-graph-and-shader-graph/1646746):
+  demonstrates distinguishing small precipitation hits from bigger
+  one-off splash events
+
+**Implementation, using only existing local Three.js**
+1. Two impact events per fish: *launch* gets a light wake; *landing* gets a
+   stronger burst at a **different world position**. The previous single
+   perfectly circular ring jumped from launch to landing, and the original
+   grey 0.045m square droplet points were hard to see against the lake.
+2. Each impact has two overlapping wavefronts with offset start times
+   (0 and +0.23s). Their shared geometry is a dense 96-segment ring with
+   bounded multi-frequency angular displacement (5, 11 and 23 harmonics),
+   yielding visibly imperfect radii rather than rain's smooth circles.
+   A lightweight shader adds irregular gaps and broken bright foam crests
+   (13, 29 and 43 harmonic combinations), with 1.8s expansion and fade.
+3. Each impact also has short-lived white *surface foam flecks* (22 desktop,
+   12 mobile) distributed unevenly around the expanding edge, and fine
+   ballistic white *spray droplets* (28 desktop, 16 mobile). A procedural
+   rounded 32px RGBA alpha sprite is shared across all splashes. No remote
+   texture, new package, volumetric fluid simulation or separate frame loop.
+4. Impact bursts disappear automatically by simulation age and use the
+   existing fish deterministic seed plus shared scene clock. Pause freezes
+   both wavefronts and all droplets. Environment-light intensity attenuates
+   white spray/foam at night instead of making permanently glowing circles.
+5. The original rain system in `stillwater/atmosphere.js` is deliberately
+   untouched: **rain remains small/simple/regular**, while fish create larger,
+   irregular and visually white impacts.
+
+**Performance constraints:** only two shared ring geometries for all actors;
+each active impact uses two small wave meshes, one foam point emitter and one
+spray point emitter, and all six impact groups (3 fish × launch/landing) are
+pooled at scene initialization. On mobile each event emits 12 foam flecks +
+16 spray droplets. Rendering continues in the existing frame loop.
+
+**Source:** `stillwater/lake-life.js`; cache version
+`fish-woodland-v1-splash-v2` in the scene module and
+`...weather-v1-life-v1-splash-v2` throughout the existing HTML/iframe
+script chain.
+
+**Regression checks:** `scripts/check_lake_life.mjs` now checks geometric
+radius variation, foam shader arc breaking, shared sprite/data texture, both
+mobile/desktop budgets, independent launch vs landing visibility, and actual
+world-space landing separation. Existing weather/rain/regressions unchanged.
+Local WebGL desktop and emulated mobile QA examined separately. This is a
+procedural game-VFX approximation, not physically simulated fluid or
+hardware-verified iOS Safari performance.

@@ -6,7 +6,7 @@ const fallback=document.getElementById('treeCanvas');
 const frame=document.createElement('iframe');
 frame.id='stillwaterFrame';
 frame.title='Interactive 3D living tree and mountain lake';
-frame.src='./stillwater/index.html?embedded=1&v=organic-grass-variation-20261022-moving-clouds-v1-weather-v1-life-v1';
+frame.src='./stillwater/index.html?embedded=1&v=organic-grass-variation-20261022-moving-clouds-v1-weather-v1-life-v1-splash-v2';
 frame.allow='fullscreen';
 frame.setAttribute('loading','eager');
 const labelLayer=document.createElement('div');labelLayer.id='stillwaterLabels';

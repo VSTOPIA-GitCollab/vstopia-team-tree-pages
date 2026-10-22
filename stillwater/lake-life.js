@@ -40,37 +40,156 @@ export function createLakeFish({scene,clock,height,lowPower}){
   .04,-.015,0,-.08,-.10,-.16,-.15,-.06,0
  ],3));finGeo.computeVertexNormals();
  const eyeGeo=new THREE.SphereGeometry(.018,6,4),eyeMat=new THREE.MeshStandardMaterial({color:'#101713',roughness:.2});
- const ringGeo=new THREE.RingGeometry(.91,1,40);ringGeo.rotateX(-Math.PI/2);
- const axis=new THREE.Vector3(1,0,0),direction=new THREE.Vector3();
- const actors=[];let jumps=0;
- for(let i=0;i<3;i++){
-  const group=new THREE.Group(),body=new THREE.Mesh(bodyGeo,skin),tail=new THREE.Mesh(finGeo,fins);
-  body.scale.set(.34,.105,.09);group.add(body,tail);
-  for(const side of [-1,1]){const eye=new THREE.Mesh(eyeGeo,eyeMat);eye.position.set(.225,.035,side*.067);group.add(eye);}
-  group.visible=false;root.add(group);
-  const ripple=new THREE.Mesh(ringGeo,new THREE.MeshStandardMaterial({color:'#a7c2bc',roughness:.3,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
-  ripple.visible=false;root.add(ripple);
-  const n=lowPower?16:28,droplets=new Float32Array(n*3),velocities=[];
-  for(let k=0;k<n;k++){const a=rnd()*Math.PI*2,r=.4+rnd()*.8;velocities.push([Math.cos(a)*r,1.1+rnd()*1.8,Math.sin(a)*r]);}
-  const sprayGeo=new THREE.BufferGeometry();sprayGeo.setAttribute('position',new THREE.BufferAttribute(droplets,3));
-  const sprayMat=new THREE.PointsMaterial({color:'#b8d4d0',size:.045,transparent:true,opacity:0,depthWrite:false});
-  const spray=new THREE.Points(sprayGeo,sprayMat);spray.frustumCulled=false;spray.visible=false;root.add(spray);
-  actors.push({group,tail,ripple,spray,velocities,next:4+i*7.3,start:-100,site:null,duration:1.35+i*.11});
- }
- function splash(a,age,x,z,strength){
-  const visible=age>=0&&age<1.65;
-  a.ripple.visible=visible;a.spray.visible=visible&&age<.65;
-  if(!visible)return;
-  a.ripple.position.set(x,.065,z);a.ripple.scale.setScalar(.16+age*1.1);
-  a.ripple.material.opacity=(1-age/1.65)*.48*strength;
-  a.spray.material.opacity=Math.max(0,1-age/.65)*.8*strength;
-  a.spray.material.color.set('#b8d4d0').multiplyScalar(atmosphereUniforms.uAtmosphereLight.value);
-  const positions=a.spray.geometry.attributes.position;
-  for(let j=0;j<a.velocities.length;j++){
-   const v=a.velocities[j];positions.setXYZ(j,x+v[0]*age,.05+Math.max(0,v[1]*age-4.9*age*age),z+v[2]*age);
+
+  // A fish displaces much more water than a raindrop: two staggered,
+  // irregular wavefronts, discontinuous white foam and fine ballistic spray.
+  // Keep rain's smooth, inexpensive rings in atmosphere.js unchanged.
+  function makeImpactWaveGeometry(seed){
+    const geo=new THREE.RingGeometry(.87,1.12,96,3);
+    geo.rotateX(-Math.PI/2);
+    const position=geo.attributes.position;
+    for(let i=0;i<position.count;i++){
+      const x=position.getX(i),z=position.getZ(i),a=Math.atan2(z,x);
+      const r=Math.hypot(x,z);
+      const noise=.080*Math.sin(a*5+seed)+.045*Math.sin(a*11-seed*.77)
+        +.022*Math.sin(a*23+seed*1.4);
+      const uneven=1+noise;
+      position.setXYZ(i,x*uneven,.002*Math.sin(a*13),z*uneven);
+    }
+    position.needsUpdate=true;geo.computeVertexNormals();geo.computeBoundingSphere();
+    return geo;
   }
-  positions.needsUpdate=true;
- }
+  const waveGeometries=[makeImpactWaveGeometry(.63),makeImpactWaveGeometry(2.41)];
+  const waveVertex=`
+   varying vec2 vRippleXZ;
+   void main(){vRippleXZ=position.xz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
+  const waveFragment=`
+   uniform float uOpacity,uAtmosphereLight;
+   varying vec2 vRippleXZ;
+   void main(){
+     float angle=atan(vRippleXZ.y,vRippleXZ.x);
+     float broken=sin(angle*13.0+sin(angle*5.0)*1.8)*.60+
+       sin(angle*29.0-1.9)*.27+sin(angle*43.0+1.2)*.13;
+     float whiter= smoothstep(-.35,.43,broken);
+     float radial=length(vRippleXZ);
+     float edge=1.0-smoothstep(.88,1.11,radial);
+     float flecks=smoothstep(.58,.90,broken)*.38;
+     float alpha=uOpacity*(.30+.70*whiter+flecks)*edge;
+     if(alpha<.012)discard;
+     vec3 foam=mix(vec3(.52,.68,.67),vec3(.91,.97,.95),whiter);
+     gl_FragColor=vec4(foam*(.13+.87*uAtmosphereLight),alpha);
+     #include <tonemapping_fragment>
+     #include <colorspace_fragment>
+   }`;
+  function waveMaterial(){
+    return new THREE.ShaderMaterial({
+      uniforms:{uOpacity:{value:0},uAtmosphereLight:atmosphereUniforms.uAtmosphereLight},
+      vertexShader:waveVertex,fragmentShader:waveFragment,
+      transparent:true,depthWrite:false,side:THREE.DoubleSide,
+      polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
+    });
+  }
+  // Procedural round alpha sprite: the original point sprites were square,
+  // tiny and almost invisible. This shared texture is NOT a network asset.
+  const diameter=32,rgba=new Uint8Array(diameter*diameter*4);
+  for(let y=0;y<diameter;y++)for(let x=0;x<diameter;x++){
+    const i=(y*diameter+x)*4;
+    const r=Math.hypot((x+.5-diameter/2)/(diameter/2),(y+.5-diameter/2)/(diameter/2));
+    rgba[i]=241;rgba[i+1]=250;rgba[i+2]=248;
+    rgba[i+3]=Math.round(255*(1-THREE.MathUtils.smoothstep(r,.48,.96)));
+  }
+  const dropletMap=new THREE.DataTexture(rgba,diameter,diameter,THREE.RGBAFormat);
+  dropletMap.colorSpace=THREE.SRGBColorSpace;
+  dropletMap.minFilter=THREE.LinearFilter;dropletMap.magFilter=THREE.LinearFilter;
+  dropletMap.needsUpdate=true;
+  const axis=new THREE.Vector3(1,0,0),direction=new THREE.Vector3();
+  const actors=[];let jumps=0;
+  function impactEffect(seed){
+    const group=new THREE.Group();group.name='Fish impact foam and turbulent ripples';
+    const waves=waveGeometries.map(geo=>{
+      const mesh=new THREE.Mesh(geo,waveMaterial());
+      mesh.position.y=.09;mesh.visible=false;mesh.renderOrder=2;
+      group.add(mesh);return mesh;
+    });
+    // Surface foam flecks around the turbulent wavefront (broken white dashes).
+    const foamCount=lowPower?12:22;
+    const foamGeometry=new THREE.BufferGeometry();
+    foamGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(foamCount*3),3));
+    const foamMaterial=new THREE.PointsMaterial({
+      map:dropletMap,color:'#e9f6f0',size:lowPower?.20:.24,transparent:true,
+      opacity:0,depthWrite:false,alphaTest:.04,sizeAttenuation:true
+    });
+    const foam=new THREE.Points(foamGeometry,foamMaterial);
+    foam.visible=false;foam.frustumCulled=false;foam.renderOrder=3;group.add(foam);
+    const n=lowPower?16:28;
+    const droplets=new Float32Array(n*3),velocities=[],angles=[],radii=[];
+    for(let k=0;k<n;k++){
+      const a=rnd()*Math.PI*2,r=.22+rnd()*.66;
+      velocities.push([Math.cos(a)*r,1.2+rnd()*2.4,Math.sin(a)*r]);
+    }
+    for(let k=0;k<foamCount;k++){
+      angles.push(rnd()*Math.PI*2);
+      radii.push(.72+rnd()*.48);
+    }
+    const sprayGeo=new THREE.BufferGeometry();
+    sprayGeo.setAttribute('position',new THREE.BufferAttribute(droplets,3));
+    const sprayMat=new THREE.PointsMaterial({
+      map:dropletMap,color:'#f0faf5',size:lowPower?.14:.17,
+      transparent:true,opacity:0,depthWrite:false,alphaTest:.04,sizeAttenuation:true
+    });
+    const spray=new THREE.Points(sprayGeo,sprayMat);
+    spray.frustumCulled=false;spray.visible=false;spray.renderOrder=3;group.add(spray);
+    root.add(group);
+    return {group,waves,foam,angles,radii,spray,velocities,seed};
+  }
+  for(let i=0;i<3;i++){
+    const group=new THREE.Group(),body=new THREE.Mesh(bodyGeo,skin),tail=new THREE.Mesh(finGeo,fins);
+    body.scale.set(.34,.105,.09);group.add(body,tail);
+    for(const side of [-1,1]){
+      const eye=new THREE.Mesh(eyeGeo,eyeMat);
+      eye.position.set(.225,.035,side*.067);group.add(eye);
+    }
+    group.visible=false;root.add(group);
+    const launch=impactEffect(i*.8+.23),landing=impactEffect(i*.8+1.81);
+    actors.push({group,tail,launch,landing,next:4+i*7.3,start:-100,site:null,duration:1.35+i*.11});
+  }
+  function splash(effect,age,x,z,strength){
+    // Launch creates a subdued wake; landing emits a visibly stronger plume.
+    // The two impacts evolve independently while sharing the simulation clock.
+    const active=age>=0&&age<2.1;
+    effect.group.visible=active;
+    if(!active)return;
+    const waveAge=Math.max(0,age);
+    for(let i=0;i<effect.waves.length;i++){
+      const wave=effect.waves[i],t=waveAge-(i*.23);
+      wave.visible=t>=0&&t<1.8;
+      if(!wave.visible)continue;
+      const radius=.27+Math.pow(t/1.8,.83)*2.05;
+      wave.position.set(x,.075+i*.006,z);
+      wave.scale.set(radius,1,radius);
+      wave.material.uniforms.uOpacity.value=strength*.75*Math.pow(1-t/1.8,1.2);
+    }
+    const fade=Math.max(0,1-waveAge/.78);
+    const f=effect.foam,attribute=f.geometry.attributes.position;
+    f.visible=fade>0;
+    f.material.opacity=.80*fade*strength*(.15+.85*atmosphereUniforms.uAtmosphereLight.value);
+    for(let k=0;k<effect.angles.length;k++){
+      const a=effect.angles[k],r=effect.radii[k]*(.20+waveAge*1.55);
+      const wobble=1+.12*Math.sin(a*7+effect.seed)+.07*Math.sin(a*17-effect.seed*3);
+      attribute.setXYZ(k,x+Math.cos(a)*r*wobble,.098+Math.sin(a*9)*.009,z+Math.sin(a)*r*wobble);
+    }
+    attribute.needsUpdate=true;
+    effect.spray.visible=waveAge<.65;
+    effect.spray.material.opacity=Math.max(0,1-waveAge/.65)*.86*strength
+      *(.20+.80*atmosphereUniforms.uAtmosphereLight.value);
+    const positions=effect.spray.geometry.attributes.position;
+    for(let j=0;j<effect.velocities.length;j++){
+      const v=effect.velocities[j];
+      positions.setXYZ(j,x+v[0]*waveAge,.10+Math.max(0,v[1]*waveAge-4.9*waveAge*waveAge),z+v[2]*waveAge);
+    }
+    positions.needsUpdate=true;
+  }
+
  return {actors,update(){
   const now=clock.value;let visible=0;
   for(const a of actors){
@@ -87,8 +206,8 @@ export function createLakeFish({scene,clock,height,lowPower}){
     a.group.quaternion.setFromUnitVectors(axis,direction);
     a.tail.rotation.x=Math.sin(age*32)*.16;
    }
-   const landed=age>=a.duration;
-   splash(a,landed?age-a.duration:age,landed?s.x+s.dx*s.distance:s.x,landed?s.z+s.dz*s.distance:s.z,landed?1:.55);
+    splash(a.launch,age,s.x,s.z,.52);
+    splash(a.landing,age-a.duration,s.x+s.dx*s.distance,s.z+s.dz*s.distance,1);
   }
   document.body.dataset.fishJumps=String(jumps);document.body.dataset.fishVisible=String(visible);
  }};
