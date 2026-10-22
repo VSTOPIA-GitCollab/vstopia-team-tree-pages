@@ -151,18 +151,21 @@ export function createDistantMountains(){
    const broad=.65+noise(x*.002+layer*8,layer+4)*.50;
    const y=-6+envelope*(47+n*125)*broad;
    p.setXYZ(i,x,y,z);
-   c.set('#596c73').lerp(new THREE.Color('#a5b9bd'),layer*.20);
-   c.multiplyScalar(.8+n*.30);colors.push(c.r,c.g,c.b);
+   // Layered slate/charcoal rock, deliberately dark against cloudy HDRI.
+   // The old blue-white albedo and pale outgoing-light haze bleached cliffs.
+   c.set('#29363b').lerp(new THREE.Color('#46585f'),layer*.18);
+   const stratum=.84+.20*Math.sin(x*.018+z*.009)+.19*n;
+   c.multiplyScalar(Math.max(.58,stratum));colors.push(c.r,c.g,c.b);
   }
   g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.computeVertexNormals();
   // Per-object aerial perspective preserves a faint horizon without covering
   // the nearby tree in the much heavier fog needed at mountain distance.
-  const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.25});
+  const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,fog:false,envMapIntensity:.02});
   material.onBeforeCompile=shader=>{
    shader.vertexShader='varying float mountainDistance;\n'+shader.vertexShader;
    shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n mountainDistance=length(mvPosition.xyz);');
    shader.fragmentShader='varying float mountainDistance;\n'+shader.fragmentShader;
-   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`float haze=clamp(1.-exp(-mountainDistance*.0009),.0,.84);outgoingLight=mix(outgoingLight,vec3(.52,.64,.68),haze);\n#include <opaque_fragment>`);
+   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`float haze=clamp(1.-exp(-mountainDistance*.0009),.0,.84);outgoingLight=mix(outgoingLight,vec3(.105,.15,.17),haze*.64);\n#include <opaque_fragment>`);
   };
   const mesh=new THREE.Mesh(g,material);mesh.name=`Horizon ridge ${layer+1}`;group.add(mesh);
  }

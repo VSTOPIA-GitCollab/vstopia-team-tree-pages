@@ -85,3 +85,8 @@ python3 -m http.server 38995 --bind 127.0.0.1
 Open [the combined local VSTOPIA website](http://127.0.0.1:38995/) or [the original full-screen Stillwater scene](http://127.0.0.1:38995/stillwater/). In the integration, **wind starts at 2/2 and light at 1/1**, the source sliders remain available through **The atmosphere** dropdown, the old bushes/short grasses/flocks are integrated, and 12 actual bark-vertex project labels can be revealed with **SHOW 12 BRANCHES**. The website still uses public-only GitHub statistics; there are no private repo tokens or backend dependencies. Controls remain original: drag orbit, right/Shift-drag pan, wheel zoom, `F` home and `H` native UI. No merges or deploy without owner approval.
 
 **Full audited architecture, source provenance, differences, test evidence and next review steps:** [Stillwater source and local integration](docs/STILLWATER_SOURCE_ARCHITECTURE_LOCAL_2026-10-22.md).
+
+
+## Local-only design review: readable glass UI and slate mountains
+
+In the isolated `feat/stillwater-ui-mountain-material-review` worktree, the Stillwater VSTOPIA site loads **one generated `site-unified.css`** from eight editable source modules and uses lighter glass, a full-height right inspector and darker slate mountain materials. The browser-verified local preview is `http://127.0.0.1:38996/`; the public GitHub Pages site remains unchanged. See [screenshots and QA](docs/STILLWATER_UI_MOUNTAIN_REVIEW_LOCAL_2026-10-22.md).

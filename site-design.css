@@ -1,0 +1,181 @@
+/* VSTOPIA × Stillwater — visual authority. Included as the final section of the
+   single generated stylesheet, after legacy rules. No new nested glass frames. */
+:root{
+ --ui-text:#f9fdfd;--ui-muted:#d5e6e9;
+ --ui-border:rgba(248,255,255,.32);--ui-glass:rgba(18,47,55,.21);
+ --ui-glass-strong:rgba(17,44,53,.32);--ui-shadow:0 2px 12px rgba(12,30,36,.24);
+ --ui-font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
+ --garden-side:clamp(345px,28vw,442px);
+}
+html,body{font-family:var(--ui-font)!important;color:var(--ui-text)}
+body .app-shell{font-family:var(--ui-font)!important}
+.layout{grid-template-columns:clamp(175px,15vw,224px) minmax(0,1fr) var(--garden-side)!important}
+/* Physically translucent: the moving tree, clouds and reflections remain
+   visible through header, side rails and compact editorial overlays. */
+.topbar,.layout>.sidebar,.layout>.inspector,.layout>.bottom-metrics,
+.layout>.workbench>.workbench-top{
+ background:var(--ui-glass)!important;
+ border-color:var(--ui-border)!important;
+ color:var(--ui-text)!important;
+ -webkit-backdrop-filter:blur(20px) saturate(122%)!important;
+ backdrop-filter:blur(20px) saturate(122%)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.31),var(--ui-shadow)!important;
+}
+.topbar{height:60px!important;min-height:60px!important;padding:0 17px!important}
+.topbar .brand-type strong{font-size:13px!important;color:var(--ui-text)!important;letter-spacing:.13em!important}
+.topbar .brand-type small{font-size:9px!important;color:var(--ui-muted)!important;letter-spacing:.10em!important}
+.layout>.sidebar{padding:12px 10px!important;overflow-x:hidden!important;overflow-y:auto!important}
+.layout>.inspector{padding:10px!important;gap:9px!important;overflow-y:auto!important;overflow-x:hidden!important}
+.layout>.workbench>.workbench-top{min-height:58px!important;padding:10px 14px!important}
+.layout :is(.sidebar,.inspector,.bottom-metrics,.workbench-top) :is(h1,h2,h3,h4,p,span,strong,small,em,a,button,label),
+.topbar :is(span,strong,small,em,a),.layout>.sidebar :is(.repo-copy,.repo-item),
+.layout>.inspector :is(.member-top,.member-stat,.work-pill,.member-last,.selected-detail,.detail-desc,.activity-message,.activity-card){
+ color:var(--ui-text)!important;
+ text-shadow:0 1px 3px rgba(7,24,30,.64)!important;
+}
+.layout :is(.sidebar h1,.workbench h2,.inspector h2){
+ font:650 clamp(20px,1.7vw,25px)/1.13 var(--ui-font)!important;
+ letter-spacing:-.045em!important;margin:0!important;
+}
+.layout .eyebrow,.layout .section-divider,.layout .section-heading{font:680 10px/1.4 var(--ui-font)!important;letter-spacing:.10em!important;color:var(--ui-muted)!important}
+.layout :is(.sidebar-header p,.inspector-caption,.detail-desc,.activity-message,.member-last,.metric small){font:450 11.5px/1.48 var(--ui-font)!important;letter-spacing:0!important;color:var(--ui-muted)!important}
+/* No nested opaque rectangles: team cards are translucent outline groupings;
+   numeric cells and work indicators are plain text within that grouping. */
+.layout>.inspector>.team-members,.layout>.inspector>.detail-section,
+.layout>.inspector>.collaborator,.layout>.inspector>.inspector-heading,
+.layout>.inspector>.inspector-bottom{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;flex:0 0 auto!important;padding:8px 9px!important;margin:0!important}
+.layout>.inspector>.inspector-heading{padding:2px 7px!important}
+.layout>.inspector .member-cards{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important;margin:5px 0 0!important}
+.layout>.inspector .member-card{
+ background:rgba(10,34,43,.16)!important;border:1px solid var(--ui-border)!important;
+ border-radius:15px!important;box-shadow:none!important;
+ padding:11px!important;margin:0!important;min-height:0!important;height:auto!important;
+ display:grid!important;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr)!important;
+ grid-template-areas:'identity identity' 'stats assignments' 'last last'!important;
+ align-content:start!important;gap:7px 11px!important;overflow:visible!important;
+}
+.layout>.inspector .member-top{grid-area:identity!important;display:flex!important;gap:8px!important;align-items:center!important}
+.layout>.inspector .member-avatar{width:30px!important;min-width:30px!important;height:30px!important;font:650 12px var(--ui-font)!important;background:rgba(255,255,255,.13)!important;border:1px solid var(--ui-border)!important}
+.layout>.inspector .member-top a{font:680 13px/1.3 var(--ui-font)!important}
+.layout>.inspector .member-top small{font:500 10px/1.2 var(--ui-font)!important;margin:2px 0 0!important}
+.layout>.inspector .member-grid{grid-area:stats!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(52px,auto))!important;gap:3px!important;margin:0!important;align-self:stretch!important;min-width:0!important}
+.layout>.inspector .member-stat{
+ min-width:0!important;min-height:52px!important;padding:5px 0!important;
+ background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+}
+.layout>.inspector .member-stat strong{font:720 23px/1 var(--ui-font)!important;white-space:nowrap!important}
+.layout>.inspector .member-stat small{font:650 10px/1.2 var(--ui-font)!important;letter-spacing:0!important;white-space:normal!important;text-align:center!important;overflow-wrap:normal!important;margin:4px 0 0!important}
+.layout>.inspector .member-work{grid-area:assignments!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:repeat(3,minmax(34px,auto))!important;gap:3px!important;margin:0!important;align-self:stretch!important;min-width:0!important}
+.layout>.inspector .work-pill{
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important;align-items:center!important;min-width:0!important;min-height:34px!important;
+ background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:2px 3px!important;
+}
+.layout>.inspector .work-pill .work-leaf{display:none!important}
+.layout>.inspector .work-pill span:nth-child(2){font:590 10.5px/1.26 var(--ui-font)!important;letter-spacing:0!important;white-space:normal!important;word-break:normal!important}
+.layout>.inspector .work-pill strong{font:720 19px/1 var(--ui-font)!important}
+.layout>.inspector .member-last{grid-area:last!important;display:flex!important;align-items:baseline!important;flex-wrap:wrap!important;gap:3px 5px!important;margin:0!important;padding:6px 0 0!important;border-top:1px solid var(--ui-border)!important;font:500 10px/1.4 var(--ui-font)!important}
+.layout>.inspector .member-last strong,.layout>.inspector .member-last div{font:650 10px/1.35 var(--ui-font)!important;margin:0!important}
+.layout>.inspector .member-last div{display:inline!important}
+.layout>.inspector .section-heading{margin:0 0 6px!important}
+.layout>.inspector :is(.activity-card,.selected-detail,.supervisor-speech,.collab-profile){
+ background:none!important;border:0!important;box-shadow:none!important;
+ height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;
+ padding:4px 0!important;margin:0!important;
+}
+.layout>.inspector .detail-title{font:670 14px/1.2 var(--ui-font)!important}
+.layout>.inspector .garden-note,.layout>.inspector .activity-disclaimer,
+.layout>.inspector .activity-kicker,.layout>.inspector .inspector-bottom{display:none!important}
+/* Demo data labels are explicit, aggregates never conflated with demo projects. */
+.layout>.sidebar .section-divider{margin:13px 0 6px!important}
+.layout>.sidebar .repo-list{padding:0!important;gap:3px!important}
+.layout>.sidebar .repo-item{background:rgba(11,33,40,.10)!important;border:1px solid transparent!important;border-radius:10px!important;box-shadow:none!important;margin:0!important;padding:8px!important;min-height:46px!important}
+.layout>.sidebar .repo-item:hover,.layout>.sidebar .repo-item.selected{background:rgba(11,36,44,.27)!important;border-color:var(--ui-border)!important}
+.layout>.sidebar .repo-item :is(small,.repo-count,.repo-meta){font:540 10px/1.35 var(--ui-font)!important}
+.layout>.sidebar .filter-bar{gap:4px!important;padding:7px 0!important}
+.layout>.sidebar .filter{font:650 10px/1.15 var(--ui-font)!important;letter-spacing:.02em!important;padding:7px 8px!important;border-radius:10px!important;background:rgba(15,44,51,.15)!important}
+.layout>.sidebar .search-field{margin:9px 0!important;min-height:37px!important;background:rgba(15,44,51,.15)!important;border:1px solid var(--ui-border)!important}
+.layout>.sidebar .search-field input{font:480 12px var(--ui-font)!important;color:#fff!important}
+.layout>.sidebar .search-field input::placeholder{color:rgba(250,255,255,.82)!important}
+.layout>.bottom-metrics{padding:8px 11px!important}
+.layout>.bottom-metrics .metrics-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:0!important}
+.layout>.bottom-metrics .metric{
+ min-height:74px!important;background:transparent!important;border:0!important;border-right:1px solid rgba(255,255,255,.23)!important;border-radius:0!important;box-shadow:none!important;
+ display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;padding:7px 8px!important;
+}
+.layout>.bottom-metrics .metric:last-child{border-right:0!important}
+.layout>.bottom-metrics .metric strong{font:720 28px/1.15 var(--ui-font)!important;letter-spacing:-.035em!important}
+.layout>.bottom-metrics .metric span{font:670 10px/1.2 var(--ui-font)!important;letter-spacing:.05em!important}
+.layout>.bottom-metrics .metric small{font-size:10px!important}
+/* Permanent info distinction, unobtrusive textual evidence labels. */
+#repoCountLabel{font-variant-numeric:tabular-nums}
+#stillwaterLabels .living-node-label{font:660 11px var(--ui-font)!important}
+/* Responsive: maintain readable metrics, never squeeze fonts to 7px. */
+@media(max-width:1180px){
+ .layout{grid-template-columns:175px minmax(0,1fr) 360px!important}
+ .layout>.inspector .member-stat strong{font-size:21px!important}
+ .layout>.inspector .member-card{gap:6px 7px!important;padding:8px!important}
+}
+@media(max-width:900px) and (min-width:761px){
+ .layout{grid-template-columns:160px minmax(0,1fr) 340px!important}
+ .layout>.inspector .member-card{grid-template-columns:1fr!important;grid-template-areas:'identity' 'stats' 'assignments' 'last'!important}
+ .layout>.inspector .member-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:1fr!important}
+}
+@media(max-width:760px){
+ body{overflow:auto!important}
+ .app-shell{height:auto!important;min-height:100dvh!important}
+ .layout{display:flex!important;flex-direction:column!important;overflow:visible!important}
+ .layout>.sidebar,.layout>.inspector,.layout>.workbench,.layout>.bottom-metrics{width:100%!important;min-width:0!important}
+ .layout>.inspector{overflow:visible!important}
+ .layout>.inspector .member-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .layout>.inspector .member-card{grid-template-areas:'identity identity' 'stats assignments' 'last last'!important}
+ .layout>.bottom-metrics .metrics-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ .layout>.bottom-metrics .metric{padding:5px 3px!important;min-height:64px!important}
+ .layout>.bottom-metrics .metric strong{font-size:19px!important}
+ .layout>.bottom-metrics .metric span{font-size:8px!important}
+ .layout>.bottom-metrics .metric small{display:none!important}
+}
+@media(max-width:410px){
+ .layout>.inspector .member-card{grid-template-columns:1fr!important;grid-template-areas:'identity' 'stats' 'assignments' 'last'!important}
+ .layout>.inspector .member-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:1fr!important}
+ .layout>.inspector .member-stat strong{font-size:18px!important}
+ .layout>.inspector .member-stat small{font-size:9px!important}
+}
+/* Replace nested faux-glass containers with editorial spacing and a fine
+   divider. Only the outer rail and individual collaborator cards have glass. */
+.layout>.inspector>.inspector-section,
+.layout>.inspector>.inspector-heading{
+ background:none!important;background-image:none!important;
+ border:0!important;box-shadow:none!important;border-radius:0!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+.layout>.inspector>.inspector-section + .inspector-section{
+ border-top:1px solid rgba(246,255,255,.24)!important;
+ padding-top:9px!important;
+}
+.layout>.inspector .member-card{
+ background:rgba(10,34,43,.105)!important;
+ border-color:rgba(246,255,255,.27)!important;
+}
+.layout>.sidebar .repo-item:not(.selected){background:rgba(10,36,44,.075)!important}
+
+/* RIGHT RAIL: use full vertical grid height, eliminate inner scrollbar.
+   Formerly the bottom metrics crossed under the inspector and clipped 88px
+   of the selected-branch/supervisor content. Keep metrics beneath 3D scene. */
+@media(min-width:761px){
+ .layout{grid-template-rows:minmax(0,1fr) auto!important}
+ .layout>.sidebar{grid-column:1!important;grid-row:1 / 3!important}
+ .layout>.workbench{grid-column:2!important;grid-row:1!important;min-height:0!important}
+ .layout>.bottom-metrics{grid-column:2!important;grid-row:2!important;min-height:0!important}
+ .layout>.inspector{grid-column:3!important;grid-row:1 / 3!important;
+  height:100%!important;max-height:none!important;min-height:0!important;
+  overflow-x:hidden!important;overflow-y:auto!important}
+}
+@media(min-width:761px) and (max-width:1100px){
+ .layout>.bottom-metrics .metrics-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+
+/* Larger selected-branch and supervisor copy, still glass/no inner panels. */
+.layout>.inspector :is(.detail-desc,.activity-message,.supervisor-speech){
+ font-size:12px!important;line-height:1.46!important;letter-spacing:0!important;
+}

@@ -46,7 +46,8 @@ class StillwaterLocalIntegrationTests(unittest.TestCase):
   self.assertIn('stillwater/index.html?embedded=1',PARENT)
   self.assertIn('id=\'stillwaterFrame\'',PARENT)
   self.assertIn('SHOW 12 BRANCHES',PARENT)
-  self.assertIn('liquid-glass.css',PAGE)
+  self.assertIn('href="./site-unified.css"',PAGE)
+  self.assertIn('liquid-glass.css', (R/'site-unified.css').read_text())
   self.assertIn('vstopia-liquid-glass-island.mjs',PAGE)
   self.assertNotIn('src="./vendor/vstopia-specy-header.mjs"',PAGE)
  def test_glass_and_local_evidence(self):
