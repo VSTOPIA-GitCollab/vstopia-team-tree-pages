@@ -6,7 +6,7 @@ const fallback=document.getElementById('treeCanvas');
 const frame=document.createElement('iframe');
 frame.id='stillwaterFrame';
 frame.title='Interactive 3D living tree and mountain lake';
-frame.src='./stillwater/index.html?embedded=1&v=ios-frame-20261022';
+frame.src='./stillwater/index.html?embedded=1&v=horizon-ring-20261022';
 frame.allow='fullscreen';
 frame.setAttribute('loading','eager');
 const labelLayer=document.createElement('div');labelLayer.id='stillwaterLabels';
