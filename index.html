@@ -33,26 +33,26 @@
       <div class="topbar-right"><span class="date-tag" id="clock">—</span><a class="top-link" href="https://github.com/orgs/VSTOPIA-GitCollab/repositories" target="_blank" rel="noopener noreferrer">GITHUB <span aria-hidden="true">↗</span></a></div>
     </header>
     <main class="layout">
-      <aside class="sidebar" aria-label="Progetti GitHub">
-        <div class="sidebar-header"><div class="eyebrow">01 / EXPLORER</div><h1>Our universe<span class="headline-dot">.</span></h1><p>Albero interattivo pubblico. I rami concettuali sono identificati come demo.</p></div>
-        <label class="search-field"><span aria-hidden="true">⌕</span><input id="repoSearch" placeholder="Cerca un repository…" autocomplete="off" aria-label="Cerca repository"><kbd>⌘ K</kbd></label>
+      <aside class="sidebar" aria-label="Aree tematiche della mappa">
+        <div class="sidebar-header"><div class="eyebrow">01 / EXPLORER</div><h1>Our universe<span class="headline-dot">.</span></h1><p>Albero tematico interattivo. I dati GitHub verificati sono nella sezione Team activity.</p></div>
+        <label class="search-field"><span aria-hidden="true">⌕</span><input id="repoSearch" placeholder="Cerca un’area…" autocomplete="off" aria-label="Cerca un’area della mappa"><kbd>⌘ K</kbd></label>
         <div class="filter-bar" role="group" aria-label="Filtro progetti">
           <button class="filter active" data-filter="all" aria-pressed="true">TUTTI</button>
-          <button class="filter" data-filter="issues" aria-pressed="false">DA FARE</button>
-          <button class="filter" data-filter="active" aria-pressed="false">ATTIVI</button>
+          <button class="filter" data-filter="creative" aria-pressed="false">CREATIVE</button>
+          <button class="filter" data-filter="technical" aria-pressed="false">TECNICHE</button>
         </div>
-        <div class="section-divider"><span>DEMO · EXAMPLE PROJECTS</span><span id="repoCountLabel">00</span></div>
-        <div id="repoList" class="repo-list" aria-live="polite"><div class="loading-list">Caricamento repository privati…</div></div>
+        <div class="section-divider"><span>PROJECT AREAS</span><span id="repoCountLabel">00</span></div>
+        <div id="repoList" class="repo-list" aria-live="polite"><div class="loading-list">Caricamento aree della mappa…</div></div>
 
       </aside>
       <section class="workbench" aria-label="Albero interattivo">
         <div class="workbench-top"><div><div class="eyebrow">02 / PROJECT ECOSYSTEM</div><h2>The living tree<span class="headline-dot">.</span></h2></div></div>
-        <div class="tree-stage" id="treeStage"><div class="tree-grid forest-atmosphere" aria-hidden="true"></div><canvas id="treeCanvas" aria-label="Albero interattivo dei repository. Trascina per ruotare, scorri per zoom e seleziona i nodi." tabindex="0"></canvas><div class="sun-halo" aria-hidden="true"></div><div class="forest-moon" aria-hidden="true"></div></div>
+        <div class="tree-stage" id="treeStage"><div class="tree-grid forest-atmosphere" aria-hidden="true"></div><canvas id="treeCanvas" aria-label="Albero interattivo delle aree tematiche. Trascina per ruotare, scorri per zoom e seleziona i nodi." tabindex="0"></canvas><div class="sun-halo" aria-hidden="true"></div><div class="forest-moon" aria-hidden="true"></div></div>
 
       </section>
       <aside class="inspector" aria-label="Dettagli e attività">
         <div class="inspector-heading"><div class="eyebrow">03 / VERIFIED GITHUB DATA</div><h2>Team activity<span class="headline-dot">.</span></h2><p class="inspector-caption">Statistiche del team e profili Agostino / Marcello; dettagli dei repository riservati.</p></div>
-        <div class="inspector-section team-members"><div class="section-heading"><span>GITHUB · VERIFIED CONTRIBUTIONS</span><span class="activity-dot"></span></div><div id="memberCards" class="member-cards"><div class="loading-list">Caricamento attività dei collaboratori…</div></div><div class="activity-disclaimer">Commit: branch predefiniti. PR e merge: totali storici. Push: eventi osservati negli ultimi 30 giorni, possibili limiti API.</div></div>
+        <div class="inspector-section team-members"><div class="section-heading"><span id="publicDataHeading">GITHUB · SNAPSHOT AGGREGATO</span><span class="activity-dot"></span></div><div id="memberCards" class="member-cards"><div class="loading-list">Caricamento attività dei collaboratori…</div></div><div class="activity-disclaimer">Commit: branch predefiniti. PR e merge: totali storici. Push: eventi osservati negli ultimi 30 giorni, possibili limiti API.</div></div>
         <div class="inspector-section collaborator"><div class="section-heading"><span>TEAM SUPERVISOR</span><span class="activity-dot"></span></div><div class="collab-profile"><div class="avatar">GH</div><div><strong>GitHub</strong><small>Supervisore · dati aggregati</small></div></div><div id="activityFeed" class="activity-card"><div class="loading-list">Caricamento supervisore…</div></div></div>
         <div class="inspector-section detail-section"><div class="section-heading"><span>SELECTED BRANCH</span><span id="selectedIndicator">—</span></div><div id="selectedDetail" class="selected-detail"><div class="empty-select"><div class="empty-symbol">◎</div>Seleziona un nodo nell'albero oppure un repository a sinistra.</div></div></div>
         <div class="inspector-bottom"><span id="lastSync">—</span></div>

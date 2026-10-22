@@ -27,8 +27,9 @@ class UnifiedDesign(unittest.TestCase):
   self.assertIn('const y=-6+envelope*(47+n*125)*broad',NATURE)
   self.assertIn('haze=clamp(1.-exp(-mountainDistance*.00036),.0,.27)',NATURE)
   self.assertNotIn("c.set('#29363b')",NATURE)
- def test_apple_font_and_real_demo_distinction(self):
+ def test_apple_font_and_public_area_distinction(self):
   self.assertIn('SF Pro Text',DESIGN)
-  self.assertIn('DEMO',HTML)
+  self.assertIn('PROJECT AREAS',HTML)
+  self.assertNotIn('DEMO',HTML)
   self.assertIn('VERIFIED GITHUB DATA',HTML)
 if __name__=='__main__':unittest.main()

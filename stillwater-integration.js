@@ -1,7 +1,7 @@
 /* VSTOPIA liquid-glass website × original Stillwater renderer.
  * Same-origin iframe intentionally isolates Three r180, its physical sky,
  * PMREM sky IBL, wind shader and OrbitControls from r167 glass app addons.
- * Keep GitHub demo snapshot/public UI entirely unchanged.
+ * Keep authorized aggregate snapshot and conceptual tree navigation separate.
  */
 const stage=document.getElementById('treeStage');
 const fallback=document.getElementById('treeCanvas');
