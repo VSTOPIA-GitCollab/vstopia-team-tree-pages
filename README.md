@@ -102,3 +102,7 @@ The latest local review matches the three original mountain shapes/placements fr
 ## Approved release: extensive non-reflective distant meadow
 
 The mountain-side meadow extends **9.6 km** and matches the real grass terrain in diffuse colors, without water-like specular reflections. The lake remains irregular and reflective, mountains preserve their original `lake-scene 2` positioning, and branch labels stay visible. See [implementation and browser QA](docs/MATTE_EXTENDED_MEADOW_PUBLIC_RELEASE_2026-10-22.md).
+
+## Plain-text live inspector sections (22 October 2026)
+
+The dark nested cards behind **Selected Branch** and **Team Supervisor** have been removed. Live details and rotating messages remain dynamically updated on the transparent Team Activity rail. Source styling is in `site-design.css`; regenerate the one stylesheet using `python3 scripts/build_site_css.py`. [Implementation notes and actual-browser screenshots](docs/PLAIN_DYNAMIC_INSPECTOR_2026-10-22.md).
