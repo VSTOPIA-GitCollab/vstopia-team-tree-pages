@@ -90,3 +90,7 @@ Open [the combined local VSTOPIA website](http://127.0.0.1:38995/) or [the origi
 ## Local-only design review: readable glass UI and slate mountains
 
 In the isolated `feat/stillwater-ui-mountain-material-review` worktree, the Stillwater VSTOPIA site loads **one generated `site-unified.css`** from eight editable source modules and uses lighter glass, a full-height right inspector and darker slate mountain materials. The browser-verified local preview is `http://127.0.0.1:38996/`; the public GitHub Pages site remains unchanged. See [screenshots and QA](docs/STILLWATER_UI_MOUNTAIN_REVIEW_LOCAL_2026-10-22.md).
+
+## Local-only rocky mountain / meadow continuation
+
+The isolated branch `feat/rocky-mountains-continuous-terrain-20261022` improves photographed triplanar mountain materials, repairs the pale terrain seam and keeps all 12 project labels permanently visible when their actual branch anchors are on camera. Test the integrated scene at `http://127.0.0.1:39031/` on the main Mac. Full technical audit, screenshots, regression notes and references: [Stillwater rocky mountains & continuous meadow](docs/STILLWATER_ROCKY_MOUNTAINS_CONTINUOUS_MEADOW_2026-10-22.md). **Not published to GitHub Pages.**

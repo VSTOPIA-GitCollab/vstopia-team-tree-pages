@@ -23,8 +23,9 @@ class UnifiedDesign(unittest.TestCase):
   self.assertIn('@media(max-width:760px)',DESIGN)
  def test_mountain_albedo_and_haze_avoid_white_washed_cliffs(self):
   self.assertIn("c.set('#29363b')",NATURE)
-  self.assertIn('envMapIntensity:.02',NATURE)
-  self.assertIn('vec3(.105,.15,.17),haze*.64',NATURE)
+  self.assertIn('envMapIntensity:.13',NATURE)
+  self.assertIn('rockTriplanar(uRockAlbedo)',NATURE)
+  self.assertIn('outgoingLight=mix(outgoingLight,vec3(.13,.18,.20)',NATURE)
   self.assertNotIn("c.set('#596c73')",NATURE)
  def test_apple_font_and_real_demo_distinction(self):
   self.assertIn('SF Pro Text',DESIGN)

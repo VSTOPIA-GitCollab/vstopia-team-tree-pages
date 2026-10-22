@@ -79,16 +79,55 @@ const terrainGeo=new THREE.PlaneGeometry(340,340,300,300);terrainGeo.rotateX(-Ma
 const tp=terrainGeo.attributes.position,colors=[];const tc=new THREE.Color();
 for(let i=0;i<tp.count;i++){const x=tp.getX(i),z=tp.getZ(i),h=height(x,z);tp.setY(i,h);const n=fbm(x*.22,z*.22);tc.set(h<.25?'#5b5946':h<.8?'#80836b':'#78816a');tc.multiplyScalar(.8+n*.5);colors.push(tc.r,tc.g,tc.b);}terrainGeo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));terrainGeo.computeVertexNormals();
 const terrain=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({map:groundTex,bumpMap:groundTex,bumpScale:.23,vertexColors:true,roughness:1}));terrain.receiveShadow=true;scene.add(terrain);
-// The mountains are distant landscape, not a wall behind the focal tree.
-scene.add(createDistantMountains());
-// Continue the ground toward the distant horizon, below the existing lake bank.
-const farGroundGeo=new THREE.RingGeometry(145,2400,180,45);farGroundGeo.rotateX(-Math.PI/2);
-const fgp=farGroundGeo.attributes.position;
+// Three photographed rock maps are CC0 Poly Haven Aerial Rocks 02, retained
+// from our earlier local alpine prototype (never fetched from a runtime CDN).
+const rockLoader=new THREE.TextureLoader();
+const rockColor=rockLoader.load('./assets/rock-pbr/aerial-rocks-color.jpg');
+const rockNormal=rockLoader.load('./assets/rock-pbr/aerial-rocks-normal.jpg');
+const rockRoughness=rockLoader.load('./assets/rock-pbr/aerial-rocks-roughness.jpg');
+rockColor.colorSpace=THREE.SRGBColorSpace;
+for(const t of [rockColor,rockNormal,rockRoughness]){
+ t.wrapS=t.wrapT=THREE.RepeatWrapping;
+ t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+}
+scene.add(createDistantMountains({rockColor,rockNormal,rockRoughness}));
+
+// Shared surface elevation for the distant meadow and every grass root.
+function distantMeadowHeight(x,z){
+ const r=Math.hypot(x,z),nearH=height(x,z)-.38;
+ const farH=6.4+(fbm(x*.012,z*.012)-.43)*13+
+   (Math.sin(x*.004+z*.003)*3.2+Math.cos(z*.006)*2.8);
+ return THREE.MathUtils.lerp(nearH,farH,THREE.MathUtils.smoothstep(r,250,800));
+}
+// Seamless terrain continuation: the old RingGeometry began at Y=1 while
+// the meadow edge was higher. It also lacked ground texture/vertex colors,
+// creating a pale band behind the grass and a visible discontinuity.
+// Use exactly the same world-space color/UV basis as the near ground.
+const farGroundGeo=new THREE.RingGeometry(144,2400,256,150);
+const fgp=farGroundGeo.attributes.position, fgu=farGroundGeo.attributes.uv;
+const farColors=[];
 for(let i=0;i<fgp.count;i++){
- const x=fgp.getX(i),z=fgp.getZ(i),r=Math.hypot(x,z),blend=Math.min(1,(r-145)/130);
- fgp.setY(i,1+blend*(3+fbm(x*.009,z*.009)*9));
-}farGroundGeo.computeVertexNormals();
-const farGround=new THREE.Mesh(farGroundGeo,new THREE.MeshStandardMaterial({color:'#647263',roughness:1,envMapIntensity:.4}));scene.add(farGround);
+ const oldX=fgp.getX(i),oldZ=fgp.getZ(i),oldR=Math.hypot(oldX,oldZ);
+ const t=THREE.MathUtils.clamp((oldR-144)/(2400-144),0,1);
+ const r=144+2256*Math.pow(t,1.8);
+ const x=oldX*(r/Math.max(.001,oldR)),z=oldZ*(r/Math.max(.001,oldR));
+ fgp.setXYZ(i,x,distantMeadowHeight(x,z),z);
+ // Near ground's PlaneGeometry(340m) has UV=(x+170)/340 and repeat=55.
+ fgu.setXY(i,(x+170)*(55/340),(170-z)*(55/340));
+ const n=fbm(x*.22,z*.22),h=height(x,z);
+ tc.set(h<.25?'#5b5946':h<.8?'#80836b':'#78816a');
+ tc.multiplyScalar(.8+n*.5);
+ farColors.push(tc.r,tc.g,tc.b);
+}
+farGroundGeo.setAttribute('color',new THREE.Float32BufferAttribute(farColors,3));
+farGroundGeo.computeVertexNormals();
+const farGround=new THREE.Mesh(farGroundGeo,new THREE.MeshStandardMaterial({
+ map:groundTex,bumpMap:groundTex,bumpScale:.23,vertexColors:true,
+ color:'#ffffff',roughness:1,metalness:0,envMapIntensity:.15
+}));
+farGround.name='Textured seamless distant meadow (no pale band)';
+farGround.receiveShadow=true;
+scene.add(farGround);
 // All tree limbs are swept, tapered and ridged; no foliage spheres or billboards.
 class MeshBuilder{
  constructor(){this.p=[];this.n=[];this.uv=[];this.idx=[];}
@@ -186,11 +225,9 @@ const grassMat=sway(new THREE.MeshStandardMaterial({color:'#b6be87',vertexColors
 const grassCount=180000,grass=new THREE.InstancedMesh(grassGeo,grassMat,grassCount);let gi=0,tries=0;
 while(gi<grassCount && tries++<1200000){let x=range(-60,60),z=range(-54,52),h=height(x,z);if(h<.08 || h>4.5)continue;if(h>2.9 && rand()>.28)continue;const patch=noise(x*.19,z*.19);if(rand()> .56+patch*.5)continue;dummy.position.set(x,h-.03,z);dummy.rotation.set(0,range(0,6.28),range(-.17,.17));const s=range(.22,.67)*(h<1.1?1.3:1);dummy.scale.set(range(.8,1.8),s,1);dummy.updateMatrix();grass.setMatrixAt(gi,dummy.matrix);tc.setHSL(range(.18,.26),.33,range(.46,.75));grass.setColorAt(gi++,tc);}
 grass.count=gi;grass.receiveShadow=true;grass.computeBoundingSphere();scene.add(grass);
-// Reeds and seed heads along shallow margins.
-const reeds=new MeshBuilder(),heads=[];
-for(let i=0;i<350;i++){const a=range(0,6.28),x=Math.cos(a)*36*range(.97,1.03),z=4+Math.sin(a)*29*range(.97,1.03),y=height(x,z);if(y<-.25||y>.55)continue;const h=range(.8,1.65);const tip=V(x+.15,y+h,z+.04);reeds.tube([V(x,y,z),V(x+.03,y+h*.5,z),tip],.018,.009,4);heads.push(tip);}
-const reedMesh=new THREE.Mesh(reeds.geometry(),sway(new THREE.MeshStandardMaterial({color:'#737342',roughness:1}),'branch'));scene.add(reedMesh);
-const seedHeads=new THREE.InstancedMesh(new THREE.CapsuleGeometry(.035,.23,3,5),new THREE.MeshStandardMaterial({color:'#493823',roughness:1}),heads.length);heads.forEach((p,i)=>{dummy.position.copy(p);dummy.rotation.set(0,0,-.12);dummy.scale.setScalar(1);dummy.updateMatrix();seedHeads.setMatrixAt(i,dummy.matrix);});scene.add(seedHeads);
+// Long-range vegetation is represented by the same photographed textured
+// meadow surface. Sub-pixel instanced grass at the mountain foot caused
+// high-contrast black/white pixel shimmer and is intentionally not created.
 // True planar reflection renders the moving trees and mountains from a mirrored camera.
 const waterNormals=new THREE.TextureLoader().load('./assets/water-normals.jpg',t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;});
 const water=new Water(new THREE.PlaneGeometry(900,900),{textureWidth:1024,textureHeight:1024,waterNormals,sunDirection:sunDir,sunColor:'#fff0da',waterColor:'#163c35',distortionScale:1.6,fog:true});water.rotation.x=-Math.PI/2;water.position.y=.015;water.material.uniforms.size.value=5;scene.add(water);

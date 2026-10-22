@@ -18,19 +18,11 @@ fallback.style.opacity='0';fallback.style.pointerEvents='none';
 const names=['Audio Playground','Creative Engine','Motion Lab','Plugin Workshop',
  'Research Garden','Release Pipeline','Community Space','Design Studio',
  'Sample Library','Collaboration Hub','Prototype Station','Knowledge Base'];
-let selected=names[0],filterVisible=new Set(names),showAll=false;
+let selected=names[0],filterVisible=new Set(names);
 let anchorData=[],ready=false;
 const controls=new Map();
-// Keep the main oak and water visible; all 12 bark anchors remain accessible.
-// Reveal the entire project canopy on demand, not a crowded wall of labels.
-const toggle=document.createElement('button');
-toggle.className='stillwater-label-toggle';toggle.type='button';
-toggle.textContent='SHOW 12 BRANCHES';toggle.setAttribute('aria-pressed','false');
-toggle.addEventListener('click',()=>{
- showAll=!showAll;toggle.setAttribute('aria-pressed',String(showAll));
- toggle.textContent=showAll?'SHOW SELECTED ONLY':'SHOW 12 BRANCHES';redraw();
-});
-document.querySelector('.workbench-top')?.append(toggle);
+// All 12 physical bark labels remain visible when their branches face the camera.
+// No toggle to hide the other names: the user explicitly wants permanent labels.
 const API={
  get ready(){return ready},
  getAnchorDiagnostics(){return anchorData.map(v=>{
@@ -57,7 +49,7 @@ function redraw(){
   const b=controls.get(p.name);
   if(!b)continue;
   b.style.left=p.x.toFixed(2)+'px';b.style.top=p.y.toFixed(2)+'px';
-  b.hidden=p.hidden||!filterVisible.has(p.name)||(!showAll&&p.name!==selected);
+  b.hidden=p.hidden||!filterVisible.has(p.name);
   b.classList.toggle('selected',p.name===selected);
  }
 }
