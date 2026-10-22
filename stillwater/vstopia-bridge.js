@@ -1,7 +1,7 @@
 /* The 3D bark-vertex anchor map receives ONLY public aliases from the parent.
  * Vertex positions track original shader wind, orbit camera, and responsive UI.
  */
-import {createVstopiaEcology} from './vstopia-ecology.js';
+import {createVstopiaEcology} from './vstopia-ecology.js?v=ios-frame-20261022';
 const NAMES=['Audio Playground','Creative Engine','Motion Lab','Plugin Workshop',
  'Research Garden','Release Pipeline','Community Space','Design Studio',
  'Sample Library','Collaboration Hub','Prototype Station','Knowledge Base'];
@@ -10,7 +10,7 @@ const signal=(type,detail={})=>{
  if(window.parent!==window)window.parent.postMessage({source:'stillwater-vstopia',type,...detail},ORIGIN);
 };
 export function mountVstopiaTreeBridge({THREE,scene,camera,controls,heroModel,heroTree,
- time,wind,water,getPaused,height,plantTree,forestModel,grassGeo,grassMat}){
+ time,wind,water,getPaused,getFrameStats,height,plantTree,forestModel,grassGeo,grassMat}){
  document.body.classList.add('embedded');
  const lowPower=window.matchMedia('(max-width:760px), (pointer:coarse)').matches;
  const ecology=createVstopiaEcology({scene,height,plantTree,forestModel,grassGeo,grassMat,lowPower});
@@ -26,12 +26,15 @@ export function mountVstopiaTreeBridge({THREE,scene,camera,controls,heroModel,he
   temp.copy(pos);
   temp.x+=Math.sin(time.value*.58+h*.09)*.12*wind.value*sway;
   temp.z+=Math.cos(time.value*.43+h*.065)*.07*wind.value*sway;
-  heroTree.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+  // Project with already-updated matrices. Recalculating the full hierarchy
+  // here used to run >17,000 times during a single anchor scan on iOS.
   world.copy(temp).applyMatrix4(heroTree.matrixWorld).project(camera);
   return {x:(world.x*.5+.5)*width(),y:(-.5*world.y+.5)*heightPx(),depth:world.z};
  }
  function chooseAnchors(){
-  const candidates=[],step=Math.max(1,Math.floor(attr.count/18000));
+  const mobileBudget=lowPower?2400:18000;
+  const candidates=[],step=Math.max(1,Math.ceil(attr.count/mobileBudget));
+  heroTree.updateMatrixWorld(true);camera.updateMatrixWorld(true);
   for(let i=0;i<attr.count;i+=step){
    const x=attr.getX(i),y=attr.getY(i),z=attr.getZ(i);
    if(y<bounds.min.y+size.y*.25||y>bounds.min.y+size.y*.96)continue;
@@ -90,7 +93,16 @@ export function mountVstopiaTreeBridge({THREE,scene,camera,controls,heroModel,he
   if(d.type==='filter'&&Array.isArray(d.visible))visible=new Set(d.visible.filter(x=>names.includes(x)));
   if(d.type==='reset')document.getElementById('focus')?.click();
  });
- addEventListener('resize',()=>{initialized=false;anchorVertices=[];});
+ // Safari's dynamic browser toolbar changes iframe height during scroll.
+ // Re-use the existing bark vertices on height-only changes: rerunning the
+ // multi-thousand point scan on every iOS resize can stall every frame.
+ let lastAnchorWidth=window.innerWidth;
+ addEventListener('resize',()=>{
+  if(Math.abs(window.innerWidth-lastAnchorWidth)>20){
+   lastAnchorWidth=window.innerWidth;
+   initialized=false;anchorVertices=[];
+  }
+ });
  function tick(now){
   ecology.update(time.value);
   if(!initialized){
@@ -103,6 +115,7 @@ export function mountVstopiaTreeBridge({THREE,scene,camera,controls,heroModel,he
   }
   if(!initialized||now-lastDispatch<(lowPower?120:70))return;
   lastDispatch=now;
+  heroTree.updateMatrixWorld(true);camera.updateMatrixWorld(true);
   signal('anchors',{positions:anchorVertices.map((v,i)=>{
    const s=screenOf(new THREE.Vector3(v.x,v.y,v.z));
    return {name:names[i],vertex:v.i,x:s.x,y:s.y,depth:s.depth,
@@ -121,6 +134,7 @@ export function mountVstopiaTreeBridge({THREE,scene,camera,controls,heroModel,he
    namesCount:names.length,selected,configureCount,candidateCount,lowPower,
    camera:[camera.position.x,camera.position.y,camera.position.z],
    paused:getPaused(),animationSeconds:time.value,waterTime:water.material.uniforms.time.value,
+   frameStats:getFrameStats(),
    firstBirdPosition:bird?[matrix.elements[12],matrix.elements[13],matrix.elements[14]]:null};
  };
  return {tick};

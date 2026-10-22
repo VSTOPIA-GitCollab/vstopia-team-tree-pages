@@ -4,7 +4,7 @@ import { Water } from 'three/addons/objects/Water.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createMysticTree, createDistantMountains } from './nature.js';
-import { mountVstopiaTreeBridge } from './vstopia-bridge.js';
+import { mountVstopiaTreeBridge } from './vstopia-bridge.js?v=ios-frame-20261022';
 
 // Reproducible, entirely local landscape. All positions are in metres.
 const $ = id => document.getElementById(id);
@@ -305,7 +305,16 @@ function toggleUI(){cinematic=!cinematic;document.body.classList.toggle('hidden-
 $('fullscreen').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch(e){$('fullscreen').title='Fullscreen unavailable in this browser';}};
 addEventListener('keydown',e=>{if(/INPUT|SELECT/.test(e.target.tagName))return;if(e.key.toLowerCase()==='h')toggleUI();if(e.key.toLowerCase()==='f')$('focus').click();if(e.code==='Space'){e.preventDefault();$('pause').click();}});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();$('error').hidden=false;$('error').textContent='The graphics context was interrupted. Reload this page to rebuild the scene.';});
+let glContextLost=false;
+renderer.domElement.addEventListener('webglcontextlost',e=>{
+ e.preventDefault();glContextLost=true;
+ $('error').hidden=false;
+ $('error').textContent='The graphics context was interrupted. Reload this page to rebuild the scene.';
+});
+renderer.domElement.addEventListener('webglcontextrestored',()=>{
+ glContextLost=false;$('error').hidden=true;
+ // Three.js recreates GPU resources automatically on restoration.
+});
 let vstopiaBridge=null;
 if(isEmbedded){
  // User prefers maximum natural light and maximum wind, slider remains operable.
@@ -331,11 +340,13 @@ if(isEmbedded){
  if($('panel-toggle')?.getAttribute('aria-expanded')==='true')$('panel-toggle').click();
  vstopiaBridge=mountVstopiaTreeBridge({THREE,scene,camera,controls,renderer,
   heroModel,heroTree,heroPos,time,wind,water,height,plantTree,forestModel,grassGeo,grassMat,
-  getPaused:()=>paused,lighting});
+  getPaused:()=>paused,getFrameStats:()=>({frames:renderFrames,frameAgeMs:Math.round(performance.now()-lastFrameAt),webglLost:glContextLost,documentVisible:!document.hidden}),lighting});
 }
 let ready=false;
+let renderFrames=0,lastFrameAt=performance.now(),rafHandle=0;
 function animate(now){
- requestAnimationFrame(animate);
+ rafHandle=requestAnimationFrame(animate);
+ renderFrames++;lastFrameAt=now;
  const realDt=Math.max(.001,(now-last)/1000);
  // 20 FPS phone frame intervals are often >50ms. Limit controls integration,
  // NOT water/bird animation time: otherwise both drift into slow motion.
@@ -354,4 +365,18 @@ function animate(now){
 }
 // Precompile catches shader failures before dismissing the loading surface.
 renderer.debug.onShaderError=(gl,program,vs,fs)=>{console.error(gl.getProgramInfoLog(program),gl.getShaderInfoLog(vs),gl.getShaderInfoLog(fs));$('error').hidden=false;$('error').textContent='This GPU could not compile a scene shader. Please try an up-to-date Chrome or Firefox with hardware acceleration enabled.';};
-if(!lowPower)renderer.compile(scene,camera);requestAnimationFrame(animate);
+// WebKit suspends iframe requestAnimationFrame when a tab is backgrounded.
+ // Restart one (never two) pending callback when the phone becomes visible.
+function resumePhoneAnimation(){
+ if(!isEmbedded||!lowPower||document.hidden)return;
+ if(rafHandle)cancelAnimationFrame(rafHandle);
+ last=performance.now();
+ rafHandle=requestAnimationFrame(animate);
+}
+if(isEmbedded&&lowPower){
+ addEventListener('pageshow',resumePhoneAnimation);
+ addEventListener('focus',resumePhoneAnimation);
+ document.addEventListener('visibilitychange',resumePhoneAnimation);
+}
+if(!lowPower)renderer.compile(scene,camera);
+rafHandle=requestAnimationFrame(animate);
