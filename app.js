@@ -1,25 +1,37 @@
 'use strict';
-/* Public demo: no credentials, network calls, internal project names, private data or GitHub API. */
+/* Public conceptual navigation and approved GitHub aggregates. Never imply concept labels are individual private repositories. */
 (() => {
   const $ = id => document.getElementById(id);
   const canvas = $('treeCanvas');
   const ctx = canvas.getContext('2d');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   const names = ['Audio Playground','Creative Engine','Motion Lab','Plugin Workshop','Research Garden','Release Pipeline','Community Space','Design Studio','Sample Library','Collaboration Hub','Prototype Station','Knowledge Base'];
-  const repos = names.map((name, i) => ({ name, demo:true, private:false, branch:'demo',
-    description: 'Progetto dimostrativo. Nessun dato proviene dai repository riservati di VSTOPIA-GitCollab.',
-    commits: [38,19,56,15,42,34,11,28,60,25,12,22][i],
-    issues: [4,2,6,1,5,3,2,0,1,4,2,1][i], prs:[2,1,3,0,1,2,0,1,0,2,0,1][i],
-    last_commit: {message:['Create a new animation','Refine UI interactions','Improve timeline','Organize next sprint'][i%4], date:'2026-10-15T00:00:00Z',author:'Demo'},
-}));
+  // Names belong to the conceptual tree layout and are NOT private repository names.
+  // No synthetic per-project commits, issue counts, PR counts, or pretend activity.
+  const areaDefinitions = [
+    ['creative','Esplorazione e sperimentazione audio.'],
+    ['creative','Ideazione e prototipazione creativa.'],
+    ['creative','Animazione, movimento e interazione.'],
+    ['technical','Sviluppo e progettazione di strumenti audio.'],
+    ['creative','Ricerca, riferimenti e nuove idee.'],
+    ['technical','Preparazione, verifica e distribuzione delle versioni.'],
+    ['creative','Collaborazione e condivisione di conoscenza.'],
+    ['creative','Design di interfacce e nuove esperienze.'],
+    ['technical','Organizzazione dei campioni e delle risorse.'],
+    ['technical','Coordinamento dei flussi di lavoro.'],
+    ['technical','Esperimenti tecnici e prototipi.'],
+    ['technical','Documentazione e consultazione delle conoscenze.']
+  ];
+  const repos = names.map((name, i) => ({
+    name, category:areaDefinitions[i][0], description:areaDefinitions[i][1]
+  }));
   let publicTotals = null;
-  const totals = key => repos.reduce((sum,r)=>sum+(r[key]||0),0);
   const state = {selected:repos[0].name,search:'',filter:'all',mode:'tree',ry:.52,rx:.20,zoom:1,drag:null,
     width:1,height:1,hits:[],tour:null};
   const number = x => new Intl.NumberFormat('it-IT').format(x);
   const create = (tag, cls, label) => {const e=document.createElement(tag);if(cls)e.className=cls;if(label!==undefined)e.textContent=label;return e;};
   const visible = () => repos.filter(r=>(r.name+' '+r.description).toLowerCase().includes(state.search) &&
-      (state.filter==='all'||(state.filter==='issues'&&r.issues+r.prs>0)||(state.filter==='active'&&r.commits>=30)));
+      (state.filter==='all'||state.filter===r.category));
   const missions = () => publicTotals ? [
     ...((publicTotals.people||[]).flatMap(person => {
       const items=[];
@@ -124,13 +136,18 @@
         ['metricIssues','open_issues'],['metricPrs','open_pull_requests'],['metricMerges','merged_pull_requests_all_time']]){
         animateNumber($(id),snapshot[key]);
       }
-      $('syncStatus').textContent='SNAPSHOT AGGIORNATO';
-      $('lastSync').textContent='SYNC '+new Date(snapshot.updated_at).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      const publishedAt=new Date(snapshot.updated_at);
+      const publishedLabel=Number.isNaN(publishedAt.getTime())?'DATA NON DISPONIBILE':
+        publishedAt.toLocaleString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      $('publicDataHeading').textContent='GITHUB · SNAPSHOT '+publishedLabel;
+      $('syncStatus').textContent='SNAPSHOT GITHUB · '+publishedLabel;
+      $('lastSync').textContent='DATI PUBBLICATI IL '+publishedLabel;
       $('supervisorMessage').textContent=missions()[supervisorIndex%missions().length];
     } catch(err) {
+      $('publicDataHeading').textContent='GITHUB · DATI NON DISPONIBILI';
       $('syncStatus').textContent='GITHUB · SNAPSHOT NON DISPONIBILE';
       $('lastSync').textContent='IN ATTESA DELLO SNAPSHOT';
-      $('supervisorMessage').textContent='I dati aggregati non sono disponibili. L’albero resta una demo grafica.';
+      $('supervisorMessage').textContent='I dati aggregati non sono disponibili. La mappa tematica resta utilizzabile.';
       $('memberCards').replaceChildren(create('div','loading-list','I dati dei collaboratori non sono disponibili.'));
     }
   }
@@ -139,24 +156,24 @@
   function renderSidebar(){const list=$('repoList');list.replaceChildren();const data=visible();window.dispatchEvent(new CustomEvent('vstopia:filters',{detail:{visible:data.map(r=>r.name)}}));$('repoCountLabel').textContent=String(data.length).padStart(2,'0');
     for(const r of data){const b=create('button','repo-item'+(r.name===state.selected?' selected':''));b.type='button';
       b.setAttribute('aria-pressed',String(r.name===state.selected));b.append(create('span','repo-glyph','⌁'));
-      const copy=create('span','repo-copy');copy.append(create('strong','',r.name),create('small','',number(r.commits)+' DEMO COMMITS · '+r.issues+' ISSUES'));
+      const copy=create('span','repo-copy');copy.append(create('strong','',r.name),create('small','',r.category==='creative'?'AREA CREATIVA':'AREA TECNICA'));
       b.append(copy,create('span','repo-chevron','›'));b.addEventListener('click',()=>select(r.name));list.append(b);}
     if(!data.length)list.append(create('div','loading-list','Nessun progetto corrisponde al filtro.'));
   }
-  function renderDetail(){const r=repos.find(x=>x.name===state.selected);const root=$('selectedDetail');root.replaceChildren();$('selectedIndicator').textContent='DEMO';
-    if(!r)return;root.append(create('h3','detail-title',r.name),create('p','detail-desc',r.description));
-    const badges=create('div','detail-badges');for(const [k,v] of [['COMMITS',r.commits],['ISSUES',r.issues],['PRs',r.prs],['MODE','DEMO']]){
-      const badge=create('span','detail-badge',k+' · ');badge.append(create('em','',String(v)));badges.append(badge);}
-    root.append(badges,create('div','detail-divider'),create('div','detail-label','ESEMPIO DI ATTIVITÀ'));
-    root.append(create('div','detail-commit',r.last_commit.message));root.append(create('div','detail-meta','Dati simulati: non rappresentano persone o attività reali.'));
+  function renderDetail(){
+    const r=repos.find(x=>x.name===state.selected);
+    const root=$('selectedDetail');root.replaceChildren();
+    $('selectedIndicator').textContent='AREA TEMATICA';
+    if(!r)return;
+    root.append(create('h3','detail-title',r.name),create('p','detail-desc',r.description));
+    root.append(create('p','detail-meta','Percorso della mappa, non un repository specifico. I dati GitHub verificati sono nei contatori del team.'));
   }
   const hash = s=>{let n=2166136261;for(const c of s){n^=c.charCodeAt(0);n=Math.imul(n,16777619);}return(n>>>0)/4294967295;};
   function world(){const rs=visible();const points=[{id:'root',x:0,y:-112,z:0,type:'root',radius:11}];
     rs.forEach((r,i)=>{const angle=i*Math.PI*(3-Math.sqrt(5))+.15,ring=Math.sqrt((i+.8)/Math.max(1,rs.length)),distance=54+ring*205;
       const x=Math.cos(angle)*distance,z=Math.sin(angle)*distance,y=25+ring*103+(hash(r.name)-.5)*52,id='repo:'+r.name;
-      points.push({id,repo:r.name,parent:'root',x,y,z,type:'repo',radius:8.6});
-      points.push({id:id+':commit',repo:r.name,parent:id,x:x+Math.cos(angle+.6)*36,y:y+24,z:z+Math.sin(angle+.6)*36,type:'commit',radius:3.2});
-      if(r.issues+r.prs>0)points.push({id:id+':open',repo:r.name,parent:id,x:x+Math.cos(angle-1.1)*42,y:y-12,z:z+Math.sin(angle-1.1)*42,type:'open',radius:3.6});});return points;}
+      // Conceptual-only fallback: no synthetic commit/issue children.
+      points.push({id,repo:r.name,parent:'root',x,y,z,type:'repo',radius:8.6});});return points;}
   function project(p,t){const drift=reducedMotion?0:Math.sin(t/4200+hash(p.id)*5.8)*(p.type==='root'?0:2.2);
     const x=p.x+drift,y=p.y+drift*.5,z=p.z,nx=x*Math.cos(state.ry)-z*Math.sin(state.ry),nz=x*Math.sin(state.ry)+z*Math.cos(state.ry);
     const ny=y*Math.cos(state.rx)-nz*Math.sin(state.rx),depth=y*Math.sin(state.rx)+nz*Math.cos(state.rx),perspective=850/(850-depth*.55);
@@ -197,11 +214,11 @@
   window.addEventListener('vstopia:select',event=>select(event.detail.name));
   $('repoSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase().trim();renderSidebar();});
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('repoSearch').focus();}});
-  for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>{state.filter=b.dataset.filter;for(const n of document.querySelectorAll('[data-filter]')){n.classList.toggle('active',n===b);n.setAttribute('aria-pressed',String(n===b));}renderSidebar();});
+  for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>{state.filter=b.dataset.filter;for(const n of document.querySelectorAll('[data-filter]')){n.classList.toggle('active',n===b);n.setAttribute('aria-pressed',String(n===b));}const items=visible();if(items.length&&!items.some(r=>r.name===state.selected)){select(items[0].name);}else renderSidebar();});
   $('clock').textContent='PUBLIC STATS';$('syncStatus').textContent='LOADING AGGREGATES';
   $('metricRepos').textContent='—';$('metricCommits').textContent='—';$('metricIssues').textContent='—';$('metricPrs').textContent='—';$('metricMerges').textContent='—';
   $('commitsFoot').textContent='Aggregato · branch principali';$('lastSync').textContent='IN ATTESA';
-  const activity=$('activityFeed');activity.replaceChildren(create('div','activity-kicker','ANIMATED SUPERVISOR · DEMO'));
+  const activity=$('activityFeed');activity.replaceChildren(create('div','activity-kicker','TEAM SUPERVISOR · PUBLIC TOTALS'));
   // Removed decorative clover: reserve visible height for both team profiles.
 
   activity.append(create('div','supervisor-speech',''));activity.lastChild.id='supervisorMessage';

@@ -39,7 +39,15 @@ jobs:
           assert not Path('glass-react-source/node_modules').exists()
           assert 'id="viewList"' not in Path('index.html').read_text()
           assert 'id="listDrawer"' not in Path('index.html').read_text()
-          assert 'DEMO' in Path('app.js').read_text()
+          # Conceptual public nodes are not private repo names or invented per-repo activity.
+          app=Path('app.js').read_text()
+          assert 'AREA TEMATICA' in app
+          assert 'DEMO' not in app
+          assert 'ESEMPIO DI ATTIVITÀ' not in app
+          assert 'Create a new animation' not in app
+          assert 'const repos = names.map' in app
+          assert 'commits: [' not in app
+          assert 'last_commit:' not in app
           snapshot=json.loads(Path('snapshot.json').read_text())
           allowed={'schema_version','data_policy','scope','updated_at',
                    'repository_count','default_branch_commits','open_issues',

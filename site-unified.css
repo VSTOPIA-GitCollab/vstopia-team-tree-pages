@@ -946,3 +946,13 @@ body .app-shell{font-family:var(--ui-font)!important}
  font:500 12px/1.55 var(--ui-font)!important;
  color:var(--ui-text)!important;text-shadow:0 1px 3px rgba(7,24,30,.56)!important;
 }
+
+/* Compact the dark thematic sidebar entries without changing typography.
+   Smaller vertical padding/height, slightly more breathing room between rows. */
+.layout>.sidebar .repo-list{gap:5px!important}
+.layout>.sidebar .repo-item{
+ min-height:39px!important;padding:3px 8px!important;
+ height:auto!important;align-items:center!important;
+}
+/* Keep preexisting label font sizes exactly as before. */
+.layout>.sidebar .repo-copy small{margin-top:2px!important}

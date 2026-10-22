@@ -106,3 +106,7 @@ The mountain-side meadow extends **9.6 km** and matches the real grass terrain i
 ## Plain-text live inspector sections (22 October 2026)
 
 The dark nested cards behind **Selected Branch** and **Team Supervisor** have been removed. Live details and rotating messages remain dynamically updated on the transparent Team Activity rail. Source styling is in `site-design.css`; regenerate the one stylesheet using `python3 scripts/build_site_css.py`. [Implementation notes and actual-browser screenshots](docs/PLAIN_DYNAMIC_INSPECTOR_2026-10-22.md).
+
+## Public data provenance and compact thematic navigator (22 October 2026)
+
+The living tree's 12 visible branches are **conceptual project areas, not individual private repositories**. The earlier invented per-branch commit/issue/PR counts and sample commit messages are removed. The left area entries retain their existing font size but are 6px shorter, with small spacing between them. GitHub team/aggregate figures are sourced separately from a **dated public snapshot**, explicitly labeled with its publication time (not live). See [public data audit and browser evidence](docs/PUBLIC_TREE_DATA_AUDIT_AND_COMPACT_UI_2026-10-22.md).
