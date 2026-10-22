@@ -3,9 +3,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { createMysticTree, createDistantMountains } from './nature.js?v=waterfall-weather-v1';
+import { createMysticTree, createDistantMountains } from './nature.js?v=fish-woodland-v1';
 import {createSurfaceMaps,displaceBarkGeometry,canopyOcclusion} from './surface-detail.js?v=surface-depth-20261022';
 import {createAtmosphere,atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1';
+import {createLakeFish,addMountainVegetation} from './lake-life.js?v=fish-woodland-v1';
 import {addMountainWaterfall} from './mountain-waterfall.js?v=waterfall-weather-v1';
 import {makeMovingCloudSky} from './moving-cloud-sky.js?v=moving-clouds-v1';
 import { mountVstopiaTreeBridge } from './vstopia-bridge.js?v=ios-frame-20261022';
@@ -327,6 +328,7 @@ function plantTree(model,pos,scale,rotation,hero=false){
 }
 const heroTree=plantTree(heroModel,heroPos,1,0,true);
 const mountainWaterfall=addMountainWaterfall({scene,clock:time,lowPower,groundHeight:distantMeadowHeight,leafGeometry:leafGeo,leafMaterial:leafMat});
+addMountainVegetation({scene,clock:time,wind,lowPower,groundHeight:distantMeadowHeight});
 for(let i=0;i<64;i++){
  const a=range(Math.PI*.93,Math.PI*2.06),r=range(48,110);let x=Math.cos(a)*r,z=Math.sin(a)*r-12;
  if(Math.hypot(x-heroPos.x,z-heroPos.z)<25)continue;
@@ -506,6 +508,7 @@ if(isEmbedded){
   heroModel,heroTree,heroPos,time,wind,water,height,plantTree,forestModel,grassGeo,grassMat,
   getPaused:()=>paused,getFrameStats:()=>({frames:renderFrames,frameAgeMs:Math.round(performance.now()-lastFrameAt),webglLost:glContextLost,documentVisible:!document.hidden}),lighting});
 }
+const lakeFish=createLakeFish({scene,clock:time,height,lowPower});
 const atmosphere=createAtmosphere({scene,camera,renderer,sun,water,terrainMat,dust,clock:time,lowPower,height});
 const originalLightInput=$('light').oninput;
 $('light').oninput=e=>{originalLightInput(e);atmosphere.refreshBase();};
@@ -527,6 +530,7 @@ function animate(now){
  camera.position.y=Math.max(camera.position.y,Math.max(.8,height(camera.position.x,camera.position.z)+.65));
  const off=controls.target.clone().sub(focus);if(off.length()>55)controls.target.copy(focus).add(off.setLength(55));
  atmosphere.update(motionDt,paused);
+ lakeFish.update();
  movingCloudDome?.update(camera);renderer.render(scene,camera);vstopiaBridge?.tick(now,dt);frameCount++;fpsTime+=realDt;
  if(fpsTime>=1){$('fps').textContent=`${Math.round(frameCount/fpsTime)} FPS`;frameCount=0;fpsTime=0;}
  if(!ready){ready=true;$('loading').style.opacity=0;setTimeout(()=>$('loading').remove(),900);}

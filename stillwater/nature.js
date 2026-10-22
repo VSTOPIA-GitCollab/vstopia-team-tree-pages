@@ -186,8 +186,10 @@ export function createDistantMountains(){
     rockUV+=vec3(sin(vRockWorld.z*.012),sin(vRockWorld.x*.014+vRockWorld.z*.008),sin(vRockWorld.x*.011))*1.2;
     vec3 mineral=mix(rockSample(uRockColor,rockUV,rockW).rgb,
      rockSample(uRockColor,rockUV*.413+vec3(17.3,4.9,11.7),rockW).rgb,.42);
-    float vegetation=(1.-smoothstep(.18,.42,1.-abs(rockN.y)))*(1.-smoothstep(14.,54.,vRockWorld.y));
-    diffuseColor.rgb*=mix(mineral,vec3(.095,.13,.055),vegetation*.78);
+    float woodlandPatch=.5+.25*sin(vRockWorld.x*.023+sin(vRockWorld.z*.019)*2.)+.25*sin(vRockWorld.z*.037+vRockWorld.x*.011);
+    float vegetation=smoothstep(.30,.82,rockN.y)*(1.-smoothstep(70.,130.,vRockWorld.y))*(.35+.65*woodlandPatch);
+    vec3 undergrowth=vec3(.065,.14,.035)*(.82+mineral*.65);
+    diffuseColor.rgb*=mix(mineral,undergrowth,vegetation*.91);
    `);
    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
     roughnessFactor=clamp(rockSample(uRockRoughness,rockUV,rockW).r,.72,1.);
@@ -206,7 +208,7 @@ export function createDistantMountains(){
     outgoingLight=mix(outgoingLight,vec3(.24,.29,.31)*uAtmosphereLight,haze);
     #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=> 'rock-scan-triplanar-v2';
+  material.customProgramCacheKey=()=> 'rock-scan-woodland-v3';
   const mesh=new THREE.Mesh(g,material);mesh.name=`Horizon ridge ${layer+1}`;group.add(mesh);
  }
  return group;
