@@ -28,7 +28,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWid
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;renderer.outputColorSpace=THREE.SRGBColorSpace;
 $('scene').appendChild(renderer.domElement);
-const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.2,6500);
+const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.2,16000);
 const heroPos=V(-5,height(-5,-26),-26), focus=heroPos.clone().add(V(0,9.0,0));
 const home=V(31,12.5,39);
 camera.position.copy(home);
@@ -93,13 +93,13 @@ function distantMeadowHeight(x,z){
 // the meadow edge was higher. It also lacked ground texture/vertex colors,
 // creating a pale band behind the grass and a visible discontinuity.
 // Use exactly the same world-space color/UV basis as the near ground.
-const FAR_MEADOW_RADIUS=4800; // More than 2x old extent: covers mountain feet and horizon
-const farGroundGeo=new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,384,210);
+const FAR_MEADOW_RADIUS=9600; // Extensive matte terrestrial meadow, well beyond all source mountain ridges
+const farGroundGeo=new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,448,240);
 const fgp=farGroundGeo.attributes.position, fgu=farGroundGeo.attributes.uv;
 const farColors=[];
 for(let i=0;i<fgp.count;i++){
  const oldX=fgp.getX(i),oldZ=fgp.getZ(i),oldR=Math.hypot(oldX,oldZ);
- const t=THREE.MathUtils.clamp((oldR-144)/(2400-144),0,1);
+ const t=THREE.MathUtils.clamp((oldR-144)/(FAR_MEADOW_RADIUS-144),0,1);
  const r=144+(FAR_MEADOW_RADIUS-144)*Math.pow(t,1.44);
  const x=oldX*(r/Math.max(.001,oldR)),z=oldZ*(r/Math.max(.001,oldR));
  fgp.setXYZ(i,x,distantMeadowHeight(x,z),z);
@@ -114,11 +114,15 @@ for(let i=0;i<fgp.count;i++){
 }
 farGroundGeo.setAttribute('color',new THREE.Float32BufferAttribute(farColors,3));
 farGroundGeo.computeVertexNormals();
-const farGround=new THREE.Mesh(farGroundGeo,new THREE.MeshStandardMaterial({
- map:groundTex,bumpMap:groundTex,bumpScale:.23,vertexColors:true,
- color:'#ffffff',roughness:1,metalness:0,envMapIntensity:.15
+// No environment map, specular lobes or water-like reflections beyond the
+// near shoreline: this is terrestrial, diffuse, photographed MEADOW.
+// The local ground texture and shared height-driven vertex colors are reused.
+// Fog is disabled on this ground only, so distant meadow remains green beneath
+// the source's mountain bases instead of being washed into pale HDRI blue.
+const farGround=new THREE.Mesh(farGroundGeo,new THREE.MeshLambertMaterial({
+ map:groundTex,vertexColors:true,color:'#d4e0d0',fog:false
 }));
-farGround.name='Textured seamless distant meadow (no pale band)';
+farGround.name='9.6km non-reflective grass meadow to the mountain horizon';
 farGround.receiveShadow=true;
 scene.add(farGround);
 // All tree limbs are swept, tapered and ridged; no foliage spheres or billboards.

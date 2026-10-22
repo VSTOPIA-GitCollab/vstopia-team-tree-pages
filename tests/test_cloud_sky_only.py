@@ -10,7 +10,7 @@ class OnlyCloudSkyTests(unittest.TestCase):
   reference=subprocess.check_output(['git','show','d0e6da0:stillwater/scene.js'],cwd=R,text=True)
   def sky_core(src):
    return src[src.index('const scene=new THREE.Scene();'):src.index('const terrainGeo=')]
-  self.assertEqual(sky_core(SOURCE),sky_core(reference))
+  self.assertEqual(sky_core(SOURCE).replace('innerHeight,.2,16000', 'innerHeight,.2,6500'),sky_core(reference))
   def cloud_override(src):
    return src[src.index(' // ONLY replace the visible sky:'):src.index(' // Keep native Atmosphere sliders available;')]
   self.assertEqual(cloud_override(SOURCE),cloud_override(reference))

@@ -98,3 +98,7 @@ The isolated branch `feat/rocky-mountains-continuous-terrain-20261022` improves 
 ## Lake Scene 2 mountain/shoreline restoration — local only
 
 The latest local review matches the three original mountain shapes/placements from the user-provided `lake-scene 2`, darkens them slightly, extends the terrain to a **4,800 m radius**, and replaces the 900 × 900 m water square with a **lake-only shoreline-clipped reflective Water.js surface**. The meadow now also uses the same photographed texture UV scale at all distances. See [technical implementation and browser screenshots](docs/LAKE_SCENE2_MOUNTAINS_TERRAIN_WATER_RESTORE_2026-10-22.md). Local preview: http://127.0.0.1:39031/ — nothing published to GitHub Pages.
+
+## Approved release: extensive non-reflective distant meadow
+
+The mountain-side meadow extends **9.6 km** and matches the real grass terrain in diffuse colors, without water-like specular reflections. The lake remains irregular and reflective, mountains preserve their original `lake-scene 2` positioning, and branch labels stay visible. See [implementation and browser QA](docs/MATTE_EXTENDED_MEADOW_PUBLIC_RELEASE_2026-10-22.md).
