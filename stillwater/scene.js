@@ -99,6 +99,10 @@ function distantMeadowHeight(x,z){
 // Use exactly the same world-space color/UV basis as the near ground.
 const FAR_MEADOW_RADIUS=9600; // Extensive matte terrestrial meadow, well beyond all source mountain ridges
 const farGroundGeo=new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,lowPower?180:448,lowPower?95:240);
+// RingGeometry starts on XY (Z=0). Rotate it onto world XZ before reading
+// vertex Z for the radially redistributed meadow. Without this rotation every
+// vertex collapses to z=0, making an edge-on, streaking black terrain strip.
+farGroundGeo.rotateX(-Math.PI/2);
 const fgp=farGroundGeo.attributes.position, fgu=farGroundGeo.attributes.uv;
 const farColors=[];
 for(let i=0;i<fgp.count;i++){
