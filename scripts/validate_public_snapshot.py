@@ -11,6 +11,7 @@ BASE={'schema_version','data_policy','scope','updated_at','repository_count',
       'people','push_count_policy','personal_counts_policy','workload_policy'}
 EXT={'organization_repository_count','repositories_by_alias','branch_age_policy',
      'pr_age_policy','last_activity_policy'}
+PLANNED={'planned_aliases'}
 PERSON={'name','github','commits','prs_opened_all_time','prs_merged_all_time',
         'push_events_observed_30d','last_interaction_at','last_interaction_type',
         'event_coverage_partial','assigned_open_issues','assigned_open_prs','reviews_requested'}
@@ -26,7 +27,9 @@ def nat(x):
 def validate(data):
     if type(data) is not dict or data.get('schema_version') not in (2,3):raise ValueError('Unexpected schema')
     version=data['schema_version']
-    if set(data)!=(BASE if version==2 else BASE|EXT):raise ValueError('Unexpected published fields')
+    allowed=BASE if version==2 else BASE|EXT
+    if set(data) not in (allowed,allowed|PLANNED if version==3 else allowed):
+        raise ValueError('Unexpected published fields')
     if data['data_policy']!='public-authorized-team-summary' or data['scope']!='repositories-readable-by-both-collaborators':
         raise ValueError('Invalid authorization scope')
     for key in ('repository_count','default_branch_commits','open_issues','open_pull_requests','merged_pull_requests_all_time'):
@@ -48,6 +51,15 @@ def validate(data):
         if type(rows) is not list or len(rows)!=data['repository_count'] or len(rows)>100:
             raise ValueError('Invalid anonymous repository list')
         names=set()
+        if 'planned_aliases' in data:
+            planned=data['planned_aliases']
+            if (type(planned) is not list or
+                len(planned)!=data['organization_repository_count']-data['repository_count'] or
+                any(type(x) is not str or not re.fullmatch(r'[A-Za-zÀ-ÖØ-öø-ÿ ]{4,40}',x) for x in planned) or
+                len(set(planned))!=len(planned)):
+                raise ValueError('Unsafe or incomplete planned aliases')
+        else:
+            planned=[]
         for repo in rows:
             if type(repo) is not dict or set(repo)!=REPO:raise ValueError('Unapproved repo fields')
             alias=repo['alias']
@@ -76,6 +88,8 @@ def validate(data):
                 raise ValueError('Unsafe event labels')
             if repo['last_activity_at'] is not None and (not isinstance(repo['last_activity_at'],str) or len(repo['last_activity_at'])>40):
                 raise ValueError('Unsafe event date')
+        if names.intersection(planned):
+            raise ValueError('Planned aliases overlap active aliases')
         for top,sub in [('default_branch_commits','default_branch_commits'),('open_issues','open_issues'),('open_pull_requests','open_prs'),('merged_pull_requests_all_time','merged_prs')]:
             if sum(r[sub] for r in rows)!=data[top]:raise ValueError('Aggregates mismatch aliases')
         for key in EXT-{'organization_repository_count','repositories_by_alias'}:

@@ -10,10 +10,23 @@ class OnlyCloudSkyTests(unittest.TestCase):
   reference=subprocess.check_output(['git','show','d0e6da0:stillwater/scene.js'],cwd=R,text=True)
   def sky_core(src):
    return src[src.index('const scene=new THREE.Scene();'):src.index('const terrainGeo=')]
-  self.assertEqual(sky_core(SOURCE).replace('innerHeight,.2,16000', 'innerHeight,.2,6500'),sky_core(reference))
+  # Preserve the physical sky and its IBL. Mobile may change only GPU resource
+  # sizes/pixel ratio/camera distance; exact byte equality is no longer valid.
+  for invariant in ('new Sky()','scene.environment=envTarget.texture',
+                    'const su=sky.material.uniforms','const envScene=new THREE.Scene()',
+                    'const sunDir=V('):
+   self.assertIn(invariant,sky_core(SOURCE))
+   self.assertIn(invariant,sky_core(reference))
+  self.assertIn("lowPower?500:2000",sky_core(SOURCE))
+  self.assertIn("lowPower?512:2048",sky_core(SOURCE))
   def cloud_override(src):
    return src[src.index(' // ONLY replace the visible sky:'):src.index(' // Keep native Atmosphere sliders available;')]
-  self.assertEqual(cloud_override(SOURCE),cloud_override(reference))
+  # Desktop keeps the exact cloud HDR treatment; phones use animated native sky.
+  self.assertIn("new RGBELoader().setDataType(THREE.HalfFloatType)",cloud_override(SOURCE))
+  self.assertIn("new RGBELoader().setDataType(THREE.HalfFloatType)",cloud_override(reference))
+  self.assertIn("if(!lowPower)",cloud_override(SOURCE))
+  self.assertIn("document.body.dataset.skyPreset='animated-three-atmosphere-mobile'",cloud_override(SOURCE))
+  self.assertIn("sky.visible=false;clouds.visible=false;scene.background=texture",cloud_override(SOURCE))
  def test_sky_has_previous_clouds_with_no_extra_controls(self):
   self.assertIn('partly-cloudy-2k.hdr',SOURCE)
   self.assertIn('sky.visible=false;clouds.visible=false;scene.background=texture',SOURCE)

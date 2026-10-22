@@ -9,7 +9,7 @@ class AnonymousAliasTests(unittest.TestCase):
  def setUp(self):
   self.v2=json.loads((R/'snapshot.json').read_text())
   for field in ('organization_repository_count','repositories_by_alias',
-                'branch_age_policy','pr_age_policy','last_activity_policy'):
+                'branch_age_policy','pr_age_policy','last_activity_policy','planned_aliases'):
    self.v2.pop(field,None)
   self.v2['schema_version']=2
   self.v3=copy.deepcopy(self.v2)

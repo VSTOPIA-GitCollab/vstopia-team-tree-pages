@@ -4,9 +4,10 @@
  */
 import * as THREE from 'three';
 const rnd=n=>{const x=Math.sin(n*81.361+35.739)*38746.381;return x-Math.floor(x);};
-function bushes({scene,height,plantTree,forestModel}){
+function bushes({scene,height,plantTree,forestModel,lowPower=false}){
   let count=0;
   for(let i=0;i<70&&count<28;i++){
+    if(lowPower&&count>=10)break;
     const a=i*2.399963,rad=38+rnd(i*17)*52;
     const x=Math.cos(a)*rad,z=4+Math.sin(a)*rad*.88,h=height(x,z);
     if(h<.40||h>6.3)continue;
@@ -15,12 +16,13 @@ function bushes({scene,height,plantTree,forestModel}){
   }
   return count;
 }
-function shortGrass({scene,height,grassGeo,grassMat}){
-  const capacity=15500,mesh=new THREE.InstancedMesh(grassGeo,grassMat,capacity),m=new THREE.Object3D();
+function shortGrass({scene,height,grassGeo,grassMat,lowPower=false}){
+  const capacity=15500,actualCapacity=lowPower?2500:capacity;
+  const mesh=new THREE.InstancedMesh(grassGeo,grassMat,actualCapacity),m=new THREE.Object3D();
   mesh.name='VSTOPIA short-grass undergrowth around lake';
   const colors=['#6a8050','#859963','#94a570','#547043','#748c58'].map(c=>new THREE.Color(c));
   let count=0;
-  for(let i=0;i<70000&&count<capacity;i++){
+  for(let i=0;i<70000&&count<actualCapacity;i++){
     const cluster=i%103,a=cluster*2.39996,rad=36+rnd(cluster*13)*24;
     const x=Math.cos(a)*rad+(rnd(i*13)-.5)*12;
     const z=4+Math.sin(a)*rad*.83+(rnd(i*23)-.5)*11,h=height(x,z);

@@ -678,5 +678,14 @@
   ],
   "branch_age_policy": "Branch age is first observed by the private collector, NOT the GitHub branch creation date.",
   "pr_age_policy": "Open PR age is calculated from the exact GitHub created_at timestamp.",
-  "last_activity_policy": "Latest observed GitHub event or mapped default-branch commit; events have limited coverage."
+  "last_activity_policy": "Latest observed GitHub event or mapped default-branch commit; events have limited coverage.",
+  "planned_aliases": [
+    "Banco delle Prove",
+    "Biblioteca delle Stelle",
+    "Cabina del Bosco",
+    "Officina Modulare",
+    "Piazza delle Lucciole",
+    "Ponte dei Messaggi",
+    "Sigillo della Quercia"
+  ]
 }
