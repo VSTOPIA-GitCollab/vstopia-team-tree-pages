@@ -3,7 +3,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { createMysticTree, createDistantMountains } from './nature.js';
+import { createMysticTree, createDistantMountains } from './nature.js?v=surface-depth-20261022';
+import {createSurfaceMaps,displaceBarkGeometry,canopyOcclusion} from './surface-detail.js?v=surface-depth-20261022';
+import {makeMovingCloudSky} from './moving-cloud-sky.js?v=moving-clouds-v1';
 import { mountVstopiaTreeBridge } from './vstopia-bridge.js?v=ios-frame-20261022';
 
 // Reproducible, entirely local landscape. All positions are in metres.
@@ -21,7 +23,7 @@ function height(x,z){
  const edge=r+.055*Math.sin(x*.32)+.035*Math.cos(z*.47)+.07*noise(x*.15,z*.15);
  return Math.tanh((edge-1)*5.0)*2.1 + (fbm(x*.15,z*.15)-.4)*1.5 + Math.max(0,edge-1.5)*1.4;
 }
-const scene=new THREE.Scene();scene.background=new THREE.Color('#c6d8db');scene.fog=new THREE.FogExp2('#a6b8b7',.0045);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#c6d8db');scene.fog=new THREE.FogExp2('#a6b8b7',.00042);
 // Adaptive native Three.js fidelity: avoid allocating desktop-size GPU targets on phones.
 const lowPower=matchMedia('(max-width:760px), (pointer:coarse)').matches;
 let renderer;
@@ -37,8 +39,8 @@ const home=V(31,12.5,39);
 if(lowPower)home.sub(focus).multiplyScalar(.88).add(focus);
 camera.position.copy(home);
 const controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(focus);controls.enableDamping=true;controls.dampingFactor=.055;controls.minDistance=7;controls.maxDistance=135;controls.maxPolarAngle=Math.PI*.487;controls.minPolarAngle=.16;controls.panSpeed=.65;controls.rotateSpeed=.45;controls.zoomSpeed=.75;controls.autoRotateSpeed=.35;controls.update();
-const sun=new THREE.DirectionalLight('#fff0cf',3.0);sun.position.set(-45,65,30);sun.castShadow=true;sun.shadow.mapSize.set(lowPower?512:2048,lowPower?512:2048);Object.assign(sun.shadow.camera,{left:-55,right:55,top:55,bottom:-55,near:1,far:180});sun.shadow.bias=-.00018;sun.shadow.normalBias=.04;sun.shadow.radius=2;sun.target.position.set(-4,0,-18);scene.add(sun,sun.target);
-scene.add(new THREE.HemisphereLight('#c4dbe5','#45513a',1.8));
+const sun=new THREE.DirectionalLight('#fff0cf',3.0);sun.position.set(-45,65,30);sun.castShadow=true;sun.shadow.mapSize.set(lowPower?512:2048,lowPower?512:2048);Object.assign(sun.shadow.camera,{left:-32,right:32,top:32,bottom:-32,near:1,far:210});sun.shadow.bias=-.00018;sun.shadow.normalBias=.018;sun.shadow.radius=2;sun.target.position.set(-4,7,-22);scene.add(sun,sun.target);
+scene.add(new THREE.HemisphereLight('#c4dbe5','#45513a',.72));
 const sky=new Sky();sky.scale.setScalar(10000);scene.add(sky);
 const su=sky.material.uniforms;su.turbidity.value=5;su.rayleigh.value=1.3;su.mieCoefficient.value=.006;su.mieDirectionalG.value=.83;
 const sunDir=V(-.5,.65,.35).normalize();su.sunPosition.value.copy(sunDir);
@@ -47,7 +49,7 @@ const envScene=new THREE.Scene();const envSky=sky.clone();envSky.scale.setScalar
 const wind={value:.65},time={value:0};
 function sway(material,kind='leaf'){
  material.onBeforeCompile=shader=>{
-  shader.uniforms.uTime=time;shader.uniforms.uWind=wind;
+  shader.uniforms.uTime=time;shader.uniforms.uWind=wind;shader.uniforms.uLeafSun={value:sunDir};
   shader.vertexShader=`uniform float uTime; uniform float uWind;
   vec3 treeSway(vec3 p){float h=max(0.,p.y);float w=pow(h*.09,1.8);p.x+=sin(uTime*.58+h*.09)*.12*uWind*w;p.z+=cos(uTime*.43+h*.065)*.07*uWind*w;return p;}
   `+shader.vertexShader;
@@ -68,15 +70,18 @@ function sway(material,kind='leaf'){
     `transformed=treeSway(transformed);`}
   `);
   if(leaf && !material.isMeshDepthMaterial){
-   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`float backGlow=pow(max(0.,dot(normal,normalize(vec3(-.5,.65,.35)))),2.0);
-    outgoingLight+=diffuseColor.rgb*.20*backGlow;
+   shader.fragmentShader='uniform vec3 uLeafSun;\n'+shader.fragmentShader;
+   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`vec3 leafSunView=normalize(mat3(viewMatrix)*uLeafSun);
+    float backGlow=pow(max(0.,dot(-normal,leafSunView)),2.0);
+    outgoingLight+=diffuseColor.rgb*.16*backGlow;
     #include <opaque_fragment>`);
   }
  };
  material.customProgramCacheKey=()=>`wind-${kind}-${material.type}`;return material;
 }
 function canvasTexture(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return t;}
-const bark=canvasTexture(512,1024,(ctx,w,h)=>{const im=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const n=fbm(x*.10,y*.008),fine=noise(x*.7,y*.10),groove=Math.pow(Math.abs(Math.sin(x*.15+noise(x*.015,y*.006)*9)),14);const c=68+n*58+fine*19-groove*38;const i=(y*w+x)*4;im.data[i]=c*1.03;im.data[i+1]=c*.89;im.data[i+2]=c*.72;im.data[i+3]=255;}ctx.putImageData(im,0,0);});bark.repeat.set(2,2);
+const barkMaps=createSurfaceMaps('bark',lowPower);
+barkMaps.roughnessMap=barkMaps.aoMap;
 const rockTex=canvasTexture(1024,1024,(ctx,w,h)=>{const im=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){let n=fbm(x*.018,y*.018),fine=noise(x*.6,y*.6),ridge=Math.abs(noise(x*.07,y*.07)-.5);const c=66+n*102+fine*24-ridge*25,i=(y*w+x)*4;const moss=noise(x*.025+60,y*.025)> .69;im.data[i]=moss?c*.70:c;im.data[i+1]=moss?c*.79:c*.99;im.data[i+2]=moss?c*.43:c*.91;im.data[i+3]=255;}ctx.putImageData(im,0,0);});
 const groundTex=new THREE.TextureLoader().load('./assets/ground.jpg');groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(55,55);groundTex.colorSpace=THREE.SRGBColorSpace;groundTex.anisotropy=8;
 // One continuous radial terrain mesh topology with a shared, irregular
@@ -138,7 +143,7 @@ const terrainGeo=makeMeadowGeometry(true),farGroundGeo=makeMeadowGeometry(false)
 // Near and far literally share the same shader/material instance.
 const terrainMat=new THREE.MeshStandardMaterial({
  map:groundTex,vertexColors:true,roughness:1,metalness:0,
- envMapIntensity:.40,fog:true
+ envMapIntensity:.24,fog:true
 });
 terrainMat.onBeforeCompile=shader=>{
  shader.vertexShader='varying vec2 vTerrainWorldXZ;\n'+shader.vertexShader;
@@ -213,8 +218,20 @@ terrainMat.onBeforeCompile=shader=>{
   diffuseColor.rgb*=mix(.88,1.12,macro);
  `);
 };
+const compileMeadow=terrainMat.onBeforeCompile;
+terrainMat.onBeforeCompile=shader=>{
+ compileMeadow(shader);
+ shader.fragmentShader=shader.fragmentShader.replace('#include <fog_fragment>',`
+  #ifdef USE_FOG
+   // Gentle aerial perspective: the former exp2 fog erased 99.4% of
+   // surface contrast at 500m. Keep distant material detail readable.
+   float landHaze=min(.30,1.-exp(-max(0.,vFogDepth-80.)*.00017));
+   gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor,landHaze);
+  #endif
+ `);
+};
 terrainMat.customProgramCacheKey=()=>lowPower?
- 'vstopia-world-antitile-v3-mobile':'vstopia-world-antitile-v3-desktop';
+ 'vstopia-world-antitile-v4-mobile':'vstopia-world-antitile-v4-desktop';
 const terrain=new THREE.Mesh(terrainGeo,terrainMat);
 terrain.name='Irregular near meadow, shared grass shader';
 terrain.receiveShadow=true;scene.add(terrain);
@@ -230,10 +247,20 @@ class MeshBuilder{
  geometry(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(this.uv,2));g.setIndex(this.idx);g.computeBoundingSphere();return g;}
 }
 const leafGeo=(()=>{const p=[],uv=[],idx=[];const segments=8;for(let i=0;i<=segments;i++){const t=i/segments,y=t*.95;const width=Math.sin(Math.PI*t)**.85*.25*(1+.035*Math.sin(t*36));for(let j=0;j<3;j++){let x=(j-1)*width;p.push(x,y,Math.sin(t*Math.PI)*.09+(j===1?0:.045));uv.push(j/2,t);}if(i<segments){let k=i*3;idx.push(k,k+3,k+1,k+1,k+3,k+4,k+1,k+4,k+2,k+2,k+4,k+5);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g;})();
-const leafMap=canvasTexture(128,256,(ctx,w,h)=>{const im=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const v=noise(x*.24,y*.12)*.15;const vein=Math.abs(x-w/2)<1.8 || Math.abs(fract((y+Math.abs(x-w/2)*1.4)/34)-.5)<.025;const c=vein?.77:.49+v;let i=(y*w+x)*4;im.data[i]=c*170;im.data[i+1]=c*218;im.data[i+2]=c*95;im.data[i+3]=255;}ctx.putImageData(im,0,0);});
-const branchMat=sway(new THREE.MeshStandardMaterial({map:bark,bumpMap:bark,bumpScale:.10,roughness:.96}),'branch');
-const leafMat=sway(new THREE.MeshStandardMaterial({map:leafMap,color:'#d5e5b2',roughness:.93,metalness:0,envMapIntensity:.32,side:THREE.DoubleSide}),'leaf');
-const heroBarkMat=sway(new THREE.MeshStandardMaterial({map:bark,bumpMap:bark,bumpScale:.19,color:'#aaa28c',roughness:.98,envMapIntensity:.40}),'branch');
+const leafMaps=createSurfaceMaps('leaf',lowPower);
+leafMaps.roughnessMap=leafMaps.aoMap;
+const branchMat=sway(new THREE.MeshStandardMaterial({...barkMaps,color:'#786c58',normalScale:new THREE.Vector2(.8,.8),aoMapIntensity:.65,roughness:1,envMapIntensity:.22}),'branch');
+const leafMat=sway(new THREE.MeshStandardMaterial({...leafMaps,color:'#eff4db',normalScale:new THREE.Vector2(.65,.65),aoMapIntensity:.45,roughness:1,metalness:0,envMapIntensity:.24,side:THREE.DoubleSide}),'leaf');
+const heroBarkMat=sway(new THREE.MeshStandardMaterial({...barkMaps,color:'#786c58',normalScale:new THREE.Vector2(1.15,1.15),aoMapIntensity:.85,roughness:1,envMapIntensity:.22}),'branch');
+const compileLeaf=leafMat.onBeforeCompile;
+leafMat.onBeforeCompile=shader=>{
+ compileLeaf(shader);
+ shader.vertexShader='attribute float instanceOcclusion; varying float vCanopyOcclusion;\n'+shader.vertexShader;
+ shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vCanopyOcclusion=instanceOcclusion;');
+ shader.fragmentShader='varying float vCanopyOcclusion;\n'+shader.fragmentShader;
+ shader.fragmentShader=shader.fragmentShader.replace('#include <aomap_fragment>','#include <aomap_fragment>\n reflectedLight.indirectDiffuse*=vCanopyOcclusion;');
+};
+leafMat.customProgramCacheKey=()=> 'leaf-veins-canopy-ao-v2';
 // Restrained moss on the older wood, concentrated on upward-facing roots
 // and crevices. Keep it in tree space so it remains fixed while orbiting.
 const compileHeroBark=heroBarkMat.onBeforeCompile;
@@ -249,7 +276,7 @@ heroBarkMat.onBeforeCompile=shader=>{
   diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.12,.17,.047),mossAmount);
  `);
 };
-heroBarkMat.customProgramCacheKey=()=> 'ancient-wood-moss-v1.1';
+heroBarkMat.customProgramCacheKey=()=> 'ancient-wood-relief-moss-v2';
 const leafDepth=sway(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,side:THREE.DoubleSide}),'leaf');
 const branchDepth=sway(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),'branch');
 const dummy=new THREE.Object3D();
@@ -280,16 +307,19 @@ function treeModel(detail=true){
  return {geometry:b.geometry(),leaves};
 }
 const heroModel=createMysticTree(),forestModel=treeModel(false);
+displaceBarkGeometry(heroModel.geometry);
 function plantTree(model,pos,scale,rotation,hero=false){
  const group=new THREE.Group();group.position.copy(pos);group.scale.setScalar(scale);group.rotation.y=rotation;scene.add(group);
  const trunk=new THREE.Mesh(model.geometry,hero?heroBarkMat:branchMat);trunk.castShadow=true;trunk.receiveShadow=true;trunk.customDepthMaterial=branchDepth;group.add(trunk);
- const foliage=new THREE.InstancedMesh(leafGeo,leafMat,model.leaves.length);let i=0;
+ const foliageGeo=leafGeo.clone();
+ foliageGeo.setAttribute('instanceOcclusion',new THREE.InstancedBufferAttribute(canopyOcclusion(model.leaves),1));
+ const foliage=new THREE.InstancedMesh(foliageGeo,leafMat,model.leaves.length);let i=0;
  for(const leaf of model.leaves){
   dummy.position.copy(leaf.p);
   if(leaf.direction){dummy.quaternion.setFromUnitVectors(V(0,1,0),leaf.direction);dummy.rotateY(leaf.roll);}
   else dummy.rotation.set(range(-1.4,1.4),range(0,6.28),range(-2,2));
   dummy.scale.set(leaf.scale,leaf.scale,leaf.scale);dummy.updateMatrix();foliage.setMatrixAt(i,dummy.matrix);
-  tc.setHSL(hero?range(.235,.28):range(.22,.28),range(.32,.48),hero?range(.51,.69):range(.48,.68));foliage.setColorAt(i++,tc);
+  tc.setHSL(hero?range(.235,.28):range(.22,.28),range(.32,.48),hero?range(.65,.85):range(.62,.81));foliage.setColorAt(i++,tc);
  }
  foliage.castShadow=hero || scale>.65;foliage.receiveShadow=true;foliage.customDepthMaterial=leafDepth;foliage.computeBoundingSphere();group.add(foliage);return group;
 }
@@ -440,7 +470,7 @@ renderer.domElement.addEventListener('webglcontextrestored',()=>{
  glContextLost=false;$('error').hidden=true;
  // Three.js recreates GPU resources automatically on restoration.
 });
-let vstopiaBridge=null;
+let vstopiaBridge=null,movingCloudDome=null;
 if(isEmbedded){
  // User prefers maximum natural light and maximum wind, slider remains operable.
  $('wind').value='2';$('wind').dispatchEvent(new Event('input',{bubbles:true}));
@@ -455,6 +485,12 @@ if(isEmbedded){
   .load('./assets/sky/partly-cloudy-2k.hdr',texture=>{
    texture.mapping=THREE.EquirectangularReflectionMapping;
    sky.visible=false;clouds.visible=false;scene.background=texture;
+   // Preserve the photographic HDRI and the static alpine horizon.
+   // Only panorama cloud pixels drift; the lake/lighting keep the same sky.
+   movingCloudDome=makeMovingCloudSky(THREE,texture,time);
+   movingCloudDome.update(camera);
+   scene.add(movingCloudDome.dome);movingCloudDome.dome.visible=true;
+   document.body.dataset.cloudMotion='hdri-clouds-drifting';
    document.body.dataset.skyPreset='alpine-partly-cloudy-2k';
    document.body.dataset.skyReady='ready';
   },undefined,error=>{
@@ -484,7 +520,7 @@ function animate(now){
  // Keep the camera above the lake and terrain, including after panning.
  camera.position.y=Math.max(camera.position.y,Math.max(.8,height(camera.position.x,camera.position.z)+.65));
  const off=controls.target.clone().sub(focus);if(off.length()>55)controls.target.copy(focus).add(off.setLength(55));
- renderer.render(scene,camera);vstopiaBridge?.tick(now,dt);frameCount++;fpsTime+=realDt;
+ movingCloudDome?.update(camera);renderer.render(scene,camera);vstopiaBridge?.tick(now,dt);frameCount++;fpsTime+=realDt;
  if(fpsTime>=1){$('fps').textContent=`${Math.round(frameCount/fpsTime)} FPS`;frameCount=0;fpsTime=0;}
  if(!ready){ready=true;$('loading').style.opacity=0;setTimeout(()=>$('loading').remove(),900);}
 }

@@ -19,8 +19,9 @@ class RockyMountainTests(unittest.TestCase):
    self.assertIn(anchor,source)
    self.assertIn(anchor,NATURE)
   self.assertIn('scene.add(createDistantMountains());',SCENE)
-  self.assertNotIn('rockTriplanar',NATURE)
-  self.assertIn('outgoingLight=mix(outgoingLight,vec3(.22,.295,.33),haze)*.50',NATURE)
+  self.assertIn('rockSample(uRockColor,rockUV,rockW)',NATURE)
+  self.assertIn('aerial-rocks-normal.jpg',NATURE)
+  self.assertNotIn('haze)*.50',NATURE)
  def test_original_lake_shoreline_clipping_instead_of_square_water(self):
   self.assertIn('function makeLakeOnlySurface()',SCENE)
   self.assertIn('new Water(makeLakeOnlySurface(),',SCENE)
