@@ -145,46 +145,76 @@ terrainMat.onBeforeCompile=shader=>{
  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',
   '#include <begin_vertex>\n vTerrainWorldXZ=(modelMatrix*vec4(transformed,1.0)).xz;');
  shader.fragmentShader=`varying vec2 vTerrainWorldXZ;
- float terrainHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+ float terrainHash(vec2 p){
+  // Mul/add hash (without per-pixel sin). Useful for phone GPU tile budgets.
+  vec3 q=fract(vec3(p.x,p.y,p.x)*.1031);
+  q+=dot(q,q.yzx+33.33);
+  return fract((q.x+q.y)*q.z);
+ }
  float terrainNoise(vec2 p){
   vec2 q=floor(p),f=fract(p);
   f=f*f*(3.0-2.0*f);
   return mix(mix(terrainHash(q),terrainHash(q+vec2(1.,0.)),f.x),
     mix(terrainHash(q+vec2(0.,1.)),terrainHash(q+vec2(1.,1.)),f.x),f.y);
  }
+ // Texture variation adapted conceptually from IQ texture repetition:
+ // a smoothly varying world-space index blends randomized virtual textures.
+ // A transition from index n to n+1 reuses the *same* sample at the join,
+ // so no tile-grid edges exist. Rotations, scales and offsets vary per region.
+ vec2 terrainVariantUV(vec2 uv,float region){
+  float a=terrainHash(vec2(region*17.13+2.0,region*9.37));
+  float b=terrainHash(vec2(region*7.91+13.1,region*14.33));
+  float quadrant=floor(a*4.0);
+  float scale=mix(.78,1.33,b);
+  // 4 quarter-turns × 2 mirror states = 8 inexpensive variations.
+  vec2 rotated=quadrant<1.0?uv:
+    quadrant<2.0?vec2(-uv.y,uv.x):
+    quadrant<3.0?-uv:vec2(uv.y,-uv.x);
+  if(b>.5)rotated.x=-rotated.x;
+  vec2 offset=vec2(terrainHash(vec2(region,19.3)),
+    terrainHash(vec2(8.9,region)))*43.1;
+  return rotated*scale+offset;
+ }
  `+shader.fragmentShader;
  const mobile=lowPower;
  shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`
   #ifdef USE_MAP
-   // Map UV from the source's world XZ coordinates via mapTransform.
    vec2 w=vTerrainWorldXZ;
-   vec2 warp=vec2(terrainNoise(w*.052+vec2(9.,2.)),
-                  terrainNoise(w*.049+vec2(4.,13.)))-.5;
-   vec2 uvA=vMapUv+warp*.56;
-   vec2 uvB=vec2(-vMapUv.y,vMapUv.x)*.91+vec2(8.13,17.71)-warp*.35;
-   vec4 sampleA=texture2D(map,uvA);
-   vec4 sampleB=texture2D(map,uvB);
-   float maskA=smoothstep(.17,.83,terrainNoise(w*.024+vec2(31.,7.)));
-   vec4 sampleGrass=mix(sampleA,sampleB,maskA*.64);
+   // Low-frequency domain warp bends periodic photographic features without
+   // breaking mip filtering or increasing texture asset/network memory.
+   vec2 warp=vec2(terrainNoise(w*.041+vec2(9.,2.)),
+     terrainNoise(w*.047+vec2(4.,13.)))-.5;
+   vec2 baseUV=vMapUv+warp*2.1;
+   // Stable, continuous 2-way random virtual-texture blend on mobile;
+   // FOUR differently randomized texture reads on desktop.
+   float variation=terrainNoise(w*.011+vec2(17.,41.))*5.5+
+     terrainNoise(w*.029+vec2(81.,23.))*2.5;
+   float indexA=floor(variation),indexB=indexA+1.0;
+   float weight=smoothstep(.12,.88,fract(variation));
+   vec4 sampleA=texture2D(map,terrainVariantUV(baseUV,indexA));
+   vec4 sampleB=texture2D(map,terrainVariantUV(baseUV,indexB));
+   vec4 sampleGrass=mix(sampleA,sampleB,weight);
    ${mobile?'':`
-   vec2 uvC=vec2(vMapUv.x*.71+vMapUv.y*.71,
-                   -vMapUv.x*.71+vMapUv.y*.71)*1.06+
-                   vec2(29.3,2.7)+warp*.23;
-   vec4 sampleC=texture2D(map,uvC);
-   float maskB=smoothstep(.21,.79,terrainNoise(w*.014+vec2(18.,42.)));
-   sampleGrass=mix(sampleGrass,sampleC,maskB*.27);
+   float variation2=terrainNoise(w*.015+vec2(33.,12.))*6.4+
+     terrainNoise(w*.006+vec2(2.,119.))*1.6;
+   float indexC=floor(variation2)+13.0,indexD=indexC+1.0;
+   vec4 sampleC=texture2D(map,terrainVariantUV(baseUV*.91,indexC));
+   vec4 sampleD=texture2D(map,terrainVariantUV(baseUV*.91,indexD));
+   float weight2=smoothstep(.12,.88,fract(variation2));
+   sampleGrass=mix(sampleGrass,mix(sampleC,sampleD,weight2),.37);
    `}
    #ifdef DECODE_VIDEO_TEXTURE
     sampleGrass=vec4(pow(sampleGrass.rgb,vec3(2.2)),sampleGrass.a);
    #endif
    diffuseColor*=sampleGrass;
   #endif
+  // Pre-lighting macro variation, never an opaque color veil.
   float macro=terrainNoise(vTerrainWorldXZ*.0046+vec2(17.,11.));
-  diffuseColor.rgb*=mix(.94,1.06,macro);
+  diffuseColor.rgb*=mix(.88,1.12,macro);
  `);
 };
 terrainMat.customProgramCacheKey=()=>lowPower?
- 'vstopia-world-antitile-v2-mobile':'vstopia-world-antitile-v2-desktop';
+ 'vstopia-world-antitile-v3-mobile':'vstopia-world-antitile-v3-desktop';
 const terrain=new THREE.Mesh(terrainGeo,terrainMat);
 terrain.name='Irregular near meadow, shared grass shader';
 terrain.receiveShadow=true;scene.add(terrain);
@@ -287,8 +317,39 @@ for(let kind=0;kind<5;kind++){
 // Tens of thousands of individually curved blades, tinted from root to tip.
 const grassGeo=(()=>{const p=[],c=[],idx=[];for(let j=0;j<5;j++){const t=j/4,y=t;const width=.035*(1-t)+.002;for(const side of [-1,1]){p.push(side*width+t*t*.17,y,t*t*.1);c.push(mix(.17,.62,t),mix(.25,.72,t),mix(.075,.31,t));}if(j<4){let k=j*2;idx.push(k,k+2,k+1,k+1,k+2,k+3);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));g.setIndex(idx);g.computeVertexNormals();return g;})();
 const grassMat=sway(new THREE.MeshStandardMaterial({color:'#b6be87',vertexColors:true,side:THREE.DoubleSide,roughness:1}),'grass');
+// The old x[-60,60], z[-54,52] sampling rectangle was the actual square
+// visible in overhead QA, even after the terrain meshes were made radial.
+// Scatter in polar/world space with a long continuous density tail instead.
+// Two gamma distributions give dense banks plus sparse outer meadow without
+// a hard band or an artificial ring. The outer limit itself is noise-shaped.
+function grassMeadowHeight(x,z){
+ const r=Math.hypot(x,z),angle=Math.atan2(z,x),edge=meadowSeamRadius(angle);
+ return r<edge?THREE.MathUtils.lerp(height(x,z),distantMeadowHeight(x,z),
+   THREE.MathUtils.smoothstep(r,115,edge)):distantMeadowHeight(x,z);
+}
+function grassOuterLimit(a){
+ return 390+85*Math.sin(a*3+1.2)+53*Math.sin(a*7-.9)+
+   37*Math.cos(a*11+2.4)+
+   64*(noise(Math.cos(a)*2.7+29,Math.sin(a)*2.7-11)-.5);
+}
 const grassCount=lowPower?24000:180000,grass=new THREE.InstancedMesh(grassGeo,grassMat,grassCount);let gi=0,tries=0;
-while(gi<grassCount && tries++<(lowPower?170000:1200000)){let x=range(-60,60),z=range(-54,52),h=height(x,z);if(h<.08 || h>4.5)continue;if(h>2.9 && rand()>.28)continue;const patch=noise(x*.19,z*.19);if(rand()> .56+patch*.5)continue;dummy.position.set(x,h-.03,z);dummy.rotation.set(0,range(0,6.28),range(-.17,.17));const s=range(.22,.67)*(h<1.1?1.3:1);dummy.scale.set(range(.8,1.8),s,1);dummy.updateMatrix();grass.setMatrixAt(gi,dummy.matrix);tc.setHSL(range(.18,.26),.33,range(.46,.75));grass.setColorAt(gi++,tc);}
+while(gi<grassCount && tries++<(lowPower?200000:1450000)){
+ const a=range(0,Math.PI*2),scale=rand()<.76?32:138;
+ const r=-scale*Math.log(Math.max(.00001,rand()*rand()));
+ if(r>grassOuterLimit(a))continue;
+ const x=Math.cos(a)*r,z=Math.sin(a)*r,h=grassMeadowHeight(x,z);
+ if(h<.08 || h>16)continue;
+ if(h>4.5 && rand()>.43)continue;
+ const patch=noise(x*.19,z*.19);
+ if(rand()> .56+patch*.5)continue;
+ const fade=1-.46*THREE.MathUtils.smoothstep(r,130,440);
+ dummy.position.set(x,h-.03,z);
+ dummy.rotation.set(0,range(0,6.28),range(-.17,.17));
+ const bladeHeight=range(.22,.67)*(h<1.1?1.3:1)*fade;
+ dummy.scale.set(range(.8,1.8),bladeHeight,1);
+ dummy.updateMatrix();grass.setMatrixAt(gi,dummy.matrix);
+ tc.setHSL(range(.18,.26),.33,range(.46,.75));grass.setColorAt(gi++,tc);
+}
 grass.count=gi;grass.receiveShadow=true;grass.computeBoundingSphere();scene.add(grass);
 // Long-range vegetation is represented by the same photographed textured
 // meadow surface. Sub-pixel instanced grass at the mountain foot caused
