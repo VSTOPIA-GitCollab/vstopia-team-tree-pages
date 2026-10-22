@@ -34,11 +34,25 @@
     return Number.isNaN(date.valueOf())?'Non rilevata':date.toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'});
   };
   const actorLabel = id => ({ostinsolo:'Agostino',InnovateSN:'Marcello',team:'Team'})[id] || 'Team';
+  // A single public alias catalog drives the sidebar AND real bark-anchored 3D labels.
+  // Unshared repositories have no public activity fields, only a creative alias.
+  const publishedAliases = () => !publicTotals || publicTotals.schema_version!==3 ? [] :
+    [...publicTotals.repositories_by_alias.map(r=>({...r,planned:false})),
+     ...(publicTotals.planned_aliases||[]).map(alias=>({alias,planned:true}))]
+      .sort((a,b)=>a.alias.localeCompare(b.alias,'it'));
   function renderAliasDetails(alias){
     selectedAlias=alias.alias;
-    $('selectedIndicator').textContent='REPO MONITORATA';
+    window.dispatchEvent(new CustomEvent('vstopia:alias-selected',{detail:{name:alias.alias}}));
+    $('selectedIndicator').textContent=alias.planned?'IN PROGRAMMAZIONE':'REPO MONITORATA';
     const root=$('selectedDetail');root.replaceChildren();
     root.append(create('h3','detail-title',alias.alias));
+    if(alias.planned){
+      root.append(create('p','detail-desc',
+        'In programmazione · repository non condiviso tra entrambi i collaboratori.'));
+      root.append(create('p','alias-age-policy',
+        'Nessuna attività privata o statistica non verificata viene pubblicata per questo elemento.'));
+      renderAliasList();return;
+    }
     root.append(create('p','detail-desc',
       `${number(alias.default_branch_commits)} commit sul branch principale · ${alias.branches} branch totali · ${alias.open_issues} issue · ${alias.open_prs} PR aperte · ${alias.merged_prs} merge.`));
     root.append(create('p','alias-fact',
@@ -74,7 +88,7 @@
       wrap.hidden=true;sidebar.classList.remove('has-alias-metrics');
       $('repoSearch').placeholder='Cerca un’area…';return;
     }
-    const data=publicTotals.repositories_by_alias;
+    const data=publishedAliases();
     wrap.hidden=false;sidebar.classList.add('has-alias-metrics');
     $('repoSearch').placeholder='Cerca un giardino…';
     $('aliasRepoCount').textContent=`${data.length} / ${publicTotals.organization_repository_count}`;
@@ -84,7 +98,9 @@
       const b=create('button','alias-repo-row'+(selectedAlias===repo.alias?' selected':''));
       b.type='button';b.setAttribute('aria-pressed',String(selectedAlias===repo.alias));
       const name=create('strong','',repo.alias);
-      const detail=create('small','',`${repo.non_default_branches} rami · ${repo.open_prs} PR · ${repo.open_issues} issue`);
+      const detail=create('small','',repo.planned?'IN PROGRAMMAZIONE':
+        `${repo.non_default_branches} rami · ${repo.open_prs} PR · ${repo.open_issues} issue`);
+      if(repo.planned)b.classList.add('planned');
       b.append(name,detail);b.addEventListener('click',()=>renderAliasDetails(repo));list.append(b);
     }
     if(!matches.length)list.append(create('div','loading-list','Nessun giardino trovato.'));
@@ -203,9 +219,23 @@
              ['branches','non_default_branches','open_prs','open_issues','merged_prs','default_branch_commits','oldest_open_pr_days','oldest_branch_observed_days'].every(k=>Number.isSafeInteger(x[k]) && x[k]>=0) &&
              ['branch_ages','pr_ages'].every(k=>Array.isArray(x[k])) &&
              x.pending && ['ostinsolo','InnovateSN'].every(k=>x.pending[k])))throw new Error('Invalid alias summary');
+        if(snapshot.planned_aliases!==undefined &&
+          (!Array.isArray(snapshot.planned_aliases) ||
+           snapshot.planned_aliases.length!==snapshot.organization_repository_count-snapshot.repository_count ||
+           new Set([...snapshot.planned_aliases,...snapshot.repositories_by_alias.map(x=>x.alias)]).size!==snapshot.organization_repository_count ||
+           !snapshot.planned_aliases.every(x=>typeof x==='string' &&
+              /^[A-Za-zÀ-ÖØ-öø-ÿ ]{4,40}$/.test(x))))throw new Error('Invalid planned aliases');
       }
       publicTotals=snapshot;
       renderAliasList();
+      if(snapshot.schema_version===3){
+        window.dispatchEvent(new CustomEvent('vstopia:aliases',{
+          detail:{aliases:publishedAliases().map(x=>({name:x.alias,planned:x.planned}))}}));
+        const catalog=publishedAliases();
+        const current=catalog.find(x=>x.alias===selectedAlias)||
+          catalog.find(x=>!x.planned)||catalog[0];
+        if(current)renderAliasDetails(current);
+      }
       updatePeople(snapshot.people);
       for(const [id,key] of [['metricRepos','repository_count'],['metricCommits','default_branch_commits'],
         ['metricIssues','open_issues'],['metricPrs','open_pull_requests'],['metricMerges','merged_pull_requests_all_time']]){
@@ -291,6 +321,10 @@
     else if(e.key==='-')state.zoom=Math.max(.5,state.zoom/1.1);
     else if(e.key==='Enter'||e.key===' '){const rs=visible();if(rs.length)select(rs[(rs.findIndex(r=>r.name===state.selected)+1)%rs.length].name);}else return;e.preventDefault();});
   window.addEventListener('vstopia:select',event=>select(event.detail.name));
+  window.addEventListener('vstopia:choose-alias',event=>{
+    const match=publishedAliases().find(x=>x.alias===event.detail?.name);
+    if(match)renderAliasDetails(match);
+  });
   $('repoSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase().trim();renderSidebar();});
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('repoSearch').focus();}});
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>{state.filter=b.dataset.filter;for(const n of document.querySelectorAll('[data-filter]')){n.classList.toggle('active',n===b);n.setAttribute('aria-pressed',String(n===b));}const items=visible();if(items.length&&!items.some(r=>r.name===state.selected)){select(items[0].name);}else renderSidebar();});

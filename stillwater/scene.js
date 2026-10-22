@@ -22,24 +22,28 @@ function height(x,z){
  return Math.tanh((edge-1)*5.0)*2.1 + (fbm(x*.15,z*.15)-.4)*1.5 + Math.max(0,edge-1.5)*1.4;
 }
 const scene=new THREE.Scene();scene.background=new THREE.Color('#c6d8db');scene.fog=new THREE.FogExp2('#a6b8b7',.0045);
+// Adaptive native Three.js fidelity: avoid allocating desktop-size GPU targets on phones.
+const lowPower=matchMedia('(max-width:760px), (pointer:coarse)').matches;
 let renderer;
-try{renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});}catch(e){throw new Error('WebGL 2 is required. Enable hardware acceleration in your browser. '+e.message);}
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);
+try{renderer=new THREE.WebGLRenderer({antialias:!lowPower,powerPreference:lowPower?'low-power':'high-performance'});}catch(e){throw new Error('WebGL 2 is required. Enable hardware acceleration in your browser. '+e.message);}
+renderer.setPixelRatio(Math.min(devicePixelRatio,lowPower?1:1.6));renderer.setSize(innerWidth,innerHeight);
+document.body.dataset.renderProfile=lowPower?'mobile-webgl':'desktop-webgl';
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;renderer.outputColorSpace=THREE.SRGBColorSpace;
 $('scene').appendChild(renderer.domElement);
-const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.2,16000);
+const camera=new THREE.PerspectiveCamera(lowPower?48:46,innerWidth/innerHeight,.2,16000);
 const heroPos=V(-5,height(-5,-26),-26), focus=heroPos.clone().add(V(0,9.0,0));
 const home=V(31,12.5,39);
+if(lowPower)home.sub(focus).multiplyScalar(.88).add(focus);
 camera.position.copy(home);
 const controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(focus);controls.enableDamping=true;controls.dampingFactor=.055;controls.minDistance=7;controls.maxDistance=135;controls.maxPolarAngle=Math.PI*.487;controls.minPolarAngle=.16;controls.panSpeed=.65;controls.rotateSpeed=.45;controls.zoomSpeed=.75;controls.autoRotateSpeed=.35;controls.update();
-const sun=new THREE.DirectionalLight('#fff0cf',3.0);sun.position.set(-45,65,30);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-55,right:55,top:55,bottom:-55,near:1,far:180});sun.shadow.bias=-.00018;sun.shadow.normalBias=.04;sun.shadow.radius=2;sun.target.position.set(-4,0,-18);scene.add(sun,sun.target);
+const sun=new THREE.DirectionalLight('#fff0cf',3.0);sun.position.set(-45,65,30);sun.castShadow=true;sun.shadow.mapSize.set(lowPower?512:2048,lowPower?512:2048);Object.assign(sun.shadow.camera,{left:-55,right:55,top:55,bottom:-55,near:1,far:180});sun.shadow.bias=-.00018;sun.shadow.normalBias=.04;sun.shadow.radius=2;sun.target.position.set(-4,0,-18);scene.add(sun,sun.target);
 scene.add(new THREE.HemisphereLight('#c4dbe5','#45513a',1.8));
 const sky=new Sky();sky.scale.setScalar(10000);scene.add(sky);
 const su=sky.material.uniforms;su.turbidity.value=5;su.rayleigh.value=1.3;su.mieCoefficient.value=.006;su.mieDirectionalG.value=.83;
 const sunDir=V(-.5,.65,.35).normalize();su.sunPosition.value.copy(sunDir);
 // The prefiltered sky supplies physical reflections and indirect light to PBR surfaces.
-const envScene=new THREE.Scene();const envSky=sky.clone();envSky.scale.setScalar(1000);envScene.add(envSky);const pmrem=new THREE.PMREMGenerator(renderer);let envTarget=pmrem.fromScene(envScene,.04,.1,2000);scene.environment=envTarget.texture;
+const envScene=new THREE.Scene();const envSky=sky.clone();envSky.scale.setScalar(1000);envScene.add(envSky);const pmrem=new THREE.PMREMGenerator(renderer);let envTarget=pmrem.fromScene(envScene,.04,.1,lowPower?500:2000);scene.environment=envTarget.texture;
 const wind={value:.65},time={value:0};
 function sway(material,kind='leaf'){
  material.onBeforeCompile=shader=>{
@@ -75,7 +79,7 @@ function canvasTexture(w,h,draw){const c=document.createElement('canvas');c.widt
 const bark=canvasTexture(512,1024,(ctx,w,h)=>{const im=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const n=fbm(x*.10,y*.008),fine=noise(x*.7,y*.10),groove=Math.pow(Math.abs(Math.sin(x*.15+noise(x*.015,y*.006)*9)),14);const c=68+n*58+fine*19-groove*38;const i=(y*w+x)*4;im.data[i]=c*1.03;im.data[i+1]=c*.89;im.data[i+2]=c*.72;im.data[i+3]=255;}ctx.putImageData(im,0,0);});bark.repeat.set(2,2);
 const rockTex=canvasTexture(1024,1024,(ctx,w,h)=>{const im=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){let n=fbm(x*.018,y*.018),fine=noise(x*.6,y*.6),ridge=Math.abs(noise(x*.07,y*.07)-.5);const c=66+n*102+fine*24-ridge*25,i=(y*w+x)*4;const moss=noise(x*.025+60,y*.025)> .69;im.data[i]=moss?c*.70:c;im.data[i+1]=moss?c*.79:c*.99;im.data[i+2]=moss?c*.43:c*.91;im.data[i+3]=255;}ctx.putImageData(im,0,0);});
 const groundTex=new THREE.TextureLoader().load('./assets/ground.jpg');groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(55,55);groundTex.colorSpace=THREE.SRGBColorSpace;groundTex.anisotropy=8;
-const terrainGeo=new THREE.PlaneGeometry(340,340,300,300);terrainGeo.rotateX(-Math.PI/2);
+const terrainGeo=new THREE.PlaneGeometry(340,340,lowPower?170:300,lowPower?170:300);terrainGeo.rotateX(-Math.PI/2);
 const tp=terrainGeo.attributes.position,colors=[];const tc=new THREE.Color();
 for(let i=0;i<tp.count;i++){const x=tp.getX(i),z=tp.getZ(i),h=height(x,z);tp.setY(i,h);const n=fbm(x*.22,z*.22);tc.set(h<.25?'#5b5946':h<.8?'#80836b':'#78816a');tc.multiplyScalar(.8+n*.5);colors.push(tc.r,tc.g,tc.b);}terrainGeo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));terrainGeo.computeVertexNormals();
 const terrain=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({map:groundTex,bumpMap:groundTex,bumpScale:.23,vertexColors:true,roughness:1}));terrain.receiveShadow=true;scene.add(terrain);
@@ -94,7 +98,7 @@ function distantMeadowHeight(x,z){
 // creating a pale band behind the grass and a visible discontinuity.
 // Use exactly the same world-space color/UV basis as the near ground.
 const FAR_MEADOW_RADIUS=9600; // Extensive matte terrestrial meadow, well beyond all source mountain ridges
-const farGroundGeo=new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,448,240);
+const farGroundGeo=new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,lowPower?180:448,lowPower?95:240);
 const fgp=farGroundGeo.attributes.position, fgu=farGroundGeo.attributes.uv;
 const farColors=[];
 for(let i=0;i<fgp.count;i++){
@@ -219,8 +223,8 @@ for(let kind=0;kind<5;kind++){
 // Tens of thousands of individually curved blades, tinted from root to tip.
 const grassGeo=(()=>{const p=[],c=[],idx=[];for(let j=0;j<5;j++){const t=j/4,y=t;const width=.035*(1-t)+.002;for(const side of [-1,1]){p.push(side*width+t*t*.17,y,t*t*.1);c.push(mix(.17,.62,t),mix(.25,.72,t),mix(.075,.31,t));}if(j<4){let k=j*2;idx.push(k,k+2,k+1,k+1,k+2,k+3);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));g.setIndex(idx);g.computeVertexNormals();return g;})();
 const grassMat=sway(new THREE.MeshStandardMaterial({color:'#b6be87',vertexColors:true,side:THREE.DoubleSide,roughness:1}),'grass');
-const grassCount=180000,grass=new THREE.InstancedMesh(grassGeo,grassMat,grassCount);let gi=0,tries=0;
-while(gi<grassCount && tries++<1200000){let x=range(-60,60),z=range(-54,52),h=height(x,z);if(h<.08 || h>4.5)continue;if(h>2.9 && rand()>.28)continue;const patch=noise(x*.19,z*.19);if(rand()> .56+patch*.5)continue;dummy.position.set(x,h-.03,z);dummy.rotation.set(0,range(0,6.28),range(-.17,.17));const s=range(.22,.67)*(h<1.1?1.3:1);dummy.scale.set(range(.8,1.8),s,1);dummy.updateMatrix();grass.setMatrixAt(gi,dummy.matrix);tc.setHSL(range(.18,.26),.33,range(.46,.75));grass.setColorAt(gi++,tc);}
+const grassCount=lowPower?24000:180000,grass=new THREE.InstancedMesh(grassGeo,grassMat,grassCount);let gi=0,tries=0;
+while(gi<grassCount && tries++<(lowPower?170000:1200000)){let x=range(-60,60),z=range(-54,52),h=height(x,z);if(h<.08 || h>4.5)continue;if(h>2.9 && rand()>.28)continue;const patch=noise(x*.19,z*.19);if(rand()> .56+patch*.5)continue;dummy.position.set(x,h-.03,z);dummy.rotation.set(0,range(0,6.28),range(-.17,.17));const s=range(.22,.67)*(h<1.1?1.3:1);dummy.scale.set(range(.8,1.8),s,1);dummy.updateMatrix();grass.setMatrixAt(gi,dummy.matrix);tc.setHSL(range(.18,.26),.33,range(.46,.75));grass.setColorAt(gi++,tc);}
 grass.count=gi;grass.receiveShadow=true;grass.computeBoundingSphere();scene.add(grass);
 // Long-range vegetation is represented by the same photographed textured
 // meadow surface. Sub-pixel instanced grass at the mountain foot caused
@@ -231,7 +235,7 @@ const waterNormals=new THREE.TextureLoader().load('./assets/water-normals.jpg',t
 // its precise wet footprint with marching triangles. Water.js still renders
 // the exact moving reflections but cannot spill into the distant meadow.
 function makeLakeOnlySurface(){
- const minX=-61,maxX=61,minZ=-58,maxZ=66,step=.58;
+ const minX=-61,maxX=61,minZ=-58,maxZ=66,step=lowPower?1.05:.58;
  const waterY=.015,shoreInlandInset=.045;
  const nx=Math.ceil((maxX-minX)/step),nz=Math.ceil((maxZ-minZ)/step);
  const positions=[],uvs=[];
@@ -273,7 +277,7 @@ function makeLakeOnlySurface(){
  document.body.dataset.lakeWaterTriangles=String(positions.length/9);
  return geo;
 }
-const water=new Water(makeLakeOnlySurface(),{textureWidth:1024,textureHeight:1024,waterNormals,sunDirection:sunDir,sunColor:'#fff0da',waterColor:'#163c35',distortionScale:1.6,fog:true});water.rotation.x=-Math.PI/2;water.position.y=.015;water.material.uniforms.size.value=5;scene.add(water);
+const water=new Water(makeLakeOnlySurface(),{textureWidth:lowPower?256:1024,textureHeight:lowPower?256:1024,waterNormals,sunDirection:sunDir,sunColor:'#fff0da',waterColor:'#163c35',distortionScale:1.6,fog:true});water.rotation.x=-Math.PI/2;water.position.y=.015;water.material.uniforms.size.value=5;scene.add(water);
 // Soft drifting cloud layer, evaluated in world space. No sky photograph.
 const cloudShader=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,uniforms:{uTime:time,uSun:{value:sunDir}},vertexShader:`varying vec3 wp;void main(){wp=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.);}`,fragmentShader:`varying vec3 wp;uniform float uTime;uniform vec3 uSun;
  float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}float fb(vec2 p){float a=.5,r=0.;for(int i=0;i<5;i++){r+=n(p)*a;p=p*2.03+7.3;a*=.5;}return r;}
@@ -288,8 +292,8 @@ $('wind').oninput=e=>{wind.value=+e.target.value;$('wind-value').textContent=win
 function lighting(value){
  const elev=mix(.20,.95,value);sunDir.set(-.55,elev,.36).normalize();sun.position.copy(sunDir).multiplyScalar(110);su.sunPosition.value.copy(sunDir);su.turbidity.value=mix(7,3,value);sun.color.setHSL(mix(.075,.12,value),mix(.48,.12,value),.87);sun.intensity=mix(2.0,3.2,value);renderer.toneMappingExposure=mix(.80,1.02,value);water.material.uniforms.sunDirection.value.copy(sunDir);water.material.uniforms.sunColor.value.copy(sun.color);scene.fog.color.set(value<.32?'#b8afa1':'#a6b8b7');$('light-value').textContent=value<.28?'Golden hour':value<.76?'Late afternoon':'Clear daylight';
 }
-$('light').oninput=e=>lighting(+e.target.value);$('light').onchange=()=>{envTarget.dispose();envTarget=pmrem.fromScene(envScene,.04,.1,2000);scene.environment=envTarget.texture;};lighting(.62);
-$('quality').onchange=e=>{const q=e.target.value;renderer.setPixelRatio(Math.min(devicePixelRatio,q==='balanced'?1:q==='high'?1.6:2));sun.shadow.mapSize.setScalar(q==='ultra'?4096:q==='high'?2048:1024);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}grass.count=Math.floor(gi*(q==='balanced'?.48:1));};
+$('light').oninput=e=>lighting(+e.target.value);$('light').onchange=()=>{envTarget.dispose();envTarget=pmrem.fromScene(envScene,.04,.1,lowPower?500:2000);scene.environment=envTarget.texture;};lighting(.62);
+$('quality').onchange=e=>{const q=e.target.value;renderer.setPixelRatio(Math.min(devicePixelRatio,lowPower?1:q==='balanced'?1:q==='high'?1.6:2));sun.shadow.mapSize.setScalar(lowPower?512:q==='ultra'?4096:q==='high'?2048:1024);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}grass.count=Math.floor(gi*(q==='balanced'?.48:1));};
 $('orbit').onclick=()=>{controls.autoRotate=!controls.autoRotate;$('orbit').setAttribute('aria-pressed',String(controls.autoRotate));};
 $('pause').onclick=()=>{paused=!paused;$('pause').setAttribute('aria-pressed',String(paused));$('pause').innerHTML=paused?'▶ <span>Resume</span>':'Ⅱ <span>Pause</span>';};
 $('focus').onclick=()=>{returning=true;controls.autoRotate=false;$('orbit').setAttribute('aria-pressed','false');};controls.addEventListener('start',()=>{returning=false;});
@@ -309,6 +313,7 @@ if(isEmbedded){
  // ONLY replace the visible sky: this is the partly cloudy 2K panorama from
  // our last alpine scene. Do not change existing PMREM, sun, wind, water,
  // clouds animation state, terrain, materials or camera controls.
+ if(!lowPower){
  new RGBELoader().setDataType(THREE.HalfFloatType)
   .load('./assets/sky/partly-cloudy-2k.hdr',texture=>{
    texture.mapping=THREE.EquirectangularReflectionMapping;
@@ -319,6 +324,11 @@ if(isEmbedded){
    console.error('[Stillwater optional cloud sky]',error);
    document.body.dataset.skyReady='fallback';
   });
+ }else{
+  // Mobile retains moving Three.js clouds and sun while avoiding large HDR uploads.
+  document.body.dataset.skyPreset='animated-three-atmosphere-mobile';
+  document.body.dataset.skyReady='ready';
+ }
  // Keep native Atmosphere sliders available; start collapsed to preserve the scene.
  if($('panel-toggle')?.getAttribute('aria-expanded')==='true')$('panel-toggle').click();
  vstopiaBridge=mountVstopiaTreeBridge({THREE,scene,camera,controls,renderer,
@@ -340,4 +350,4 @@ function animate(now){
 }
 // Precompile catches shader failures before dismissing the loading surface.
 renderer.debug.onShaderError=(gl,program,vs,fs)=>{console.error(gl.getProgramInfoLog(program),gl.getShaderInfoLog(vs),gl.getShaderInfoLog(fs));$('error').hidden=false;$('error').textContent='This GPU could not compile a scene shader. Please try an up-to-date Chrome or Firefox with hardware acceleration enabled.';};
-renderer.compile(scene,camera);requestAnimationFrame(animate);
+if(!lowPower)renderer.compile(scene,camera);requestAnimationFrame(animate);

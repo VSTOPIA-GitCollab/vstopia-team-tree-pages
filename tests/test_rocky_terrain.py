@@ -30,7 +30,7 @@ class RockyMountainTests(unittest.TestCase):
   self.assertNotIn('new THREE.PlaneGeometry(900,900)',SCENE)
  def test_real_distant_meadow_extent(self):
   self.assertIn('const FAR_MEADOW_RADIUS=9600',SCENE)
-  self.assertIn('new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,448,240)',SCENE)
+  self.assertIn('new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,lowPower?180:448,lowPower?95:240)',SCENE)
   self.assertIn('(FAR_MEADOW_RADIUS-144)*Math.pow(t,1.44)',SCENE)
   self.assertIn('(oldR-144)/(FAR_MEADOW_RADIUS-144)',SCENE)
   self.assertIn('innerHeight,.2,16000',SCENE)
@@ -49,7 +49,7 @@ class RockyMountainTests(unittest.TestCase):
  def test_names_all_visible_no_mode_switch(self):
   self.assertNotIn('stillwater-label-toggle',BRIDGE)
   self.assertNotIn('showAll',BRIDGE)
-  self.assertIn('b.hidden=p.hidden||!filterVisible.has(p.name)',BRIDGE)
+  self.assertIn('b.hidden=hidden;',BRIDGE)
   self.assertIn("b.classList.toggle(\'selected\'",BRIDGE)
  def test_site_and_privacy_preserved(self):
   self.assertIn('site-unified.css',(R/'index.html').read_text())

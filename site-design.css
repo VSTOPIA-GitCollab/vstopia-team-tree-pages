@@ -226,7 +226,7 @@ body .app-shell{font-family:var(--ui-font)!important}
 /* Keep preexisting label font sizes exactly as before. */
 .layout>.sidebar .repo-copy small{margin-top:2px!important}
 
-/* Anonymous monitored repositories are separate from the conceptual 12-branch tree.
+/* Anonymous monitored repositories now share their aliases with the 3D tree.
    Keep the same type scale and lightly translucent outer rail; no new card stacks. */
 .alias-projects{padding:8px 0 2px!important}
 .alias-policy{padding:3px 11px 6px!important;font:500 10px/1.45 var(--ui-font)!important;
@@ -246,10 +246,43 @@ body .app-shell{font-family:var(--ui-font)!important}
 .alias-age-details summary{cursor:pointer;font:650 11px/1.6 var(--ui-font)}
 .alias-age-item{padding:2px 7px;font:500 10px/1.4 var(--ui-font)}
 
-/* V3 has one primary left navigation: REAL monitored aliases. The old 12
-   conceptual areas remain attached to the 3D oak, not duplicated below. */
+/* V3 uses the same monitored and planned aliases in both navigation and tree.
+   Conceptual fallback is shown only when the public snapshot is unavailable. */
 .layout>.sidebar.has-alias-metrics #repoList,
 .layout>.sidebar.has-alias-metrics>.section-divider,
 .layout>.sidebar.has-alias-metrics .filter-bar{display:none!important}
 .layout>.sidebar.has-alias-metrics .alias-projects{display:block!important;padding-top:10px!important}
 .layout>.sidebar.has-alias-metrics .alias-repo-list{overflow:visible!important}
+
+/* Planned aliases disclose no private activity, only a navigation status. */
+.layout>.sidebar .alias-repo-row.planned{border-style:dashed!important;opacity:.84}
+.layout>.sidebar .alias-repo-row.planned small{font-weight:700!important;letter-spacing:.03em}
+#stillwaterLabels .living-node.planned .living-node-label{border-style:dashed!important;opacity:.86}
+@media(max-width:760px){
+ .layout>.workbench .tree-stage{min-height:470px!important;height:min(74svh,620px)!important}
+ .layout>.sidebar .alias-repo-row{min-height:44px!important}
+ #stillwaterLabels .living-node-label{font-size:9px!important;padding:5px 7px!important;max-width:118px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+ .layout :is(.sidebar,.inspector,.topbar){backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
+}
+
+/* Phones: expose the catalog as a usable, explicitly scrollable explorer,
+   not a 190px tall box that clips every repository row. */
+@media(max-width:760px){
+ .layout>.sidebar.has-alias-metrics{height:440px!important;min-height:440px!important;max-height:440px!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important}
+ .layout>.sidebar.has-alias-metrics #aliasRepoList{overflow:visible!important}
+ .layout>.sidebar.has-alias-metrics .alias-projects{padding-bottom:18px!important}
+ .layout>.sidebar.has-alias-metrics .alias-policy{font-size:11px!important}
+}
+
+/* On phones the WebGL viewport MUST be in the document flow: the inherited
+   full-screen fixed garden was behind translucent sidebar hit targets and
+   prevented OrbitControls touch gestures from reaching the iframe. */
+@media(max-width:760px){
+ .layout>.workbench{position:relative!important;height:auto!important;min-height:0!important;isolation:isolate!important}
+ .layout>.workbench>.tree-stage{
+  position:relative!important;inset:auto!important;top:auto!important;right:auto!important;
+  bottom:auto!important;left:auto!important;width:100%!important;
+  height:min(74svh,620px)!important;min-height:470px!important;
+  flex:0 0 auto!important;z-index:1!important;pointer-events:auto!important}
+ .layout>.workbench>.workbench-top{position:relative!important;z-index:2!important}
+}

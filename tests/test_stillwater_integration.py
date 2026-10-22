@@ -18,7 +18,7 @@ class StillwaterLocalIntegrationTests(unittest.TestCase):
  def test_original_physical_sky_reflection_and_nature(self):
   self.assertIn('new THREE.PMREMGenerator(renderer)',SCENE)
   self.assertIn('new Sky()',SCENE)
-  self.assertIn('textureWidth:1024,textureHeight:1024',SCENE)
+  self.assertIn('textureWidth:lowPower?256:1024,textureHeight:lowPower?256:1024',SCENE)
   self.assertIn('createMysticTree',NATURE)
   self.assertIn('parallel-transport',NATURE.lower())
  def test_max_wind_and_light_keep_sliders(self):
@@ -47,7 +47,7 @@ class StillwaterLocalIntegrationTests(unittest.TestCase):
   self.assertIn('id=\'stillwaterFrame\'',PARENT)
   self.assertNotIn('SHOW 12 BRANCHES',PARENT)
   self.assertNotIn('SHOW SELECTED ONLY',PARENT)
-  self.assertIn('b.hidden=p.hidden||!filterVisible.has(p.name)',PARENT)
+  self.assertIn('b.hidden=hidden;',PARENT)
   self.assertIn('href="./site-unified.css"',PAGE)
   self.assertIn('liquid-glass.css', (R/'site-unified.css').read_text())
   self.assertIn('vstopia-liquid-glass-island.mjs',PAGE)
