@@ -122,14 +122,35 @@ for(let i=0;i<fgp.count;i++){
 }
 farGroundGeo.setAttribute('color',new THREE.Float32BufferAttribute(farColors,3));
 farGroundGeo.computeVertexNormals();
-// No environment map, specular lobes or water-like reflections beyond the
-// near shoreline: this is terrestrial, diffuse, photographed MEADOW.
-// The local ground texture and shared height-driven vertex colors are reused.
-// Fog is disabled on this ground only, so distant meadow remains green beneath
-// the source's mountain bases instead of being washed into pale HDRI blue.
-const farGround=new THREE.Mesh(farGroundGeo,new THREE.MeshLambertMaterial({
- map:groundTex,vertexColors:true,color:'#d4e0d0',fog:false
-}));
+// Blender-style landscape mapping: reuse the exact foreground UV/photograph,
+// fade its sub-pixel tiling with distance, and add low-frequency, world-space
+// macro color variation. Near the 144m join the surface uses the identical
+// foreground Standard BRDF, so the 9.6km ring is not a dark Lambert strip.
+// Distance tint remains diffuse/matte and does not create a second lake.
+const farMeadowMat=new THREE.MeshStandardMaterial({
+ map:groundTex,vertexColors:true,roughness:1,metalness:0,
+ envMapIntensity:.24,fog:false
+});
+farMeadowMat.onBeforeCompile=shader=>{
+ shader.vertexShader='varying vec2 vFarMeadowXZ;\n'+shader.vertexShader;
+ shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',
+  '#include <begin_vertex>\n vFarMeadowXZ=(modelMatrix*vec4(transformed,1.0)).xz;');
+ shader.fragmentShader='varying vec2 vFarMeadowXZ;\n'+shader.fragmentShader;
+ shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
+  // A Blender Noise -> ColorRamp -> Mix analogue, based on world coordinates.
+  // Blends out unresolvable photographic repeats at grazing distances.
+  float meadowR=length(vFarMeadowXZ);
+  float meadowFade=smoothstep(165.0,640.0,meadowR);
+  float macroA=sin(vFarMeadowXZ.x*.006+sin(vFarMeadowXZ.y*.004)*1.2);
+  float macroB=cos(vFarMeadowXZ.y*.008-vFarMeadowXZ.x*.0027);
+  float macroC=sin(vFarMeadowXZ.x*.0019+vFarMeadowXZ.y*.0031);
+  float macroMix=(macroA*.45+macroB*.35+macroC*.20);
+  vec3 sunlitGrass=vec3(.26,.38,.21)+macroMix*vec3(.030,.042,.027);
+  outgoingLight=mix(outgoingLight,sunlitGrass,meadowFade*.86);
+  #include <opaque_fragment>`);
+};
+farMeadowMat.customProgramCacheKey=()=> 'vstopia-meadow-blender-macroblend-v1';
+const farGround=new THREE.Mesh(farGroundGeo,farMeadowMat);
 farGround.name='9.6km non-reflective grass meadow to the mountain horizon';
 farGround.receiveShadow=true;
 scene.add(farGround);

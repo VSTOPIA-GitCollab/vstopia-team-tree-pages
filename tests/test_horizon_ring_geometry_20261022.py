@@ -35,7 +35,7 @@ class DistantMeadowRingGeometryTests(unittest.TestCase):
         self.assertIn('fgp.setXYZ(i,x,distantMeadowHeight(x,z),z);',SOURCE)
         self.assertIn('fgu.setXY(i,(x+170)/340,(170-z)/340);',SOURCE)
         self.assertIn('farGroundGeo.computeVertexNormals();',SOURCE)
-        self.assertIn("new THREE.MeshLambertMaterial({",SOURCE)
+        self.assertIn("new THREE.MeshStandardMaterial({",SOURCE)
         self.assertIn("farGround.receiveShadow=true;",SOURCE)
 
     def test_both_desktop_and_phone_rings_have_area_in_x_and_z(self):
