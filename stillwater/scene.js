@@ -313,7 +313,8 @@ if(isEmbedded){
  // ONLY replace the visible sky: this is the partly cloudy 2K panorama from
  // our last alpine scene. Do not change existing PMREM, sun, wind, water,
  // clouds animation state, terrain, materials or camera controls.
- if(!lowPower){
+ // Preserve the same cloudy HDR panorama on mobile and desktop.
+ // The birds, swaying branches, grass and reflecting water stay animated.
  new RGBELoader().setDataType(THREE.HalfFloatType)
   .load('./assets/sky/partly-cloudy-2k.hdr',texture=>{
    texture.mapping=THREE.EquirectangularReflectionMapping;
@@ -324,11 +325,6 @@ if(isEmbedded){
    console.error('[Stillwater optional cloud sky]',error);
    document.body.dataset.skyReady='fallback';
   });
- }else{
-  // Mobile retains moving Three.js clouds and sun while avoiding large HDR uploads.
-  document.body.dataset.skyPreset='animated-three-atmosphere-mobile';
-  document.body.dataset.skyReady='ready';
- }
  // Keep native Atmosphere sliders available; start collapsed to preserve the scene.
  if($('panel-toggle')?.getAttribute('aria-expanded')==='true')$('panel-toggle').click();
  vstopiaBridge=mountVstopiaTreeBridge({THREE,scene,camera,controls,renderer,

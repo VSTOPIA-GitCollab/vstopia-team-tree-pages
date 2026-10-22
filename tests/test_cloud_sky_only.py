@@ -21,11 +21,11 @@ class OnlyCloudSkyTests(unittest.TestCase):
   self.assertIn("lowPower?512:2048",sky_core(SOURCE))
   def cloud_override(src):
    return src[src.index(' // ONLY replace the visible sky:'):src.index(' // Keep native Atmosphere sliders available;')]
-  # Desktop keeps the exact cloud HDR treatment; phones use animated native sky.
+  # Both desktop and mobile retain the same original HDRI backdrop.
   self.assertIn("new RGBELoader().setDataType(THREE.HalfFloatType)",cloud_override(SOURCE))
   self.assertIn("new RGBELoader().setDataType(THREE.HalfFloatType)",cloud_override(reference))
-  self.assertIn("if(!lowPower)",cloud_override(SOURCE))
-  self.assertIn("document.body.dataset.skyPreset='animated-three-atmosphere-mobile'",cloud_override(SOURCE))
+  self.assertNotIn("animated-three-atmosphere-mobile",cloud_override(SOURCE))
+  self.assertNotIn("if(!lowPower)",cloud_override(SOURCE))
   self.assertIn("sky.visible=false;clouds.visible=false;scene.background=texture",cloud_override(SOURCE))
  def test_sky_has_previous_clouds_with_no_extra_controls(self):
   self.assertIn('partly-cloudy-2k.hdr',SOURCE)
