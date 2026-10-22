@@ -225,3 +225,31 @@ body .app-shell{font-family:var(--ui-font)!important}
 }
 /* Keep preexisting label font sizes exactly as before. */
 .layout>.sidebar .repo-copy small{margin-top:2px!important}
+
+/* Anonymous monitored repositories are separate from the conceptual 12-branch tree.
+   Keep the same type scale and lightly translucent outer rail; no new card stacks. */
+.alias-projects{padding:8px 0 2px!important}
+.alias-policy{padding:3px 11px 6px!important;font:500 10px/1.45 var(--ui-font)!important;
+ color:var(--ui-muted)!important;margin:0!important}
+.alias-repo-list{display:grid!important;gap:5px!important;padding:3px 7px 9px!important}
+.alias-repo-row{width:100%;display:flex;flex-direction:column;align-items:flex-start;
+ gap:2px;padding:6px 10px;border:1px solid rgba(241,255,255,.21);border-radius:10px;
+ background:rgba(16,45,49,.14);color:var(--ui-text);cursor:pointer;text-align:left;
+ font-family:var(--ui-font);min-height:41px}
+.alias-repo-row strong{font-size:11px;font-weight:650;line-height:1.3}
+.alias-repo-row small{font-size:10px;line-height:1.25;color:var(--ui-muted)}
+.alias-repo-row:hover,.alias-repo-row.selected{background:rgba(207,240,231,.19);
+ border-color:rgba(236,255,245,.54)}
+.alias-fact{font:500 11px/1.48 var(--ui-font);padding:2px 0!important;margin:2px 0!important}
+.alias-age-policy{font:500 10px/1.5 var(--ui-font);opacity:.83;margin:8px 0!important}
+.alias-age-details{padding:3px 0!important;background:transparent!important;border:0!important}
+.alias-age-details summary{cursor:pointer;font:650 11px/1.6 var(--ui-font)}
+.alias-age-item{padding:2px 7px;font:500 10px/1.4 var(--ui-font)}
+
+/* V3 has one primary left navigation: REAL monitored aliases. The old 12
+   conceptual areas remain attached to the 3D oak, not duplicated below. */
+.layout>.sidebar.has-alias-metrics #repoList,
+.layout>.sidebar.has-alias-metrics>.section-divider,
+.layout>.sidebar.has-alias-metrics .filter-bar{display:none!important}
+.layout>.sidebar.has-alias-metrics .alias-projects{display:block!important;padding-top:10px!important}
+.layout>.sidebar.has-alias-metrics .alias-repo-list{overflow:visible!important}

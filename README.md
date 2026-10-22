@@ -110,3 +110,7 @@ The dark nested cards behind **Selected Branch** and **Team Supervisor** have be
 ## Public data provenance and compact thematic navigator (22 October 2026)
 
 The living tree's 12 visible branches are **conceptual project areas, not individual private repositories**. The earlier invented per-branch commit/issue/PR counts and sample commit messages are removed. The left area entries retain their existing font size but are 6px shorter, with small spacing between them. GitHub team/aggregate figures are sourced separately from a **dated public snapshot**, explicitly labeled with its publication time (not live). See [public data audit and browser evidence](docs/PUBLIC_TREE_DATA_AUDIT_AND_COMPACT_UI_2026-10-22.md).
+
+## v3: anonymous real repository activity (22 October 2026)
+
+The public site now accepts and displays a **sanitized real GitHub snapshot v3**: 20 organization repositories, 13 shared monitored aliases at the initial snapshot; per-alias branch/PR/Issue/commit counts, exact ages of open PRs, first-*observed* non-default branch ages, approved member assignment/review counts and last observed interaction. The 12 labels on the ancient tree remain conceptual map areas; real repository names are never on GitHub Pages. See [the public data contract and screenshots](docs/PUBLIC_ANON_REPOSITORY_METRICS_V3_2026-10-22.md). This first v3 snapshot was manually collected and published; **hourly private Actions refresh requires secrets and remains disabled until safely configured.**
