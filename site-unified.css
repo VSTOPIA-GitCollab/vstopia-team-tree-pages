@@ -910,3 +910,39 @@ body .app-shell{font-family:var(--ui-font)!important}
 .layout>.inspector :is(.detail-desc,.activity-message,.supervisor-speech){
  font-size:12px!important;line-height:1.46!important;letter-spacing:0!important;
 }
+
+/* Text-only Selected Branch and Team Supervisor — no dark nested boxes.
+   Keep original headings, live JS IDs, auto-refresh, and team cards untouched. */
+.layout>.inspector>.inspector-section:is(.detail-section,.collaborator),
+.layout>.inspector>.inspector-section:is(.detail-section,.collaborator) :is(
+ .selected-detail,.activity-card,.supervisor-speech,.collab-profile,
+ .detail-badges,.detail-badge,.detail-commit,.detail-meta,.detail-divider){
+ background:transparent!important;background-color:transparent!important;
+ background-image:none!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+ outline:0!important;
+}
+.layout>.inspector>.inspector-section:is(.detail-section,.collaborator){
+ padding:10px 9px 5px!important;
+}
+.layout>.inspector>.inspector-section:is(.detail-section,.collaborator) :is(
+ .selected-detail,.activity-card,.supervisor-speech){
+ padding:0!important;margin:0!important;max-height:none!important;
+ overflow:visible!important;
+}
+.layout>.inspector>.detail-section .detail-badges{
+ display:flex!important;flex-wrap:wrap!important;gap:5px 12px!important;
+ margin:8px 0!important;padding:0!important;
+}
+.layout>.inspector>.detail-section .detail-badge{
+ padding:0!important;margin:0!important;
+ color:var(--ui-muted)!important;
+ font:600 10px/1.35 var(--ui-font)!important;
+}
+.layout>.inspector>.detail-section .detail-divider{display:none!important}
+.layout>.inspector>.collaborator #supervisorMessage{
+ display:block!important;
+ font:500 12px/1.55 var(--ui-font)!important;
+ color:var(--ui-text)!important;text-shadow:0 1px 3px rgba(7,24,30,.56)!important;
+}
