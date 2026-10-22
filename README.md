@@ -94,3 +94,7 @@ In the isolated `feat/stillwater-ui-mountain-material-review` worktree, the Stil
 ## Local-only rocky mountain / meadow continuation
 
 The isolated branch `feat/rocky-mountains-continuous-terrain-20261022` improves photographed triplanar mountain materials, repairs the pale terrain seam and keeps all 12 project labels permanently visible when their actual branch anchors are on camera. Test the integrated scene at `http://127.0.0.1:39031/` on the main Mac. Full technical audit, screenshots, regression notes and references: [Stillwater rocky mountains & continuous meadow](docs/STILLWATER_ROCKY_MOUNTAINS_CONTINUOUS_MEADOW_2026-10-22.md). **Not published to GitHub Pages.**
+
+## Lake Scene 2 mountain/shoreline restoration — local only
+
+The latest local review matches the three original mountain shapes/placements from the user-provided `lake-scene 2`, darkens them slightly, extends the terrain to a **4,800 m radius**, and replaces the 900 × 900 m water square with a **lake-only shoreline-clipped reflective Water.js surface**. The meadow now also uses the same photographed texture UV scale at all distances. See [technical implementation and browser screenshots](docs/LAKE_SCENE2_MOUNTAINS_TERRAIN_WATER_RESTORE_2026-10-22.md). Local preview: http://127.0.0.1:39031/ — nothing published to GitHub Pages.

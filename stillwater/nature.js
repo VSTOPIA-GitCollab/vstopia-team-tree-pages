@@ -135,7 +135,7 @@ export function createMysticTree(seed=49213){
 
 // A low, distant mountain system, with domain-warped ridged fractals and
 // overlapping slopes. Distances of 650–1,650 metres keep it behind the grove.
-export function createDistantMountains({rockColor,rockNormal,rockRoughness}={}){
+export function createDistantMountains(){
  const hash=(x,y)=>{const n=Math.sin(x*127.1+y*311.7)*43758.5453123;return n-Math.floor(n);};
  const noise=(x,y)=>{const ix=Math.floor(x),iy=Math.floor(y);let u=x-ix,v=y-iy;u=u*u*(3-2*u);v=v*v*(3-2*v);return lerp(lerp(hash(ix,iy),hash(ix+1,iy),u),lerp(hash(ix,iy+1),hash(ix+1,iy+1),u),v);};
  function ridged(x,y){let a=.55,sum=0,weight=1;for(let i=0;i<6;i++){let s=1-Math.abs(2*noise(x,y)-1);s=s*s*weight;sum+=s*a;weight=Math.min(1,s*1.8);x=x*2.09+17;y=y*2.09+9;a*=.48;}return sum;}
@@ -151,80 +151,19 @@ export function createDistantMountains({rockColor,rockNormal,rockRoughness}={}){
    const broad=.65+noise(x*.002+layer*8,layer+4)*.50;
    const y=-6+envelope*(47+n*125)*broad;
    p.setXYZ(i,x,y,z);
-   // Layered slate/charcoal rock, deliberately dark against cloudy HDRI.
-   // The old blue-white albedo and pale outgoing-light haze bleached cliffs.
-   c.set('#29363b').lerp(new THREE.Color('#46585f'),layer*.18);
-   const stratum=.84+.20*Math.sin(x*.018+z*.009)+.19*n;
-   c.multiplyScalar(Math.max(.58,stratum));colors.push(c.r,c.g,c.b);
+   c.set('#596c73').lerp(new THREE.Color('#a5b9bd'),layer*.20);
+   c.multiplyScalar((.8+n*.30)*.88);colors.push(c.r,c.g,c.b);
   }
   g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.computeVertexNormals();
   // Per-object aerial perspective preserves a faint horizon without covering
   // the nearby tree in the much heavier fog needed at mountain distance.
-  // PBR scanned rock: world-space triplanar projection, independent of steep
-  // slope UVs. Two non-aligned scales suppress recognizable texture tiling.
-  // Includes OpenGL tangent normal and measured roughness from Poly Haven CC0.
-  const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.94,metalness:0,fog:false,envMapIntensity:.13});
+  const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.25});
   material.onBeforeCompile=shader=>{
-   shader.uniforms.uRockAlbedo={value:rockColor};
-   shader.uniforms.uRockNormal={value:rockNormal};
-   shader.uniforms.uRockRoughness={value:rockRoughness};
-   const vs='varying vec3 vRockPos; varying vec3 vRockWorldNormal;\n';
-   shader.vertexShader=vs+shader.vertexShader;
-   shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>',
-    '#include <worldpos_vertex>\n vRockPos=(modelMatrix*vec4(transformed,1.)).xyz; vRockWorldNormal=normalize(mat3(modelMatrix)*normal);');
-   const fs=`varying vec3 vRockPos;
-    varying vec3 vRockWorldNormal;
-    uniform sampler2D uRockAlbedo;
-    uniform sampler2D uRockNormal;
-    uniform sampler2D uRockRoughness;
-    vec3 rockWeights(vec3 n){vec3 w=pow(abs(n),vec3(4.));return w/max(w.x+w.y+w.z,.0001);}
-    vec3 rockTex3(sampler2D tex,vec3 p,vec3 w,float scale){
-      return texture2D(tex,p.yz*scale+vec2(.13,.63)).rgb*w.x+
-             texture2D(tex,p.xz*scale+vec2(.71,.11)).rgb*w.y+
-             texture2D(tex,p.xy*scale+vec2(.36,.47)).rgb*w.z;
-    }
-    vec3 rockTriplanar(sampler2D tex){
-      vec3 w=rockWeights(vRockWorldNormal);
-      // Small domain warp from large scale geometry discourages obvious grids.
-      vec3 p=vRockPos+vec3(sin(vRockPos.z*.016)*2.9,cos(vRockPos.x*.013)*2.0,
-                          sin(vRockPos.y*.024+vRockPos.x*.015)*2.4);
-      vec3 a=rockTex3(tex,p,w,.052);
-      vec3 b=rockTex3(tex,p+vec3(19.1,37.2,11.7),w,.113);
-      return mix(a,b,.26);
-    }
-   `;
-   shader.fragmentShader=fs+shader.fragmentShader;
-   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',
-    `#include <color_fragment>
-     vec3 scannedStone=rockTriplanar(uRockAlbedo);
-     // Custom sampler data in linear light: GL internally decodes sRGB albedo.
-     diffuseColor.rgb *= scannedStone * 2.04;
-     float strata=.87+.10*sin(vRockPos.y*.16+vRockPos.x*.022);
-     diffuseColor.rgb *= strata;
-    `);
-   shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',
-    '#include <roughnessmap_fragment>\n roughnessFactor*=mix(.80,1.0,rockTriplanar(uRockRoughness).r);');
-   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',
-    `#include <normal_fragment_maps>
-    vec3 w=rockWeights(vRockWorldNormal);
-    vec3 nx=rockTex3(uRockNormal,vRockPos,vec3(1.,0.,0.),.052)*2.-1.;
-    vec3 ny=rockTex3(uRockNormal,vRockPos,vec3(0.,1.,0.),.052)*2.-1.;
-    vec3 nz=rockTex3(uRockNormal,vRockPos,vec3(0.,0.,1.),.052)*2.-1.;
-    vec3 rockBump=normalize(vec3(nx.z,nx.x,nx.y)*w.x+
-                               vec3(ny.x,ny.z,ny.y)*w.y+
-                               vec3(nz.x,nz.y,nz.z)*w.z);
-    normal=normalize(normal+rockBump*.31);
-    `);
-   // Atmospheric perspective is applied to REAL textured rock, never a
-   // solid pale color: depth-dependent muted haze, max 18% on far layers.
    shader.vertexShader='varying float mountainDistance;\n'+shader.vertexShader;
-   shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',
-    '#include <project_vertex>\n mountainDistance=length(mvPosition.xyz);');
+   shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n mountainDistance=length(mvPosition.xyz);');
    shader.fragmentShader='varying float mountainDistance;\n'+shader.fragmentShader;
-   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',
-    'outgoingLight=mix(outgoingLight,vec3(.13,.18,.20),min(.18,mountainDistance*.000065));\n#include <opaque_fragment>');
+   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`float haze=clamp(1.-exp(-mountainDistance*.00036),.0,.27);outgoingLight=mix(outgoingLight,vec3(.22,.295,.33),haze)*.50;\n#include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=> 'vstopia-alpine-pbr-triplanar-photographic-v2';
   const mesh=new THREE.Mesh(g,material);mesh.name=`Horizon ridge ${layer+1}`;group.add(mesh);
  }
  return group;

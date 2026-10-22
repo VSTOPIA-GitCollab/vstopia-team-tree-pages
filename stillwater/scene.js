@@ -79,19 +79,9 @@ const terrainGeo=new THREE.PlaneGeometry(340,340,300,300);terrainGeo.rotateX(-Ma
 const tp=terrainGeo.attributes.position,colors=[];const tc=new THREE.Color();
 for(let i=0;i<tp.count;i++){const x=tp.getX(i),z=tp.getZ(i),h=height(x,z);tp.setY(i,h);const n=fbm(x*.22,z*.22);tc.set(h<.25?'#5b5946':h<.8?'#80836b':'#78816a');tc.multiplyScalar(.8+n*.5);colors.push(tc.r,tc.g,tc.b);}terrainGeo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));terrainGeo.computeVertexNormals();
 const terrain=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({map:groundTex,bumpMap:groundTex,bumpScale:.23,vertexColors:true,roughness:1}));terrain.receiveShadow=true;scene.add(terrain);
-// Three photographed rock maps are CC0 Poly Haven Aerial Rocks 02, retained
-// from our earlier local alpine prototype (never fetched from a runtime CDN).
-const rockLoader=new THREE.TextureLoader();
-const rockColor=rockLoader.load('./assets/rock-pbr/aerial-rocks-color.jpg');
-const rockNormal=rockLoader.load('./assets/rock-pbr/aerial-rocks-normal.jpg');
-const rockRoughness=rockLoader.load('./assets/rock-pbr/aerial-rocks-roughness.jpg');
-rockColor.colorSpace=THREE.SRGBColorSpace;
-for(const t of [rockColor,rockNormal,rockRoughness]){
- t.wrapS=t.wrapT=THREE.RepeatWrapping;
- t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
-}
-scene.add(createDistantMountains({rockColor,rockNormal,rockRoughness}));
-
+// User's original lake-scene 2 mountains, exact original layered ridge
+// geometry and positions. Color only is 12% darker than source.
+scene.add(createDistantMountains());
 // Shared surface elevation for the distant meadow and every grass root.
 function distantMeadowHeight(x,z){
  const r=Math.hypot(x,z),nearH=height(x,z)-.38;
@@ -103,17 +93,20 @@ function distantMeadowHeight(x,z){
 // the meadow edge was higher. It also lacked ground texture/vertex colors,
 // creating a pale band behind the grass and a visible discontinuity.
 // Use exactly the same world-space color/UV basis as the near ground.
-const farGroundGeo=new THREE.RingGeometry(144,2400,256,150);
+const FAR_MEADOW_RADIUS=4800; // More than 2x old extent: covers mountain feet and horizon
+const farGroundGeo=new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,384,210);
 const fgp=farGroundGeo.attributes.position, fgu=farGroundGeo.attributes.uv;
 const farColors=[];
 for(let i=0;i<fgp.count;i++){
  const oldX=fgp.getX(i),oldZ=fgp.getZ(i),oldR=Math.hypot(oldX,oldZ);
  const t=THREE.MathUtils.clamp((oldR-144)/(2400-144),0,1);
- const r=144+2256*Math.pow(t,1.8);
+ const r=144+(FAR_MEADOW_RADIUS-144)*Math.pow(t,1.44);
  const x=oldX*(r/Math.max(.001,oldR)),z=oldZ*(r/Math.max(.001,oldR));
  fgp.setXYZ(i,x,distantMeadowHeight(x,z),z);
  // Near ground's PlaneGeometry(340m) has UV=(x+170)/340 and repeat=55.
- fgu.setXY(i,(x+170)*(55/340),(170-z)*(55/340));
+ // The *texture itself* already repeats 55x. Repeating this UV 55x too would
+ // create 3025 tiny tiles across the field and alias the distant meadow.
+ fgu.setXY(i,(x+170)/340,(170-z)/340);
  const n=fbm(x*.22,z*.22),h=height(x,z);
  tc.set(h<.25?'#5b5946':h<.8?'#80836b':'#78816a');
  tc.multiplyScalar(.8+n*.5);
@@ -230,7 +223,53 @@ grass.count=gi;grass.receiveShadow=true;grass.computeBoundingSphere();scene.add(
 // high-contrast black/white pixel shimmer and is intentionally not created.
 // True planar reflection renders the moving trees and mountains from a mirrored camera.
 const waterNormals=new THREE.TextureLoader().load('./assets/water-normals.jpg',t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;});
-const water=new Water(new THREE.PlaneGeometry(900,900),{textureWidth:1024,textureHeight:1024,waterNormals,sunDirection:sunDir,sunColor:'#fff0da',waterColor:'#163c35',distortionScale:1.6,fog:true});water.rotation.x=-Math.PI/2;water.position.y=.015;water.material.uniforms.size.value=5;scene.add(water);
+// Lake ONLY: instead of the source's 900m x 900m water plane, triangulate
+// its precise wet footprint with marching triangles. Water.js still renders
+// the exact moving reflections but cannot spill into the distant meadow.
+function makeLakeOnlySurface(){
+ const minX=-61,maxX=61,minZ=-58,maxZ=66,step=.58;
+ const waterY=.015,shoreInlandInset=.045;
+ const nx=Math.ceil((maxX-minX)/step),nz=Math.ceil((maxZ-minZ)/step);
+ const positions=[],uvs=[];
+ const pt=(x,z)=>({x,z,d:height(x,z)-(waterY-shoreInlandInset)});
+ const lerpPoint=(a,b)=>{
+  const t=THREE.MathUtils.clamp(a.d/(a.d-b.d),0,1);
+  return {x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,d:0};
+ };
+ const emit=(a,b,c)=>{
+  // Local Water.js plane geometry is XY; after rotation -PI/2 it becomes XZ.
+  for(const v of [a,b,c]){
+   positions.push(v.x,-v.z,0);
+   uvs.push((v.x-minX)/(maxX-minX),(v.z-minZ)/(maxZ-minZ));
+  }
+ };
+ const clip=(triangle)=>{
+  const poly=[];
+  for(let k=0;k<3;k++){
+   const a=triangle[k],b=triangle[(k+1)%3];
+   if(a.d<=0)poly.push(a);
+   if((a.d<0&&b.d>0)||(a.d>0&&b.d<0))poly.push(lerpPoint(a,b));
+  }
+  for(let k=1;k<poly.length-1;k++)emit(poly[0],poly[k],poly[k+1]);
+ };
+ for(let iz=0;iz<nz;iz++){
+  const za=minZ+(maxZ-minZ)*iz/nz,zb=minZ+(maxZ-minZ)*(iz+1)/nz;
+  for(let ix=0;ix<nx;ix++){
+   const xa=minX+(maxX-minX)*ix/nx,xb=minX+(maxX-minX)*(ix+1)/nx;
+   const a=pt(xa,za),b=pt(xb,za),c=pt(xa,zb),d=pt(xb,zb);
+   // Winding matches PlaneGeometry normal (+Z) in local XY after z inversion.
+   clip([a,c,b]);clip([b,c,d]);
+  }
+ }
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geo.computeVertexNormals();
+ document.body.dataset.lakeOnly='exact-wet-terrain-footprint';
+ document.body.dataset.lakeWaterTriangles=String(positions.length/9);
+ return geo;
+}
+const water=new Water(makeLakeOnlySurface(),{textureWidth:1024,textureHeight:1024,waterNormals,sunDirection:sunDir,sunColor:'#fff0da',waterColor:'#163c35',distortionScale:1.6,fog:true});water.rotation.x=-Math.PI/2;water.position.y=.015;water.material.uniforms.size.value=5;scene.add(water);
 // Soft drifting cloud layer, evaluated in world space. No sky photograph.
 const cloudShader=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,uniforms:{uTime:time,uSun:{value:sunDir}},vertexShader:`varying vec3 wp;void main(){wp=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.);}`,fragmentShader:`varying vec3 wp;uniform float uTime;uniform vec3 uSun;
  float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}float fb(vec2 p){float a=.5,r=0.;for(int i=0;i<5;i++){r+=n(p)*a;p=p*2.03+7.3;a*=.5;}return r;}
