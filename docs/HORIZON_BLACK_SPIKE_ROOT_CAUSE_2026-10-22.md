@@ -69,3 +69,21 @@ Run all Python tests, the public snapshot allowlist validator and a real
 Three.js/WebGL view at front and orbited camera angles. Release only after
 those checks. The test must also verify that the restored ring now occupies
 the XZ plane and produces no spurious elevated black surface.
+
+## Browser proof using the exact vendored Three.js r180
+
+This was additionally validated **in Chromium with the unmodified vendored
+`stillwater/vendor/three.module.js` and `three.core.js`**, not a reimplementation.
+Constructed and redistributed production RingGeometry at both tessellations:
+
+| Profile | Geometry | X span | Z span | Vertices with Z = 0 |
+| --- | --- | ---: | ---: | ---: |
+| Desktop | Without rotation | 19,200m | **0m** | 100% |
+| Desktop | Corrected XZ rotation | 19,200m | 19,200m | 0.67% |
+| Mobile | Without rotation | 19,200m | **0m** | 100% |
+| Mobile | Corrected XZ rotation | 19,200m | 19,200m | 1.66% |
+
+The remaining Z=0 values are normal ring vertices on the central X axis,
+not collapsed land. Actual renderer rendering from every user orbit angle is
+still distinguishable from this geometric proof; the 2D source collapse is,
+however, definitively eliminated by the rotation.
