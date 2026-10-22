@@ -23,20 +23,20 @@ def simulate_ring(radial, segments, rotated):
     return (max(xs)-min(xs), max(zs)-min(zs))
 
 class DistantMeadowRingGeometryTests(unittest.TestCase):
-    def test_ring_is_rotated_before_reading_z(self):
-        constructor='const farGroundGeo=new THREE.RingGeometry(144,FAR_MEADOW_RADIUS,lowPower?180:448,lowPower?95:240);'
-        rotation='farGroundGeo.rotateX(-Math.PI/2);'
-        read='const fgp=farGroundGeo.attributes.position, fgu=farGroundGeo.attributes.uv;'
+    def test_ring_rotated_before_world_xz_read(self):
+        constructor='const mesh=new THREE.RingGeometry(0,1,sides,radialBands);'
+        rotation='mesh.rotateX(-Math.PI/2);'
+        read='const pts=mesh.attributes.position,uv=mesh.attributes.uv;'
         self.assertIn(constructor,SOURCE)
         self.assertIn(rotation,SOURCE)
         self.assertTrue(SOURCE.index(constructor)<SOURCE.index(rotation)<SOURCE.index(read))
-
-    def test_preserves_meadow_heights_uv_and_materials(self):
-        self.assertIn('fgp.setXYZ(i,x,distantMeadowHeight(x,z),z);',SOURCE)
-        self.assertIn('fgu.setXY(i,(x+170)/340,(170-z)/340);',SOURCE)
-        self.assertIn('farGroundGeo.computeVertexNormals();',SOURCE)
-        self.assertIn("new THREE.MeshStandardMaterial({",SOURCE)
-        self.assertIn("farGround.receiveShadow=true;",SOURCE)
+    def test_near_far_share_height_and_uv(self):
+        self.assertIn('function meadowSeamRadius(theta)',SOURCE)
+        self.assertIn('pts.setXYZ(i,x,y,z);',SOURCE)
+        self.assertIn('uv.setXY(i,(x+170)/340,(170-z)/340)',SOURCE)
+        self.assertIn('mesh.computeVertexNormals();',SOURCE)
+        self.assertIn('const terrainMat=new THREE.MeshStandardMaterial({',SOURCE)
+        self.assertIn('farGround.receiveShadow=true;',SOURCE)
 
     def test_both_desktop_and_phone_rings_have_area_in_x_and_z(self):
         for radial,segments in ((240,448),(95,180)):
