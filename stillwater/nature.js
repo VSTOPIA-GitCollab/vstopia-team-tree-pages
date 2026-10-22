@@ -6,7 +6,7 @@ function random(seed){return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;
 // Parallel-transport cross sections keep the bark and silhouette continuous
 // through twisted limbs. Winding is outward, including branch caps.
 class WoodBuilder {
- constructor(){this.positions=[];this.normals=[];this.uvs=[];this.indices=[];}
+ constructor(){this.positions=[];this.normals=[];this.uvs=[];this.indices=[];this.radii=[];}
  tube(points,radii,sides=12,relief=.06){
   const base=this.positions.length/3;
   const tangent=points[1].clone().sub(points[0]).normalize();
@@ -23,14 +23,14 @@ class WoodBuilder {
     const n=right.clone().multiplyScalar(Math.cos(a)).addScaledVector(up,Math.sin(a));
     const r=radii[j]*(1+relief*Math.sin(a*7+length*.55)+relief*.4*Math.sin(a*13-length*.4));
     const p=points[j].clone().addScaledVector(n,r);
-    this.positions.push(p.x,p.y,p.z);this.normals.push(n.x,n.y,n.z);this.uvs.push(k/sides*3,length*.42);
+    this.radii.push(radii[j]);this.positions.push(p.x,p.y,p.z);this.normals.push(n.x,n.y,n.z);this.uvs.push(k/sides*3,length*.42);
     if(j<points.length-1 && k<sides){const a0=base+j*(sides+1)+k,b=a0+sides+1;this.indices.push(a0,a0+1,b,b,a0+1,b+1);}
    }
   }
   // Closed ends remove the hollow-pipe appearance at small exposed tips.
   for(const [j,flip] of [[0,true],[points.length-1,false]]){
    const center=this.positions.length/3,p=points[j],t=points[flip?1:j].clone().sub(points[flip?0:j-1]).normalize().multiplyScalar(flip?-1:1);
-   this.positions.push(p.x,p.y,p.z);this.normals.push(t.x,t.y,t.z);this.uvs.push(.5,.5);
+   this.radii.push(0);this.positions.push(p.x,p.y,p.z);this.normals.push(t.x,t.y,t.z);this.uvs.push(.5,.5);
    for(let k=0;k<sides;k++){const a=base+j*(sides+1)+k;this.indices.push(center,flip?a+1:a,flip?a:a+1);}
   }
  }
@@ -39,7 +39,7 @@ class WoodBuilder {
   const radii=points.map((_,i)=>lerp(r0,r1,Math.pow(i/segments,.8)));
   this.tube(points,radii,sides,relief);return points;
  }
- geometry(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.positions,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.normals,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(this.uvs,2));g.setIndex(this.indices);g.computeBoundingBox();g.computeBoundingSphere();return g;}
+ geometry(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.positions,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.normals,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(this.uvs,2));g.setAttribute('woodRadius',new THREE.Float32BufferAttribute(this.radii,1));g.setIndex(this.indices);g.computeBoundingBox();g.computeBoundingSphere();return g;}
 }
 
 export function createMysticTree(seed=49213){
@@ -140,6 +140,13 @@ export function createDistantMountains(){
  const noise=(x,y)=>{const ix=Math.floor(x),iy=Math.floor(y);let u=x-ix,v=y-iy;u=u*u*(3-2*u);v=v*v*(3-2*v);return lerp(lerp(hash(ix,iy),hash(ix+1,iy),u),lerp(hash(ix,iy+1),hash(ix+1,iy+1),u),v);};
  function ridged(x,y){let a=.55,sum=0,weight=1;for(let i=0;i<6;i++){let s=1-Math.abs(2*noise(x,y)-1);s=s*s*weight;sum+=s*a;weight=Math.min(1,s*1.8);x=x*2.09+17;y=y*2.09+9;a*=.48;}return sum;}
  const group=new THREE.Group();group.name='Distant mountain horizon';
+ const textures=new THREE.TextureLoader();
+ const rockColor=textures.load('./assets/rock-pbr/aerial-rocks-color.jpg');
+ rockColor.colorSpace=THREE.SRGBColorSpace;
+ const rockNormal=textures.load('./assets/rock-pbr/aerial-rocks-normal.jpg');
+ const rockRoughness=textures.load('./assets/rock-pbr/aerial-rocks-roughness.jpg');
+ for(const tex of [rockColor,rockNormal,rockRoughness]){tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.anisotropy=4;}
+
  for(let layer=0;layer<3;layer++){
   const g=new THREE.PlaneGeometry(2800,570,400,100);g.rotateX(-Math.PI/2);
   const p=g.attributes.position,colors=[],c=new THREE.Color();
@@ -150,20 +157,54 @@ export function createDistantMountains(){
    const envelope=Math.pow(Math.max(0,Math.sin((z0+285)/570*Math.PI)),1.1);
    const broad=.65+noise(x*.002+layer*8,layer+4)*.50;
    const y=-6+envelope*(47+n*125)*broad;
-   p.setXYZ(i,x,y,z);
-   c.set('#596c73').lerp(new THREE.Color('#a5b9bd'),layer*.20);
-   c.multiplyScalar((.8+n*.30)*.88);colors.push(c.r,c.g,c.b);
+   const erosion=(ridged(x*.023+layer*19,z*.013)-.28)*envelope*10;
+   p.setXYZ(i,x,y+erosion,z);
+   const strata=.87+.13*Math.sin(y*.17+noise(x*.013,z*.017)*5);
+   c.set('#b6b1a0').multiplyScalar(strata*(.84+n*.24));colors.push(c.r,c.g,c.b);
   }
   g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.computeVertexNormals();
-  // Per-object aerial perspective preserves a faint horizon without covering
-  // the nearby tree in the much heavier fog needed at mountain distance.
-  const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.25});
+  // A scan provides actual mineral detail; macro geometry supplies silhouette
+  // and slope shadows. No post-lighting brightness multiplier or flat blue paint.
+  const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.16});
   material.onBeforeCompile=shader=>{
-   shader.vertexShader='varying float mountainDistance;\n'+shader.vertexShader;
-   shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n mountainDistance=length(mvPosition.xyz);');
-   shader.fragmentShader='varying float mountainDistance;\n'+shader.fragmentShader;
-   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`float haze=clamp(1.-exp(-mountainDistance*.00036),.0,.27);outgoingLight=mix(outgoingLight,vec3(.22,.295,.33),haze)*.50;\n#include <opaque_fragment>`);
+   Object.assign(shader.uniforms,{uRockColor:{value:rockColor},uRockNormal:{value:rockNormal},uRockRoughness:{value:rockRoughness}});
+   shader.vertexShader='varying vec3 vRockWorld; varying vec3 vRockNormal; varying float mountainDistance;\n'+shader.vertexShader;
+   shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
+    vRockWorld=(modelMatrix*vec4(transformed,1.)).xyz;
+    vRockNormal=normalize(mat3(modelMatrix)*objectNormal);
+    mountainDistance=length(mvPosition.xyz);`);
+   shader.fragmentShader=`varying vec3 vRockWorld; varying vec3 vRockNormal; varying float mountainDistance;
+    uniform sampler2D uRockColor,uRockNormal,uRockRoughness;
+    vec3 rockWeights(vec3 n){vec3 w=pow(abs(n),vec3(4.));return w/(w.x+w.y+w.z);}
+    vec4 rockSample(sampler2D tex,vec3 p,vec3 w){return texture2D(tex,p.zy)*w.x+texture2D(tex,p.xz)*w.y+texture2D(tex,p.xy)*w.z;}
+   `+shader.fragmentShader;
+   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+    vec3 rockN=normalize(vRockNormal),rockW=rockWeights(rockN);
+    vec3 rockUV=vRockWorld*.022;
+    rockUV+=vec3(sin(vRockWorld.z*.012),sin(vRockWorld.x*.014+vRockWorld.z*.008),sin(vRockWorld.x*.011))*1.2;
+    vec3 mineral=mix(rockSample(uRockColor,rockUV,rockW).rgb,
+     rockSample(uRockColor,rockUV*.413+vec3(17.3,4.9,11.7),rockW).rgb,.42);
+    float vegetation=(1.-smoothstep(.18,.42,1.-abs(rockN.y)))*(1.-smoothstep(14.,54.,vRockWorld.y));
+    diffuseColor.rgb*=mix(mineral,vec3(.095,.13,.055),vegetation*.78);
+   `);
+   shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+    roughnessFactor=clamp(rockSample(uRockRoughness,rockUV,rockW).r,.72,1.);
+   `);
+   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+    vec3 nx=texture2D(uRockNormal,rockUV.zy).xyz*2.-1.;
+    vec3 ny=texture2D(uRockNormal,rockUV.xz).xyz*2.-1.;
+    vec3 nz=texture2D(uRockNormal,rockUV.xy).xyz*2.-1.;
+    nx.xy*=.48;ny.xy*=.48;nz.xy*=.48;
+    vec3 blended=normalize(vec3(abs(nx.z)*rockN.x,nx.y+rockN.y,nx.x+rockN.z)*rockW.x+
+     vec3(ny.x+rockN.x,abs(ny.z)*rockN.y,ny.y+rockN.z)*rockW.y+
+     vec3(nz.x+rockN.x,nz.y+rockN.y,abs(nz.z)*rockN.z)*rockW.z);
+    normal=normalize(mat3(viewMatrix)*blended);
+   `);
+   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`float haze=min(.38,1.-exp(-max(0.,mountainDistance-250.)*.00020));
+    outgoingLight=mix(outgoingLight,vec3(.24,.29,.31),haze);
+    #include <opaque_fragment>`);
   };
+  material.customProgramCacheKey=()=> 'rock-scan-triplanar-v2';
   const mesh=new THREE.Mesh(g,material);mesh.name=`Horizon ridge ${layer+1}`;group.add(mesh);
  }
  return group;
