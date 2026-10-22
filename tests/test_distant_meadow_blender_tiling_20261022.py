@@ -9,10 +9,10 @@ class DistantMeadowBlenderTiling(unittest.TestCase):
   self.assertIn('const farGround=new THREE.Mesh(farGroundGeo,terrainMat)',SRC)
   self.assertIn('uv.setXY(i,(x+170)/340,(170-z)/340)',SRC)
  def test_actual_rotated_texture_samples_and_macro_variation(self):
-  for piece in ('vec4 sampleA=texture2D(map,uvA)', 'vec4 sampleB=texture2D(map,uvB)',
-    'vec4 sampleC=texture2D(map,uvC)', 'float maskA=smoothstep',
-    'float maskB=smoothstep', 'float macro=terrainNoise(vTerrainWorldXZ*.0046',
-    'diffuseColor.rgb*=mix(.94,1.06,macro)'):
+  for piece in ('vec4 sampleA=texture2D(map,terrainVariantUV(baseUV,indexA))', 'vec4 sampleB=texture2D(map,terrainVariantUV(baseUV,indexB))',
+    'vec4 sampleC=texture2D(map,terrainVariantUV(baseUV*.91,indexC))', 'float weight=smoothstep',
+    'float weight2=smoothstep', 'float macro=terrainNoise(vTerrainWorldXZ*.0046',
+    'diffuseColor.rgb*=mix(.88,1.12,macro)'):
    self.assertIn(piece,SRC)
   self.assertNotIn('outgoingLight=mix(outgoingLight,sunlitGrass',SRC)
   self.assertNotIn('new THREE.MeshLambertMaterial',SRC)

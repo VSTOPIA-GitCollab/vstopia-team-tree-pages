@@ -28,11 +28,11 @@ class MeadowAntiTilingSeam(unittest.TestCase):
    self.assertIn('const terrainGeo=makeMeadowGeometry(true),farGroundGeo=makeMeadowGeometry(false)',S)
 
  def test_actual_rotated_multisampling_not_opaque_distance_tint(self):
-  self.assertIn('vec4 sampleA=texture2D(map,uvA);',S)
-  self.assertIn('vec4 sampleB=texture2D(map,uvB);',S)
-  self.assertIn('vec4 sampleC=texture2D(map,uvC);',S)
+  self.assertIn('vec4 sampleA=texture2D(map,terrainVariantUV(baseUV,indexA));',S)
+  self.assertIn('vec4 sampleB=texture2D(map,terrainVariantUV(baseUV,indexB));',S)
+  self.assertIn('vec4 sampleC=texture2D(map,terrainVariantUV(baseUV*.91,indexC));',S)
   self.assertIn('terrainNoise(vTerrainWorldXZ*.0046',S)
-  self.assertIn('diffuseColor.rgb*=mix(.94,1.06,macro);',S)
+  self.assertIn('diffuseColor.rgb*=mix(.88,1.12,macro);',S)
   self.assertNotIn('outgoingLight=mix(outgoingLight,sunlitGrass',S)
   self.assertIn('const farGround=new THREE.Mesh(farGroundGeo,terrainMat)',S)
   self.assertIn('const terrain=new THREE.Mesh(terrainGeo,terrainMat)',S)
@@ -46,7 +46,7 @@ class MeadowAntiTilingSeam(unittest.TestCase):
   self.assertNotIn('window.__meadowDebug',S)
 
  def test_cache_chain(self):
-  self.assertIn('stillwater-integration.js?v=antitile-seam-20261022',(R/'index.html').read_text())
-  self.assertIn('embedded=1&v=antitile-seam-20261022',(R/'stillwater-integration.js').read_text())
-  self.assertIn('scene.js?v=antitile-seam-20261022',(R/'stillwater/index.html').read_text())
+  self.assertIn('stillwater-integration.js?v=organic-grass-variation-20261022',(R/'index.html').read_text())
+  self.assertIn('embedded=1&v=organic-grass-variation-20261022',(R/'stillwater-integration.js').read_text())
+  self.assertIn('scene.js?v=organic-grass-variation-20261022',(R/'stillwater/index.html').read_text())
 if __name__=='__main__': unittest.main()
