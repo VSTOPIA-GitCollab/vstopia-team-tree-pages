@@ -25,7 +25,7 @@ class OriginalMobileGlassAndMotion(unittest.TestCase):
 
     def test_live_wind_water_birds_and_mobile_layout_survive(self):
         self.assertIn('renderer.render(scene,camera);vstopiaBridge?.tick(now,dt)', JS)
-        self.assertIn('water.material.uniforms.time.value+=dt', JS)
+        self.assertIn('water.material.uniforms.time.value+=motionDt', JS)
         self.assertIn('return {bushCount,shortGrassCount,birdCount:30,update:birdFlocks.update}', ECO)
         self.assertIn('mesh.instanceMatrix.needsUpdate=true', ECO)
         self.assertIn('ecology.update(time.value)',BRIDGE)

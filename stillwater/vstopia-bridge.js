@@ -10,7 +10,7 @@ const signal=(type,detail={})=>{
  if(window.parent!==window)window.parent.postMessage({source:'stillwater-vstopia',type,...detail},ORIGIN);
 };
 export function mountVstopiaTreeBridge({THREE,scene,camera,controls,heroModel,heroTree,
- time,wind,height,plantTree,forestModel,grassGeo,grassMat}){
+ time,wind,water,getPaused,height,plantTree,forestModel,grassGeo,grassMat}){
  document.body.classList.add('embedded');
  const lowPower=window.matchMedia('(max-width:760px), (pointer:coarse)').matches;
  const ecology=createVstopiaEcology({scene,height,plantTree,forestModel,grassGeo,grassMat,lowPower});
@@ -110,10 +110,18 @@ export function mountVstopiaTreeBridge({THREE,scene,camera,controls,heroModel,he
        s.x<width()*.035||s.x>width()*.965||s.y<heightPx()*.07||s.y>heightPx()*.93};
   }),selected,time:time.value});
  }
- window.VstopiaStillwaterDebug=()=>({ready:initialized,vertices:anchorVertices.length,
-  bushes:ecology.bushCount,shortGrass:ecology.shortGrassCount,birds:ecology.birdCount,
-  wind:wind.value,sky:'original-Sky-PMREM-r180',labelsAttached:'analytic-wind-bark-vertices',
-  namesCount:names.length,selected,configureCount,candidateCount,lowPower,
-  camera:[camera.position.x,camera.position.y,camera.position.z]});
+ window.VstopiaStillwaterDebug=()=>{
+  // Read-only animation evidence for mobile/desktop QA. Does not alter frames.
+  const bird=scene.getObjectByName('VSTOPIA flying birds - three flocks');
+  const matrix=new THREE.Matrix4();
+  if(bird)bird.getMatrixAt(0,matrix);
+  return {ready:initialized,vertices:anchorVertices.length,
+   bushes:ecology.bushCount,shortGrass:ecology.shortGrassCount,birds:ecology.birdCount,
+   wind:wind.value,sky:'original-Sky-PMREM-r180',labelsAttached:'analytic-wind-bark-vertices',
+   namesCount:names.length,selected,configureCount,candidateCount,lowPower,
+   camera:[camera.position.x,camera.position.y,camera.position.z],
+   paused:getPaused(),animationSeconds:time.value,waterTime:water.material.uniforms.time.value,
+   firstBirdPosition:bird?[matrix.elements[12],matrix.elements[13],matrix.elements[14]]:null};
+ };
  return {tick};
 }
