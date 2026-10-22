@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three.module.js';
+import {atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 const lerp=(a,b,t)=>a+(b-a)*t;
 function random(seed){return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
@@ -167,7 +168,7 @@ export function createDistantMountains(){
   // and slope shadows. No post-lighting brightness multiplier or flat blue paint.
   const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.16});
   material.onBeforeCompile=shader=>{
-   Object.assign(shader.uniforms,{uRockColor:{value:rockColor},uRockNormal:{value:rockNormal},uRockRoughness:{value:rockRoughness}});
+   Object.assign(shader.uniforms,{...atmosphereUniforms,uRockColor:{value:rockColor},uRockNormal:{value:rockNormal},uRockRoughness:{value:rockRoughness}});
    shader.vertexShader='varying vec3 vRockWorld; varying vec3 vRockNormal; varying float mountainDistance;\n'+shader.vertexShader;
    shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
     vRockWorld=(modelMatrix*vec4(transformed,1.)).xyz;
@@ -175,6 +176,7 @@ export function createDistantMountains(){
     mountainDistance=length(mvPosition.xyz);`);
    shader.fragmentShader=`varying vec3 vRockWorld; varying vec3 vRockNormal; varying float mountainDistance;
     uniform sampler2D uRockColor,uRockNormal,uRockRoughness;
+    uniform float uAtmosphereLight;uniform vec3 uAtmosphereFog;
     vec3 rockWeights(vec3 n){vec3 w=pow(abs(n),vec3(4.));return w/(w.x+w.y+w.z);}
     vec4 rockSample(sampler2D tex,vec3 p,vec3 w){return texture2D(tex,p.zy)*w.x+texture2D(tex,p.xz)*w.y+texture2D(tex,p.xy)*w.z;}
    `+shader.fragmentShader;
@@ -201,7 +203,7 @@ export function createDistantMountains(){
     normal=normalize(mat3(viewMatrix)*blended);
    `);
    shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`float haze=min(.38,1.-exp(-max(0.,mountainDistance-250.)*.00020));
-    outgoingLight=mix(outgoingLight,vec3(.24,.29,.31),haze);
+    outgoingLight=mix(outgoingLight,vec3(.24,.29,.31)*uAtmosphereLight,haze);
     #include <opaque_fragment>`);
   };
   material.customProgramCacheKey=()=> 'rock-scan-triplanar-v2';

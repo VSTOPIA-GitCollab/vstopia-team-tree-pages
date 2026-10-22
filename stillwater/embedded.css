@@ -17,3 +17,6 @@ body.embedded #restore{display:none!important}
 body.embedded #panel{width:185px!important;padding:0 13px 10px!important}
 body.embedded #panel #panel-toggle{padding:10px 0!important}
 body.embedded #panel #panel-body[hidden]{display:none!important}
+
+body.embedded #panel{max-height:calc(100dvh - 155px)!important;overflow-y:auto!important}
+@media(max-width:760px){body.embedded #panel{max-height:calc(100dvh - 28px)!important}}

@@ -3,8 +3,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { createMysticTree, createDistantMountains } from './nature.js?v=surface-depth-20261022';
+import { createMysticTree, createDistantMountains } from './nature.js?v=waterfall-weather-v1';
 import {createSurfaceMaps,displaceBarkGeometry,canopyOcclusion} from './surface-detail.js?v=surface-depth-20261022';
+import {createAtmosphere,atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1';
+import {addMountainWaterfall} from './mountain-waterfall.js?v=waterfall-weather-v1';
 import {makeMovingCloudSky} from './moving-cloud-sky.js?v=moving-clouds-v1';
 import { mountVstopiaTreeBridge } from './vstopia-bridge.js?v=ios-frame-20261022';
 
@@ -49,7 +51,7 @@ const envScene=new THREE.Scene();const envSky=sky.clone();envSky.scale.setScalar
 const wind={value:.65},time={value:0};
 function sway(material,kind='leaf'){
  material.onBeforeCompile=shader=>{
-  shader.uniforms.uTime=time;shader.uniforms.uWind=wind;shader.uniforms.uLeafSun={value:sunDir};
+  shader.uniforms.uTime=time;shader.uniforms.uWind=wind;shader.uniforms.uLeafSun={value:sunDir};shader.uniforms.uAtmosphereLight=atmosphereUniforms.uAtmosphereLight;
   shader.vertexShader=`uniform float uTime; uniform float uWind;
   vec3 treeSway(vec3 p){float h=max(0.,p.y);float w=pow(h*.09,1.8);p.x+=sin(uTime*.58+h*.09)*.12*uWind*w;p.z+=cos(uTime*.43+h*.065)*.07*uWind*w;return p;}
   `+shader.vertexShader;
@@ -70,10 +72,10 @@ function sway(material,kind='leaf'){
     `transformed=treeSway(transformed);`}
   `);
   if(leaf && !material.isMeshDepthMaterial){
-   shader.fragmentShader='uniform vec3 uLeafSun;\n'+shader.fragmentShader;
+   shader.fragmentShader='uniform vec3 uLeafSun;uniform float uAtmosphereLight;\n'+shader.fragmentShader;
    shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`vec3 leafSunView=normalize(mat3(viewMatrix)*uLeafSun);
     float backGlow=pow(max(0.,dot(-normal,leafSunView)),2.0);
-    outgoingLight+=diffuseColor.rgb*.16*backGlow;
+    outgoingLight+=diffuseColor.rgb*.16*backGlow*uAtmosphereLight;
     #include <opaque_fragment>`);
   }
  };
@@ -324,6 +326,7 @@ function plantTree(model,pos,scale,rotation,hero=false){
  foliage.castShadow=hero || scale>.65;foliage.receiveShadow=true;foliage.customDepthMaterial=leafDepth;foliage.computeBoundingSphere();group.add(foliage);return group;
 }
 const heroTree=plantTree(heroModel,heroPos,1,0,true);
+const mountainWaterfall=addMountainWaterfall({scene,clock:time,lowPower,groundHeight:distantMeadowHeight,leafGeometry:leafGeo,leafMaterial:leafMat});
 for(let i=0;i<64;i++){
  const a=range(Math.PI*.93,Math.PI*2.06),r=range(48,110);let x=Math.cos(a)*r,z=Math.sin(a)*r-12;
  if(Math.hypot(x-heroPos.x,z-heroPos.z)<25)continue;
@@ -434,9 +437,9 @@ function makeLakeOnlySurface(){
 }
 const water=new Water(makeLakeOnlySurface(),{textureWidth:lowPower?256:1024,textureHeight:lowPower?256:1024,waterNormals,sunDirection:sunDir,sunColor:'#fff0da',waterColor:'#163c35',distortionScale:1.6,fog:true});water.rotation.x=-Math.PI/2;water.position.y=.015;water.material.uniforms.size.value=5;scene.add(water);
 // Soft drifting cloud layer, evaluated in world space. No sky photograph.
-const cloudShader=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,uniforms:{uTime:time,uSun:{value:sunDir}},vertexShader:`varying vec3 wp;void main(){wp=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.);}`,fragmentShader:`varying vec3 wp;uniform float uTime;uniform vec3 uSun;
+const cloudShader=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,uniforms:{uTime:time,uAtmosphereLight:atmosphereUniforms.uAtmosphereLight,uSun:{value:sunDir}},vertexShader:`varying vec3 wp;void main(){wp=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.);}`,fragmentShader:`varying vec3 wp;uniform float uTime,uAtmosphereLight;uniform vec3 uSun;
  float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}float fb(vec2 p){float a=.5,r=0.;for(int i=0;i<5;i++){r+=n(p)*a;p=p*2.03+7.3;a*=.5;}return r;}
- void main(){vec2 p=wp.xz*.003+vec2(uTime*.00055,0.);float f=fb(p);float density=smoothstep(.43,.73,f);float edge=1.-smoothstep(500.,900.,length(wp.xz));vec3 c=mix(vec3(.61,.67,.69),vec3(1.,.98,.93),smoothstep(.45,.75,f));gl_FragColor=vec4(c,density*.80*edge);#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')});
+ void main(){vec2 p=wp.xz*.003+vec2(uTime*.00055,0.);float f=fb(p);float density=smoothstep(.43,.73,f);float edge=1.-smoothstep(500.,900.,length(wp.xz));vec3 c=mix(vec3(.61,.67,.69),vec3(1.,.98,.93),smoothstep(.45,.75,f));gl_FragColor=vec4(c*uAtmosphereLight,density*.80*edge);#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')});
 const clouds=new THREE.Mesh(new THREE.PlaneGeometry(1800,1800),cloudShader);clouds.rotation.x=-Math.PI/2;clouds.position.y=180;scene.add(clouds);
 // Slow airborne motes are tiny physical points, not a screen overlay.
 const dustGeo=new THREE.BufferGeometry(),dustPositions=[];for(let i=0;i<130;i++)dustPositions.push(range(-30,30),range(1,16),range(-42,15));dustGeo.setAttribute('position',new THREE.Float32BufferAttribute(dustPositions,3));const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f1e9c8',size:.038,transparent:true,opacity:.45,depthWrite:false}));scene.add(dust);
@@ -503,6 +506,9 @@ if(isEmbedded){
   heroModel,heroTree,heroPos,time,wind,water,height,plantTree,forestModel,grassGeo,grassMat,
   getPaused:()=>paused,getFrameStats:()=>({frames:renderFrames,frameAgeMs:Math.round(performance.now()-lastFrameAt),webglLost:glContextLost,documentVisible:!document.hidden}),lighting});
 }
+const atmosphere=createAtmosphere({scene,camera,renderer,sun,water,terrainMat,dust,clock:time,lowPower,height});
+const originalLightInput=$('light').oninput;
+$('light').oninput=e=>{originalLightInput(e);atmosphere.refreshBase();};
 let ready=false;
 let renderFrames=0,lastFrameAt=performance.now(),rafHandle=0;
 function animate(now){
@@ -520,6 +526,7 @@ function animate(now){
  // Keep the camera above the lake and terrain, including after panning.
  camera.position.y=Math.max(camera.position.y,Math.max(.8,height(camera.position.x,camera.position.z)+.65));
  const off=controls.target.clone().sub(focus);if(off.length()>55)controls.target.copy(focus).add(off.setLength(55));
+ atmosphere.update(motionDt,paused);
  movingCloudDome?.update(camera);renderer.render(scene,camera);vstopiaBridge?.tick(now,dt);frameCount++;fpsTime+=realDt;
  if(fpsTime>=1){$('fps').textContent=`${Math.round(frameCount/fpsTime)} FPS`;frameCount=0;fpsTime=0;}
  if(!ready){ready=true;$('loading').style.opacity=0;setTimeout(()=>$('loading').remove(),900);}
