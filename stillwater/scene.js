@@ -285,9 +285,12 @@ const cloudShader=new THREE.ShaderMaterial({transparent:true,depthWrite:false,si
 const clouds=new THREE.Mesh(new THREE.PlaneGeometry(1800,1800),cloudShader);clouds.rotation.x=-Math.PI/2;clouds.position.y=180;scene.add(clouds);
 // Slow airborne motes are tiny physical points, not a screen overlay.
 const dustGeo=new THREE.BufferGeometry(),dustPositions=[];for(let i=0;i<130;i++)dustPositions.push(range(-30,30),range(1,16),range(-42,15));dustGeo.setAttribute('position',new THREE.Float32BufferAttribute(dustPositions,3));const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f1e9c8',size:.038,transparent:true,opacity:.45,depthWrite:false}));scene.add(dust);
+// The interactive phone embed must animate even if Reduce Motion is enabled.
+// Preserve reduced-motion defaults on standalone and desktop; manual Pause still works.
+const isEmbedded=new URLSearchParams(location.search).get('embedded')==='1';
 let paused=false,cinematic=false,elapsed=0,last=performance.now(),frameCount=0,fpsTime=0,returning=false;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-if(reduced){paused=true;$('pause').setAttribute('aria-pressed','true');$('pause').innerHTML='▶ <span>Resume</span>';}
+if(reduced&&!(isEmbedded&&lowPower)){paused=true;$('pause').setAttribute('aria-pressed','true');$('pause').innerHTML='▶ <span>Resume</span>';}
 $('wind').oninput=e=>{wind.value=+e.target.value;$('wind-value').textContent=wind.value<.08?'Still':wind.value<.8?'Gentle':wind.value<1.4?'Breezy':'Strong';};
 function lighting(value){
  const elev=mix(.20,.95,value);sunDir.set(-.55,elev,.36).normalize();sun.position.copy(sunDir).multiplyScalar(110);su.sunPosition.value.copy(sunDir);su.turbidity.value=mix(7,3,value);sun.color.setHSL(mix(.075,.12,value),mix(.48,.12,value),.87);sun.intensity=mix(2.0,3.2,value);renderer.toneMappingExposure=mix(.80,1.02,value);water.material.uniforms.sunDirection.value.copy(sunDir);water.material.uniforms.sunColor.value.copy(sun.color);scene.fog.color.set(value<.32?'#b8afa1':'#a6b8b7');$('light-value').textContent=value<.28?'Golden hour':value<.76?'Late afternoon':'Clear daylight';
@@ -304,7 +307,6 @@ addEventListener('keydown',e=>{if(/INPUT|SELECT/.test(e.target.tagName))return;i
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();$('error').hidden=false;$('error').textContent='The graphics context was interrupted. Reload this page to rebuild the scene.';});
 let vstopiaBridge=null;
-const isEmbedded=new URLSearchParams(location.search).get('embedded')==='1';
 if(isEmbedded){
  // User prefers maximum natural light and maximum wind, slider remains operable.
  $('wind').value='2';$('wind').dispatchEvent(new Event('input',{bubbles:true}));
@@ -328,13 +330,19 @@ if(isEmbedded){
  // Keep native Atmosphere sliders available; start collapsed to preserve the scene.
  if($('panel-toggle')?.getAttribute('aria-expanded')==='true')$('panel-toggle').click();
  vstopiaBridge=mountVstopiaTreeBridge({THREE,scene,camera,controls,renderer,
-  heroModel,heroTree,heroPos,time,wind,height,plantTree,forestModel,grassGeo,grassMat,
+  heroModel,heroTree,heroPos,time,wind,water,height,plantTree,forestModel,grassGeo,grassMat,
   getPaused:()=>paused,lighting});
 }
 let ready=false;
 function animate(now){
- requestAnimationFrame(animate);const realDt=Math.max(.001,(now-last)/1000),dt=Math.min(realDt,.05);last=now;
- if(!paused){elapsed+=dt;time.value=elapsed;water.material.uniforms.time.value+=dt*(.25+wind.value*.33);water.material.uniforms.distortionScale.value=.45+wind.value*1.5;dust.position.x=Math.sin(elapsed*.035)*1.5;dust.position.y=Math.sin(elapsed*.12)*.25;}
+ requestAnimationFrame(animate);
+ const realDt=Math.max(.001,(now-last)/1000);
+ // 20 FPS phone frame intervals are often >50ms. Limit controls integration,
+ // NOT water/bird animation time: otherwise both drift into slow motion.
+ // Discard only long background-tab stalls, equally on desktop and mobile.
+ const motionDt=Math.min(realDt,.25),dt=Math.min(realDt,.05);
+ last=now;
+ if(!paused){elapsed+=motionDt;time.value=elapsed;water.material.uniforms.time.value+=motionDt*(.25+wind.value*.33);water.material.uniforms.distortionScale.value=.45+wind.value*1.5;dust.position.x=Math.sin(elapsed*.035)*1.5;dust.position.y=Math.sin(elapsed*.12)*.25;}
  if(returning){camera.position.lerp(home,1-Math.exp(-dt*4));controls.target.lerp(focus,1-Math.exp(-dt*4));if(camera.position.distanceTo(home)<.02)returning=false;}
  const wasOrbiting=controls.autoRotate;if(paused)controls.autoRotate=false;controls.update(dt);controls.autoRotate=wasOrbiting;
  // Keep the camera above the lake and terrain, including after panning.
