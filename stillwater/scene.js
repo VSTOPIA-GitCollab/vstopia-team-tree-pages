@@ -5,6 +5,7 @@ import { Sky } from 'three/addons/objects/Sky.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createMysticTree, createDistantMountains } from './nature.js?v=surface-depth-20261022';
 import {createSurfaceMaps,displaceBarkGeometry,canopyOcclusion} from './surface-detail.js?v=surface-depth-20261022';
+import {makeMovingCloudSky} from './moving-cloud-sky.js?v=moving-clouds-v1';
 import { mountVstopiaTreeBridge } from './vstopia-bridge.js?v=ios-frame-20261022';
 
 // Reproducible, entirely local landscape. All positions are in metres.
@@ -469,7 +470,7 @@ renderer.domElement.addEventListener('webglcontextrestored',()=>{
  glContextLost=false;$('error').hidden=true;
  // Three.js recreates GPU resources automatically on restoration.
 });
-let vstopiaBridge=null;
+let vstopiaBridge=null,movingCloudDome=null;
 if(isEmbedded){
  // User prefers maximum natural light and maximum wind, slider remains operable.
  $('wind').value='2';$('wind').dispatchEvent(new Event('input',{bubbles:true}));
@@ -484,6 +485,12 @@ if(isEmbedded){
   .load('./assets/sky/partly-cloudy-2k.hdr',texture=>{
    texture.mapping=THREE.EquirectangularReflectionMapping;
    sky.visible=false;clouds.visible=false;scene.background=texture;
+   // Preserve the photographic HDRI and the static alpine horizon.
+   // Only panorama cloud pixels drift; the lake/lighting keep the same sky.
+   movingCloudDome=makeMovingCloudSky(THREE,texture,time);
+   movingCloudDome.update(camera);
+   scene.add(movingCloudDome.dome);movingCloudDome.dome.visible=true;
+   document.body.dataset.cloudMotion='hdri-clouds-drifting';
    document.body.dataset.skyPreset='alpine-partly-cloudy-2k';
    document.body.dataset.skyReady='ready';
   },undefined,error=>{
@@ -513,7 +520,7 @@ function animate(now){
  // Keep the camera above the lake and terrain, including after panning.
  camera.position.y=Math.max(camera.position.y,Math.max(.8,height(camera.position.x,camera.position.z)+.65));
  const off=controls.target.clone().sub(focus);if(off.length()>55)controls.target.copy(focus).add(off.setLength(55));
- renderer.render(scene,camera);vstopiaBridge?.tick(now,dt);frameCount++;fpsTime+=realDt;
+ movingCloudDome?.update(camera);renderer.render(scene,camera);vstopiaBridge?.tick(now,dt);frameCount++;fpsTime+=realDt;
  if(fpsTime>=1){$('fps').textContent=`${Math.round(frameCount/fpsTime)} FPS`;frameCount=0;fpsTime=0;}
  if(!ready){ready=true;$('loading').style.opacity=0;setTimeout(()=>$('loading').remove(),900);}
 }
