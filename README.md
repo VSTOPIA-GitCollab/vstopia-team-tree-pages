@@ -71,3 +71,34 @@ Both public team cards now use a responsive two-column internal layout: readable
 ## Connected lake, animated cascade and flocking birds (October 21, 2026)
 
 The giant irregular lake and long river now share **one Three.js reflective water surface**, with an animated rocky waterfall, spray and foam, 30 animated birds in three small flocks, and wildflower patches. The redundant supervisor clover was removed. See [implementation and source references](docs/WATERFALL_FLOCKS_CONNECTED_WATER_2026-10-21.md) and the five real browser views linked there.
+
+## Local visual experiment — user-supplied Stillwater scene × VSTOPIA
+
+The current local-only branch `feat/stillwater-base-integration-local-20261021` uses the **user's original Stillwater — Ancient Grove v1.1** scene, not the earlier procedural EZ-Tree or Alpine mockup. The original Three.js r180 renderer, ancient tree, physical sky/PMREM, planar-reflected lake, rocks, mountains, foreground grass, camera and Atmosphere sliders remain under `stillwater/`; VSTOPIA appears as translucent glass UI around it. The public GitHub Pages app is unchanged.
+
+On the main Mac:
+
+```sh
+python3 -m http.server 38995 --bind 127.0.0.1
+```
+
+Open [the combined local VSTOPIA website](http://127.0.0.1:38995/) or [the original full-screen Stillwater scene](http://127.0.0.1:38995/stillwater/). In the integration, **wind starts at 2/2 and light at 1/1**, the source sliders remain available through **The atmosphere** dropdown, the old bushes/short grasses/flocks are integrated, and 12 actual bark-vertex project labels can be revealed with **SHOW 12 BRANCHES**. The website still uses public-only GitHub statistics; there are no private repo tokens or backend dependencies. Controls remain original: drag orbit, right/Shift-drag pan, wheel zoom, `F` home and `H` native UI. No merges or deploy without owner approval.
+
+**Full audited architecture, source provenance, differences, test evidence and next review steps:** [Stillwater source and local integration](docs/STILLWATER_SOURCE_ARCHITECTURE_LOCAL_2026-10-22.md).
+
+
+## Local-only design review: readable glass UI and slate mountains
+
+In the isolated `feat/stillwater-ui-mountain-material-review` worktree, the Stillwater VSTOPIA site loads **one generated `site-unified.css`** from eight editable source modules and uses lighter glass, a full-height right inspector and darker slate mountain materials. The browser-verified local preview is `http://127.0.0.1:38996/`; the public GitHub Pages site remains unchanged. See [screenshots and QA](docs/STILLWATER_UI_MOUNTAIN_REVIEW_LOCAL_2026-10-22.md).
+
+## Local-only rocky mountain / meadow continuation
+
+The isolated branch `feat/rocky-mountains-continuous-terrain-20261022` improves photographed triplanar mountain materials, repairs the pale terrain seam and keeps all 12 project labels permanently visible when their actual branch anchors are on camera. Test the integrated scene at `http://127.0.0.1:39031/` on the main Mac. Full technical audit, screenshots, regression notes and references: [Stillwater rocky mountains & continuous meadow](docs/STILLWATER_ROCKY_MOUNTAINS_CONTINUOUS_MEADOW_2026-10-22.md). **Not published to GitHub Pages.**
+
+## Lake Scene 2 mountain/shoreline restoration — local only
+
+The latest local review matches the three original mountain shapes/placements from the user-provided `lake-scene 2`, darkens them slightly, extends the terrain to a **4,800 m radius**, and replaces the 900 × 900 m water square with a **lake-only shoreline-clipped reflective Water.js surface**. The meadow now also uses the same photographed texture UV scale at all distances. See [technical implementation and browser screenshots](docs/LAKE_SCENE2_MOUNTAINS_TERRAIN_WATER_RESTORE_2026-10-22.md). Local preview: http://127.0.0.1:39031/ — nothing published to GitHub Pages.
+
+## Approved release: extensive non-reflective distant meadow
+
+The mountain-side meadow extends **9.6 km** and matches the real grass terrain in diffuse colors, without water-like specular reflections. The lake remains irregular and reflective, mountains preserve their original `lake-scene 2` positioning, and branch labels stay visible. See [implementation and browser QA](docs/MATTE_EXTENDED_MEADOW_PUBLIC_RELEASE_2026-10-22.md).

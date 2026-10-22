@@ -24,8 +24,9 @@ class TeamReadabilityTests(unittest.TestCase):
   self.assertIn('font-size:10.5px!important',CSS)
   self.assertIn('font-size:10px!important',CSS)
  def test_css_loaded_last_and_on_mobile(self):
-  self.assertIn('href="./team-readable.css"',HTML)
-  self.assertLess(HTML.index('href="./water-garden.css"'),HTML.index('href="./team-readable.css"'))
+  self.assertIn('href="./site-unified.css"',HTML)
+  self.assertIn('team-readable.css', (R/'site-unified.css').read_text())
+  self.assertLess((R/'site-unified.css').read_text().index('/* water-garden.css */'),(R/'site-unified.css').read_text().index('/* team-readable.css */'))
   self.assertIn('@media(max-width:760px)',CSS)
   self.assertIn('@media(max-width:380px)',CSS)
 if __name__=='__main__':unittest.main()

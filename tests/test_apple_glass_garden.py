@@ -42,7 +42,10 @@ class AppleGardenTests(unittest.TestCase):
     def test_native_sf_font_no_distributed_font_files(self):
         self.assertIn('"SF Pro Text"',CSS)
         self.assertIn('"Helvetica Neue"',CSS)
-        self.assertIn('apple-glass.css',HTML)
+        # Source CSS remains available, but the browser loads one bundled sheet.
+        self.assertIn('apple-glass.css', (ROOT/'scripts/build_site_css.py').read_text())
+        self.assertIn('href="./site-unified.css"',HTML)
+        self.assertIn('apple-glass.css', (ROOT/'site-unified.css').read_text())
         self.assertFalse(list(ROOT.rglob('*.woff')))
         self.assertFalse(list(ROOT.rglob('*.ttf')))
 
