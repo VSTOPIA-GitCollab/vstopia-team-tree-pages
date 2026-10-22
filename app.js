@@ -26,6 +26,70 @@
     name, category:areaDefinitions[i][0], description:areaDefinitions[i][1]
   }));
   let publicTotals = null;
+  let selectedAlias = null;
+  const humanDay = n => n===1?'1 giorno':`${n} giorni`;
+  const safeDate = iso => {
+    if(!iso)return 'Non rilevata';
+    const date=new Date(iso);
+    return Number.isNaN(date.valueOf())?'Non rilevata':date.toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'});
+  };
+  const actorLabel = id => ({ostinsolo:'Agostino',InnovateSN:'Marcello',team:'Team'})[id] || 'Team';
+  function renderAliasDetails(alias){
+    selectedAlias=alias.alias;
+    $('selectedIndicator').textContent='REPO MONITORATA';
+    const root=$('selectedDetail');root.replaceChildren();
+    root.append(create('h3','detail-title',alias.alias));
+    root.append(create('p','detail-desc',
+      `${number(alias.default_branch_commits)} commit sul branch principale · ${alias.branches} branch totali · ${alias.open_issues} issue · ${alias.open_prs} PR aperte · ${alias.merged_prs} merge.`));
+    root.append(create('p','alias-fact',
+      `Branch secondari: ${alias.non_default_branches} · più vecchio osservato da ${humanDay(alias.oldest_branch_observed_days)}.`));
+    root.append(create('p','alias-fact',
+      `PR più vecchia aperta da ${humanDay(alias.oldest_open_pr_days)} · issue più vecchia aperta da ${humanDay(alias.oldest_open_issue_days)}.`));
+    root.append(create('p','alias-fact',
+      `Ultima attività osservata: ${actorLabel(alias.last_actor)} · ${alias.last_activity_type} · ${safeDate(alias.last_activity_at)}.`));
+    for(const id of ['ostinsolo','InnovateSN']){
+      const w=alias.pending[id];
+      root.append(create('p','alias-fact',
+        `${actorLabel(id)}: ${w.reviews} review richieste, ${w.issues} issue e ${w.prs} PR assegnate.`));
+    }
+    const addDetails=(label,rows,extra,formatter)=>{
+      const box=create('details','alias-age-details');
+      const summary=create('summary','',`${label} (${rows.length+extra})`);box.append(summary);
+      for(const item of rows)box.append(create('div','alias-age-item',formatter(item)));
+      if(extra)box.append(create('p','alias-fact',`Altri ${extra} elementi non elencati; inclusi nel totale.`));
+      root.append(box);
+    };
+    addDetails('Rami monitorati',alias.branch_ages,alias.unlisted_branches,
+      item=>`${item.label} · osservato da ${humanDay(item.observed_days)}`);
+    addDetails('PR aperte',alias.pr_ages,alias.unlisted_prs,
+      item=>`${item.label} · aperta da ${humanDay(item.open_days)}${item.draft?' · bozza':''}${item.requested_from.length?' · review: '+item.requested_from.map(actorLabel).join(', '):''}`);
+    root.append(create('p','alias-age-policy',
+      'L’età delle PR è esatta. Per i branch è mostrato soltanto il tempo trascorso dalla prima osservazione del collector.'));
+    renderAliasList();
+  }
+  function renderAliasList(){
+    const wrap=$('aliasProjects');const list=$('aliasRepoList');
+    const sidebar=wrap.closest('.sidebar');
+    if(!publicTotals || publicTotals.schema_version!==3){
+      wrap.hidden=true;sidebar.classList.remove('has-alias-metrics');
+      $('repoSearch').placeholder='Cerca un’area…';return;
+    }
+    const data=publicTotals.repositories_by_alias;
+    wrap.hidden=false;sidebar.classList.add('has-alias-metrics');
+    $('repoSearch').placeholder='Cerca un giardino…';
+    $('aliasRepoCount').textContent=`${data.length} / ${publicTotals.organization_repository_count}`;
+    list.replaceChildren();
+    const matches=data.filter(a=>a.alias.toLowerCase().includes(state.search));
+    for(const repo of matches){
+      const b=create('button','alias-repo-row'+(selectedAlias===repo.alias?' selected':''));
+      b.type='button';b.setAttribute('aria-pressed',String(selectedAlias===repo.alias));
+      const name=create('strong','',repo.alias);
+      const detail=create('small','',`${repo.non_default_branches} rami · ${repo.open_prs} PR · ${repo.open_issues} issue`);
+      b.append(name,detail);b.addEventListener('click',()=>renderAliasDetails(repo));list.append(b);
+    }
+    if(!matches.length)list.append(create('div','loading-list','Nessun giardino trovato.'));
+  }
+
   const state = {selected:repos[0].name,search:'',filter:'all',mode:'tree',ry:.52,rx:.20,zoom:1,drag:null,
     width:1,height:1,hits:[],tour:null};
   const number = x => new Intl.NumberFormat('it-IT').format(x);
@@ -120,7 +184,7 @@
       const response=await fetch('./snapshot.json',{cache:'no-store'});
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const snapshot=await response.json();
-      if(snapshot.schema_version!==2||snapshot.data_policy!=='public-authorized-team-summary')throw new Error('Schema non valido');
+      if(![2,3].includes(snapshot.schema_version)||snapshot.data_policy!=='public-authorized-team-summary')throw new Error('Schema non valido');
       const keys=['repository_count','default_branch_commits','open_issues','open_pull_requests','merged_pull_requests_all_time'];
       if(!keys.every(k=>Number.isSafeInteger(snapshot[k])&&snapshot[k]>=0))throw new Error('Aggregati non validi');
       if(!Array.isArray(snapshot.people)||snapshot.people.length!==2 ||
@@ -130,12 +194,26 @@
         if(!['commits','prs_opened_all_time','prs_merged_all_time','push_events_observed_30d','assigned_open_issues','assigned_open_prs','reviews_requested'].every(
           k=>Number.isSafeInteger(person[k])&&person[k]>=0))throw new Error('Contatori profili non validi');
       }
+      if(snapshot.schema_version===3){
+        if(!Number.isSafeInteger(snapshot.organization_repository_count)||
+           !Array.isArray(snapshot.repositories_by_alias)||
+           snapshot.repositories_by_alias.length!==snapshot.repository_count ||
+           snapshot.organization_repository_count<snapshot.repository_count ||
+           !snapshot.repositories_by_alias.every(x=>typeof x.alias==='string' &&
+             ['branches','non_default_branches','open_prs','open_issues','merged_prs','default_branch_commits','oldest_open_pr_days','oldest_branch_observed_days'].every(k=>Number.isSafeInteger(x[k]) && x[k]>=0) &&
+             ['branch_ages','pr_ages'].every(k=>Array.isArray(x[k])) &&
+             x.pending && ['ostinsolo','InnovateSN'].every(k=>x.pending[k])))throw new Error('Invalid alias summary');
+      }
       publicTotals=snapshot;
+      renderAliasList();
       updatePeople(snapshot.people);
       for(const [id,key] of [['metricRepos','repository_count'],['metricCommits','default_branch_commits'],
         ['metricIssues','open_issues'],['metricPrs','open_pull_requests'],['metricMerges','merged_pull_requests_all_time']]){
         animateNumber($(id),snapshot[key]);
       }
+      $('metricRepos').parentElement.querySelector('small').textContent=snapshot.schema_version===3?
+        `${snapshot.repository_count} monitorati · ${snapshot.organization_repository_count} totali`:
+        'Repository monitorati nello snapshot';
       const publishedAt=new Date(snapshot.updated_at);
       const publishedLabel=Number.isNaN(publishedAt.getTime())?'DATA NON DISPONIBILE':
         publishedAt.toLocaleString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -149,11 +227,12 @@
       $('lastSync').textContent='IN ATTESA DELLO SNAPSHOT';
       $('supervisorMessage').textContent='I dati aggregati non sono disponibili. La mappa tematica resta utilizzabile.';
       $('memberCards').replaceChildren(create('div','loading-list','I dati dei collaboratori non sono disponibili.'));
+      publicTotals=null;renderAliasList();
     }
   }
 
-  function select(name){state.selected=name;renderSidebar();renderDetail();window.dispatchEvent(new CustomEvent('vstopia:select-changed',{detail:{name}}));}
-  function renderSidebar(){const list=$('repoList');list.replaceChildren();const data=visible();window.dispatchEvent(new CustomEvent('vstopia:filters',{detail:{visible:data.map(r=>r.name)}}));$('repoCountLabel').textContent=String(data.length).padStart(2,'0');
+  function select(name){selectedAlias=null;state.selected=name;renderSidebar();renderDetail();renderAliasList();window.dispatchEvent(new CustomEvent('vstopia:select-changed',{detail:{name}}));}
+  function renderSidebar(){renderAliasList();const list=$('repoList');list.replaceChildren();const data=visible();window.dispatchEvent(new CustomEvent('vstopia:filters',{detail:{visible:data.map(r=>r.name)}}));$('repoCountLabel').textContent=String(data.length).padStart(2,'0');
     for(const r of data){const b=create('button','repo-item'+(r.name===state.selected?' selected':''));b.type='button';
       b.setAttribute('aria-pressed',String(r.name===state.selected));b.append(create('span','repo-glyph','⌁'));
       const copy=create('span','repo-copy');copy.append(create('strong','',r.name),create('small','',r.category==='creative'?'AREA CREATIVA':'AREA TECNICA'));

@@ -1,44 +1,682 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "data_policy": "public-authorized-team-summary",
   "scope": "repositories-readable-by-both-collaborators",
-  "updated_at": "2026-10-21T05:50:58.015753+00:00",
+  "updated_at": "2026-10-22T02:16:45.502032+00:00",
   "repository_count": 13,
-  "default_branch_commits": 973,
+  "default_branch_commits": 1056,
   "open_issues": 34,
-  "open_pull_requests": 11,
-  "merged_pull_requests_all_time": 60,
+  "open_pull_requests": 15,
+  "merged_pull_requests_all_time": 101,
   "people": [
     {
       "name": "Agostino",
       "github": "ostinsolo",
-      "commits": 295,
-      "prs_opened_all_time": 60,
-      "prs_merged_all_time": 48,
-      "push_events_observed_30d": 264,
-      "assigned_open_issues": 2,
+      "commits": 377,
+      "prs_opened_all_time": 105,
+      "prs_merged_all_time": 89,
+      "push_events_observed_30d": 306,
+      "assigned_open_issues": 1,
       "assigned_open_prs": 0,
-      "reviews_requested": 1,
-      "last_interaction_at": "2026-10-21T05:33:35Z",
-      "last_interaction_type": "commit",
-      "event_coverage_partial": false
+      "reviews_requested": 0,
+      "last_interaction_at": "2026-10-22T02:05:19Z",
+      "last_interaction_type": "push",
+      "event_coverage_partial": true
     },
     {
       "name": "Marcello",
       "github": "InnovateSN",
-      "commits": 8,
-      "prs_opened_all_time": 7,
+      "commits": 9,
+      "prs_opened_all_time": 8,
       "prs_merged_all_time": 2,
       "push_events_observed_30d": 25,
       "assigned_open_issues": 6,
       "assigned_open_prs": 0,
-      "reviews_requested": 6,
-      "last_interaction_at": "2026-10-20T22:24:06Z",
-      "last_interaction_type": "issue",
-      "event_coverage_partial": false
+      "reviews_requested": 4,
+      "last_interaction_at": "2026-10-22T01:30:03Z",
+      "last_interaction_type": "pull request",
+      "event_coverage_partial": true
     }
   ],
   "push_count_policy": "Observed GitHub PushEvent records in last 30 days; counts may be incomplete due to event pagination and retention.",
   "personal_counts_policy": "Commits on default branch by mapped GitHub user; PRs authored or merged by account, across collaborator-accessible repositories.",
-  "workload_policy": "Open issues and PRs assigned, plus explicit individual pending review requests. Draft PR review requests excluded."
+  "workload_policy": "Open issues and PRs assigned, plus explicit individual pending review requests. Draft PR review requests excluded.",
+  "organization_repository_count": 20,
+  "repositories_by_alias": [
+    {
+      "alias": "Albero Maestro",
+      "oldest_branch_observed_days": 0,
+      "branches": 1,
+      "non_default_branches": 0,
+      "oldest_open_issue_days": 0,
+      "unlisted_prs": 0,
+      "open_prs": 0,
+      "unlisted_branches": 0,
+      "default_branch_commits": 1,
+      "merged_prs": 0,
+      "open_issues": 0,
+      "oldest_open_pr_days": 0,
+      "branch_ages": [],
+      "pr_ages": [],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-20T20:49:18+00:00",
+      "last_actor": "InnovateSN",
+      "last_activity_type": "commit"
+    },
+    {
+      "alias": "Bussola Segreta",
+      "oldest_branch_observed_days": 0,
+      "branches": 2,
+      "non_default_branches": 1,
+      "oldest_open_issue_days": 0,
+      "unlisted_prs": 0,
+      "open_prs": 1,
+      "unlisted_branches": 0,
+      "default_branch_commits": 10,
+      "merged_prs": 0,
+      "open_issues": 0,
+      "oldest_open_pr_days": 14,
+      "branch_ages": [
+        {
+          "label": "Ramo 01",
+          "observed_days": 0
+        }
+      ],
+      "pr_ages": [
+        {
+          "label": "PR 01",
+          "open_days": 14,
+          "draft": false,
+          "requested_from": [
+            "InnovateSN"
+          ]
+        }
+      ],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 1
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-18T23:16:50+00:00",
+      "last_actor": "team",
+      "last_activity_type": "push"
+    },
+    {
+      "alias": "Casa delle Idee",
+      "oldest_branch_observed_days": 0,
+      "branches": 1,
+      "non_default_branches": 0,
+      "oldest_open_issue_days": 14,
+      "unlisted_prs": 0,
+      "open_prs": 0,
+      "unlisted_branches": 0,
+      "default_branch_commits": 52,
+      "merged_prs": 38,
+      "open_issues": 8,
+      "oldest_open_pr_days": 0,
+      "branch_ages": [],
+      "pr_ages": [],
+      "pending": {
+        "InnovateSN": {
+          "issues": 5,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-21T15:55:45+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "issue"
+    },
+    {
+      "alias": "Esploratore Verde",
+      "oldest_branch_observed_days": 0,
+      "branches": 2,
+      "non_default_branches": 1,
+      "oldest_open_issue_days": 0,
+      "unlisted_prs": 0,
+      "open_prs": 1,
+      "unlisted_branches": 0,
+      "default_branch_commits": 4,
+      "merged_prs": 0,
+      "open_issues": 0,
+      "oldest_open_pr_days": 7,
+      "branch_ages": [
+        {
+          "label": "Ramo 01",
+          "observed_days": 0
+        }
+      ],
+      "pr_ages": [
+        {
+          "label": "PR 01",
+          "open_days": 7,
+          "draft": false,
+          "requested_from": [
+            "InnovateSN"
+          ]
+        }
+      ],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 1
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-14T17:10:34+00:00",
+      "last_actor": "team",
+      "last_activity_type": "push"
+    },
+    {
+      "alias": "Faro Operativo",
+      "oldest_branch_observed_days": 0,
+      "branches": 8,
+      "non_default_branches": 7,
+      "oldest_open_issue_days": 17,
+      "unlisted_prs": 0,
+      "open_prs": 4,
+      "unlisted_branches": 0,
+      "default_branch_commits": 712,
+      "merged_prs": 12,
+      "open_issues": 5,
+      "oldest_open_pr_days": 1,
+      "branch_ages": [
+        {
+          "label": "Ramo 01",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 02",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 03",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 04",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 05",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 06",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 07",
+          "observed_days": 0
+        }
+      ],
+      "pr_ages": [
+        {
+          "label": "PR 01",
+          "open_days": 1,
+          "draft": false,
+          "requested_from": []
+        },
+        {
+          "label": "PR 02",
+          "open_days": 0,
+          "draft": true,
+          "requested_from": []
+        },
+        {
+          "label": "PR 03",
+          "open_days": 0,
+          "draft": false,
+          "requested_from": []
+        },
+        {
+          "label": "PR 04",
+          "open_days": 0,
+          "draft": false,
+          "requested_from": []
+        }
+      ],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-22T02:05:19+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "push"
+    },
+    {
+      "alias": "Giardino Aperto",
+      "oldest_branch_observed_days": 0,
+      "branches": 2,
+      "non_default_branches": 1,
+      "oldest_open_issue_days": 0,
+      "unlisted_prs": 0,
+      "open_prs": 0,
+      "unlisted_branches": 0,
+      "default_branch_commits": 27,
+      "merged_prs": 15,
+      "open_issues": 0,
+      "oldest_open_pr_days": 0,
+      "branch_ages": [
+        {
+          "label": "Ramo 01",
+          "observed_days": 0
+        }
+      ],
+      "pr_ages": [],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-22T01:46:07+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "pull_request"
+    },
+    {
+      "alias": "Onda Viva",
+      "oldest_branch_observed_days": 0,
+      "branches": 1,
+      "non_default_branches": 0,
+      "oldest_open_issue_days": 14,
+      "unlisted_prs": 0,
+      "open_prs": 0,
+      "unlisted_branches": 0,
+      "default_branch_commits": 53,
+      "merged_prs": 0,
+      "open_issues": 1,
+      "oldest_open_pr_days": 0,
+      "branch_ages": [],
+      "pr_ages": [],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-08T04:23:12+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "push"
+    },
+    {
+      "alias": "Pianeta Armonico",
+      "oldest_branch_observed_days": 0,
+      "branches": 6,
+      "non_default_branches": 5,
+      "oldest_open_issue_days": 17,
+      "unlisted_prs": 0,
+      "open_prs": 2,
+      "unlisted_branches": 0,
+      "default_branch_commits": 24,
+      "merged_prs": 10,
+      "open_issues": 16,
+      "oldest_open_pr_days": 14,
+      "branch_ages": [
+        {
+          "label": "Ramo 01",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 02",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 03",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 04",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 05",
+          "observed_days": 0
+        }
+      ],
+      "pr_ages": [
+        {
+          "label": "PR 01",
+          "open_days": 14,
+          "draft": false,
+          "requested_from": [
+            "InnovateSN"
+          ]
+        },
+        {
+          "label": "PR 02",
+          "open_days": 14,
+          "draft": false,
+          "requested_from": [
+            "InnovateSN"
+          ]
+        }
+      ],
+      "pending": {
+        "InnovateSN": {
+          "issues": 1,
+          "prs": 0,
+          "reviews": 2
+        },
+        "ostinsolo": {
+          "issues": 1,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-21T15:56:22+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "comment"
+    },
+    {
+      "alias": "Portale del Vento",
+      "oldest_branch_observed_days": 0,
+      "branches": 13,
+      "non_default_branches": 12,
+      "oldest_open_issue_days": 5,
+      "unlisted_prs": 0,
+      "open_prs": 5,
+      "unlisted_branches": 0,
+      "default_branch_commits": 164,
+      "merged_prs": 24,
+      "open_issues": 4,
+      "oldest_open_pr_days": 0,
+      "branch_ages": [
+        {
+          "label": "Ramo 01",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 02",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 03",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 04",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 05",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 06",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 07",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 08",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 09",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 10",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 11",
+          "observed_days": 0
+        },
+        {
+          "label": "Ramo 12",
+          "observed_days": 0
+        }
+      ],
+      "pr_ages": [
+        {
+          "label": "PR 01",
+          "open_days": 0,
+          "draft": true,
+          "requested_from": []
+        },
+        {
+          "label": "PR 02",
+          "open_days": 0,
+          "draft": true,
+          "requested_from": []
+        },
+        {
+          "label": "PR 03",
+          "open_days": 0,
+          "draft": false,
+          "requested_from": []
+        },
+        {
+          "label": "PR 04",
+          "open_days": 0,
+          "draft": false,
+          "requested_from": []
+        },
+        {
+          "label": "PR 05",
+          "open_days": 0,
+          "draft": false,
+          "requested_from": []
+        }
+      ],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-22T01:39:52+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "pull_request"
+    },
+    {
+      "alias": "Radici Comuni",
+      "oldest_branch_observed_days": 0,
+      "branches": 2,
+      "non_default_branches": 1,
+      "oldest_open_issue_days": 0,
+      "unlisted_prs": 0,
+      "open_prs": 1,
+      "unlisted_branches": 0,
+      "default_branch_commits": 1,
+      "merged_prs": 0,
+      "open_issues": 0,
+      "oldest_open_pr_days": 7,
+      "branch_ages": [
+        {
+          "label": "Ramo 01",
+          "observed_days": 0
+        }
+      ],
+      "pr_ages": [
+        {
+          "label": "PR 01",
+          "open_days": 7,
+          "draft": false,
+          "requested_from": []
+        }
+      ],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-14T17:11:51+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "pull_request"
+    },
+    {
+      "alias": "Radici del Team",
+      "oldest_branch_observed_days": 0,
+      "branches": 2,
+      "non_default_branches": 1,
+      "oldest_open_issue_days": 0,
+      "unlisted_prs": 0,
+      "open_prs": 1,
+      "unlisted_branches": 0,
+      "default_branch_commits": 3,
+      "merged_prs": 2,
+      "open_issues": 0,
+      "oldest_open_pr_days": 0,
+      "branch_ages": [
+        {
+          "label": "Ramo 01",
+          "observed_days": 0
+        }
+      ],
+      "pr_ages": [
+        {
+          "label": "PR 01",
+          "open_days": 0,
+          "draft": false,
+          "requested_from": []
+        }
+      ],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-21T06:00:53+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "push"
+    },
+    {
+      "alias": "Sentiero Autonomo",
+      "oldest_branch_observed_days": 0,
+      "branches": 1,
+      "non_default_branches": 0,
+      "oldest_open_issue_days": 0,
+      "unlisted_prs": 0,
+      "open_prs": 0,
+      "unlisted_branches": 0,
+      "default_branch_commits": 3,
+      "merged_prs": 0,
+      "open_issues": 0,
+      "oldest_open_pr_days": 0,
+      "branch_ages": [],
+      "pr_ages": [],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-08T04:18:38+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "push"
+    },
+    {
+      "alias": "Tasca Ritmica",
+      "oldest_branch_observed_days": 0,
+      "branches": 1,
+      "non_default_branches": 0,
+      "oldest_open_issue_days": 0,
+      "unlisted_prs": 0,
+      "open_prs": 0,
+      "unlisted_branches": 0,
+      "default_branch_commits": 2,
+      "merged_prs": 0,
+      "open_issues": 0,
+      "oldest_open_pr_days": 0,
+      "branch_ages": [],
+      "pr_ages": [],
+      "pending": {
+        "InnovateSN": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        },
+        "ostinsolo": {
+          "issues": 0,
+          "prs": 0,
+          "reviews": 0
+        }
+      },
+      "last_activity_at": "2026-10-06T18:19:14+00:00",
+      "last_actor": "ostinsolo",
+      "last_activity_type": "push"
+    }
+  ],
+  "branch_age_policy": "Branch age is first observed by the private collector, NOT the GitHub branch creation date.",
+  "pr_age_policy": "Open PR age is calculated from the exact GitHub created_at timestamp.",
+  "last_activity_policy": "Latest observed GitHub event or mapped default-branch commit; events have limited coverage."
 }

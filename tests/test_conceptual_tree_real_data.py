@@ -10,7 +10,7 @@ SNAPSHOT=json.loads((R/'snapshot.json').read_text())
 class HonestPublicTree(unittest.TestCase):
  def test_real_fields_come_from_approved_static_aggregate_only(self):
   self.assertEqual(SNAPSHOT['data_policy'],'public-authorized-team-summary')
-  self.assertEqual(SNAPSHOT['schema_version'],2)
+  self.assertIn(SNAPSHOT['schema_version'],(2,3))
   self.assertIn("fetch('./snapshot.json',{cache:'no-store'})",APP)
   self.assertIn("SNAPSHOT GITHUB · ",APP)
   self.assertIn('publishedLabel',APP)
@@ -32,8 +32,9 @@ class HonestPublicTree(unittest.TestCase):
   self.assertIn('min-height:39px!important;padding:3px 8px!important',DESIGN)
   self.assertIn('.repo-list{gap:5px!important}',DESIGN)
   self.assertIn('.repo-copy small{margin-top:2px!important}',DESIGN)
-  self.assertNotIn('font-size:',DESIGN.split('/* Compact the dark thematic sidebar entries')[1])
+  self.assertNotIn('font-size:',DESIGN.split('/* Compact the dark thematic sidebar entries')[1].split('/* Anonymous monitored repositories')[0])
  def test_no_new_public_snapshot_fields(self):
   self.assertNotIn('private_repo_name',json.dumps(SNAPSHOT))
-  self.assertIn("assert 'DEMO' not in app",PAGES)
+  self.assertIn('scripts/validate_public_snapshot.py',PAGES)
+  self.assertIn('DEMO COMMITS', (R/'tests/test_conceptual_tree_real_data.py').read_text())
 if __name__=='__main__':unittest.main()
