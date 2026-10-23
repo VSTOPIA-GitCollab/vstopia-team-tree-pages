@@ -23,12 +23,19 @@ export function createAtmosphere({scene,camera,renderer,sun,water,terrainMat,dus
  water.material.fragmentShader='uniform float uAtmosphereLight;\n'+water.material.fragmentShader.replace('vec3( 0.1 ) + reflectionSample','vec3( 0.1 * uAtmosphereLight ) + reflectionSample');
  const moon=new THREE.DirectionalLight('#91b5ec',0);
  moon.position.set(-35,70,-90);scene.add(moon);
- const uniforms={...atmosphereUniforms,uTime:clock};
+ const uniforms={...atmosphereUniforms,uTime:clock,
+  uBackdropMountains:{value:null},uBackdropMountainsVisible:{value:0},
+   uBackdropMidground:{value:null},uBackdropMidgroundVisible:{value:0},
+  uBackdropYaw:{value:0},uBackdropVerticalScale:{value:1},
+  uBackdropVerticalOffset:{value:0}
+ };
  const skyMaterial=new THREE.ShaderMaterial({
   uniforms,transparent:true,side:THREE.BackSide,depthTest:true,depthWrite:false,
   vertexShader:`varying vec3 vDirection;void main(){vDirection=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
   fragmentShader:`
-   uniform float uDaylight,uRain,uTime;varying vec3 vDirection;
+   uniform float uDaylight,uRain,uTime,uBackdropMountainsVisible,uBackdropMidgroundVisible,uBackdropYaw,uBackdropVerticalScale,uBackdropVerticalOffset;
+    uniform sampler2D uBackdropMountains,uBackdropMidground;
+    varying vec3 vDirection;
    float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
    float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}
    void main(){
@@ -50,12 +57,41 @@ export function createAtmosphere({scene,camera,renderer,sun,water,terrainMat,dus
     float halo=exp(-length(d-normalize(vec3(-.35,.70,-.90)))*32.);
     c+=vec3(.58,.69,.86)*(moon+halo*.09)*(1.-smoothstep(.04,.35,uDaylight))*(1.-uRain*.93);
     float opacity=max(1.-smoothstep(.0,.88,uDaylight),uRain*.94);
+    // Weather lives on a 7100m sphere IN FRONT of the 7200m mountain photo
+    // dome. Only its transparent sky, not its opaque photographic ridges,
+    // should receive the weather/night sky overlay.
+    // WebGL texture2D uses implicit UV derivatives to select mipmaps.
+    // Never sample this mountain mask inside an if conditioned on per-pixel
+    // cropV/arcU: derivatives are undefined across that dynamic boundary,
+    // producing the observed dotted latitude arc in the nighttime sky.
+    // Sample unconditionally for each fragment of the uniform-enabled dome,
+    // then gate alpha with the SAME smooth spatial mask as the photo shader.
+    if(uBackdropMountainsVisible>.5){
+      float arcU=(uv.x+uBackdropYaw-.25)*2.;
+      float sourceV=.5+(uv.y-.5)*uBackdropVerticalScale+uBackdropVerticalOffset;
+      float cropV=(sourceV-(1.-2190./4096.))*(4096./1020.);
+      float arcVisible=step(0.,arcU)*step(arcU,1.);
+      float verticalVisible=step(0.,cropV)*step(cropV,1.);
+      vec2 ridgeUV=vec2(clamp(arcU,.0005,.9995),clamp(cropV,.0005,.9995));
+      float arcFade=smoothstep(.0,.10,arcU)*(1.-smoothstep(.90,1.,arcU));
+      float farAlpha=texture2D(uBackdropMountains,ridgeUV).a;
+      vec2 midUV=vec2(clamp(.5+(ridgeUV.x-.5)*1.28+.03,.0005,.9995),
+        clamp(.5+(ridgeUV.y-.5)*.52+.065,.0005,.9995));
+      float midAlpha=texture2D(uBackdropMidground,midUV).a*uBackdropMidgroundVisible;
+      float maskArea=arcFade*arcVisible*verticalVisible;
+      float mountainAlpha=(farAlpha+midAlpha*(1.-farAlpha))*maskArea;
+      opacity*=1.-mountainAlpha;
+    }
     gl_FragColor=vec4(c,opacity);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
    }`
  });
- const overlay=new THREE.Mesh(new THREE.SphereGeometry(7100,32,16),skyMaterial);
+ // Preserve the existing 48x24 weather-sphere tessellation. The earlier
+ // v11 hypothesis that different sphere tessellations caused the dotted sky
+ // line was disproved by isolating each material. The verified v12 fix is
+ // branchless TEXTURE SAMPLING above, not any color/mesh/geometry change.
+const overlay=new THREE.Mesh(new THREE.SphereGeometry(7100,48,24),skyMaterial);
  overlay.name='Day night and storm sky';overlay.renderOrder=-9999;overlay.frustumCulled=false;scene.add(overlay);
  let seed=96321;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  const count=lowPower?1000:3800,positions=[],ends=[];
@@ -111,7 +147,19 @@ export function createAtmosphere({scene,camera,renderer,sun,water,terrainMat,dus
  $('rain').oninput=e=>{targetRain=+e.target.value;labels();};
  $('day-cycle').onclick=()=>{cycle=!cycle;phase=Math.acos(clamp(2*daylight-1,-1,1));$('day-cycle').setAttribute('aria-pressed',String(cycle));};
  labels();
- return {refreshBase,update(dt,paused){
+ return {refreshBase,
+  bindBackdropMountains(mountains){
+    // Share the exact image + UV transform of the existing photographed
+    // ridges. No duplicate TextureLoader, asset, or animation loop.
+    uniforms.uBackdropMountains.value=mountains.uMountains.value;
+    uniforms.uBackdropMountainsVisible.value=mountains.uMountainsEnabled.value;
+     uniforms.uBackdropMidground.value=mountains.uMidground.value;
+     uniforms.uBackdropMidgroundVisible.value=mountains.uMidgroundEnabled.value;
+    uniforms.uBackdropYaw.value=mountains.uMountainsYaw.value;
+    uniforms.uBackdropVerticalScale.value=mountains.uMountainsVerticalScale.value;
+    uniforms.uBackdropVerticalOffset.value=mountains.uMountainsVerticalOffset.value;
+  },
+  update(dt,paused){
   if(cycle&&!paused){phase+=dt*Math.PI*2/240;targetDay=(Math.cos(phase)+1)*.5;$('daylight').value=targetDay;labels();}
   const blend=1-Math.exp(-dt*3);
   daylight=mix(daylight,targetDay,blend);rainfall=mix(rainfall,targetRain,blend);

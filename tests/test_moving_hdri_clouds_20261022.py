@@ -10,7 +10,7 @@ class MovingCloudsContract(unittest.TestCase):
   self.assertIn("load('./assets/sky/partly-cloudy-2k.hdr'",SCENE)
   self.assertIn("scene.environment=envTarget.texture",SCENE)
   self.assertIn("sky.visible=false;clouds.visible=false;scene.background=texture",SCENE)
-  self.assertIn("makeMovingCloudSky(THREE,texture,time)",SCENE)
+  self.assertIn("makeMovingCloudSky(THREE,texture,time,{...atmosphereUniforms,uSceneLight:photoSceneLight})",SCENE)
   self.assertIn("water.material.uniforms.time.value+=motionDt",SCENE)
   self.assertIn("if(!paused){elapsed+=motionDt;time.value=elapsed;",SCENE)
   self.assertIn("movingCloudDome?.update(camera);renderer.render(scene,camera)",SCENE)

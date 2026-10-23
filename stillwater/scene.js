@@ -3,12 +3,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { createMysticTree, createDistantMountains } from './nature.js?v=fish-woodland-v1';
+import { createMysticTree, createDistantMountains } from './nature.js?v=fish-woodland-v1-atmosphere-shared-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6';
 import {createSurfaceMaps,displaceBarkGeometry,canopyOcclusion} from './surface-detail.js?v=surface-depth-20261022';
-import {createAtmosphere,atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1';
-import {createLakeFish,addMountainVegetation} from './lake-life.js?v=fish-woodland-v1-splash-v2';
-import {addMountainWaterfall} from './mountain-waterfall.js?v=waterfall-weather-v1';
-import {makeMovingCloudSky} from './moving-cloud-sky.js?v=moving-clouds-v1';
+import {createAtmosphere,atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1-mountain-occlusion-v1-partial-arc-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6-matched-sphere-v11-branchless-mask-v12';
+import {createLakeFish,addMountainVegetation} from './lake-life.js?v=fish-woodland-v1-splash-v2-atmosphere-shared-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6';
+import {addMountainWaterfall} from './mountain-waterfall.js?v=waterfall-weather-v1-atmosphere-shared-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6';
+import {createShootingStars} from './shooting-stars.js?v=rare-meteors-v1';
+import {makeMovingCloudSky} from './moving-cloud-sky.js?v=moving-clouds-v1-alps-field-v1-weather-occlusion-v1-partial-arc-v1-crest-restored-dark-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-skylight-v5-leftstretch-v6-highlightmask-v7-narrow-v9';
 import { mountVstopiaTreeBridge } from './vstopia-bridge.js?v=ios-frame-20261022';
 
 // Reproducible, entirely local landscape. All positions are in metres.
@@ -452,7 +453,11 @@ let paused=false,cinematic=false,elapsed=0,last=performance.now(),frameCount=0,f
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 if(reduced&&!(isEmbedded&&lowPower)){paused=true;$('pause').setAttribute('aria-pressed','true');$('pause').innerHTML='▶ <span>Resume</span>';}
 $('wind').oninput=e=>{wind.value=+e.target.value;$('wind-value').textContent=wind.value<.08?'Still':wind.value<.8?'Gentle':wind.value<1.4?'Breezy':'Strong';};
+// Shared with the photo shader; also updated by bridge-driven lighting(),
+// not only native DOM slider events. Initialized before the embedded preset.
+const photoSceneLight={value:+$('light').value};
 function lighting(value){
+ photoSceneLight.value=value;
  const elev=mix(.20,.95,value);sunDir.set(-.55,elev,.36).normalize();sun.position.copy(sunDir).multiplyScalar(110);su.sunPosition.value.copy(sunDir);su.turbidity.value=mix(7,3,value);sun.color.setHSL(mix(.075,.12,value),mix(.48,.12,value),.87);sun.intensity=mix(2.0,3.2,value);renderer.toneMappingExposure=mix(.80,1.02,value);water.material.uniforms.sunDirection.value.copy(sunDir);water.material.uniforms.sunColor.value.copy(sun.color);scene.fog.color.set(value<.32?'#b8afa1':'#a6b8b7');$('light-value').textContent=value<.28?'Golden hour':value<.76?'Late afternoon':'Clear daylight';
 }
 $('light').oninput=e=>lighting(+e.target.value);$('light').onchange=()=>{envTarget.dispose();envTarget=pmrem.fromScene(envScene,.04,.1,lowPower?500:2000);scene.environment=envTarget.texture;};lighting(.62);
@@ -492,9 +497,35 @@ if(isEmbedded){
    sky.visible=false;clouds.visible=false;scene.background=texture;
    // Preserve the photographic HDRI and the static alpine horizon.
    // Only panorama cloud pixels drift; the lake/lighting keep the same sky.
-   movingCloudDome=makeMovingCloudSky(THREE,texture,time);
+   movingCloudDome=makeMovingCloudSky(THREE,texture,time,{...atmosphereUniforms,uSceneLight:photoSceneLight});
    movingCloudDome.update(camera);
    scene.add(movingCloudDome.dome);movingCloudDome.dome.visible=true;
+   // Original non-repeating 180-degree photographic Alps Field band, with
+   // preserved original source angular scale, transparent mountain skyline
+   // and no wrap around the 360-degree sky.
+   document.body.dataset.mountainBackdrop='loading';
+   const ridgeQuality=lowPower?'4k':'8k';
+   new THREE.TextureLoader().load('./assets/sky/alps-field-mountains-'+ridgeQuality+'.webp',
+     ridge=>{
+       movingCloudDome?.setMountains(ridge);
+       if(movingCloudDome)atmosphere.bindBackdropMountains(movingCloudDome.uniforms);
+       document.body.dataset.mountainBackdrop='ready';
+       document.body.dataset.mountainBackdropQuality=ridgeQuality;
+       document.body.dataset.mountainMidground='loading';
+       document.body.dataset.mountainMidgroundSource='approved-generated-image';
+       new THREE.TextureLoader().load('./assets/sky/approved-alpine-midground-'+ridgeQuality+'.webp?v=rgb-bleed-ridge-v10',
+         foreground=>{
+           movingCloudDome?.setMidground(foreground);
+           if(movingCloudDome)atmosphere.bindBackdropMountains(movingCloudDome.uniforms);
+           document.body.dataset.mountainMidground='ready';
+         },undefined,error=>{
+           console.warn('[Stillwater optional forest mountain layer]',error);
+           document.body.dataset.mountainMidground='fallback';
+         });
+     },undefined,error=>{
+       console.warn('[Stillwater optional Alps Field backdrop]',error);
+       document.body.dataset.mountainBackdrop='fallback';
+     });
    document.body.dataset.cloudMotion='hdri-clouds-drifting';
    document.body.dataset.skyPreset='alpine-partly-cloudy-2k';
    document.body.dataset.skyReady='ready';
@@ -510,8 +541,21 @@ if(isEmbedded){
 }
 const lakeFish=createLakeFish({scene,clock:time,height,lowPower});
 const atmosphere=createAtmosphere({scene,camera,renderer,sun,water,terrainMat,dust,clock:time,lowPower,height});
+// A single small sky streak, rarely scheduled by the shared simulation clock.
+const shootingStars=createShootingStars({THREE,scene,camera,clock:time,atmosphereUniforms});
+const meteorFrequencyInput=$('meteor-frequency'),meteorFrequencyValue=$('meteor-frequency-value');
+function setMeteorFrequency(){
+ const value=+meteorFrequencyInput.value;
+ const label=value===0?'Off':value<=25?'Very rare':value<=55?'Occasional':value<=80?'Frequent':'Very frequent';
+ meteorFrequencyValue.textContent=label;
+ meteorFrequencyInput.setAttribute('aria-valuetext',label);
+ shootingStars.setFrequency(value);
+}
+meteorFrequencyInput.addEventListener('input',setMeteorFrequency);
+setMeteorFrequency();
+
 const originalLightInput=$('light').oninput;
-$('light').oninput=e=>{originalLightInput(e);atmosphere.refreshBase();};
+$('light').oninput=e=>{originalLightInput(e);photoSceneLight.value=+e.target.value;atmosphere.refreshBase();};
 let ready=false;
 let renderFrames=0,lastFrameAt=performance.now(),rafHandle=0;
 function animate(now){
@@ -531,6 +575,7 @@ function animate(now){
  const off=controls.target.clone().sub(focus);if(off.length()>55)controls.target.copy(focus).add(off.setLength(55));
  atmosphere.update(motionDt,paused);
  lakeFish.update();
+ shootingStars.update();
  movingCloudDome?.update(camera);renderer.render(scene,camera);vstopiaBridge?.tick(now,dt);frameCount++;fpsTime+=realDt;
  if(fpsTime>=1){$('fps').textContent=`${Math.round(frameCount/fpsTime)} FPS`;frameCount=0;fpsTime=0;}
  if(!ready){ready=true;$('loading').style.opacity=0;setTimeout(()=>$('loading').remove(),900);}

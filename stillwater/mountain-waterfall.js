@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1';
+import {atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1-mountain-occlusion-v1-partial-arc-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6-matched-sphere-v11-branchless-mask-v12';
 // Fits the cascade to the actual first mountain heightfield. No screen sprite
 // or detached white rectangle; the supporting shelf is part of the ridge mesh.
 export function addMountainWaterfall({scene,clock,lowPower,groundHeight,leafGeometry,leafMaterial}){

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1';
+import {atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1-mountain-occlusion-v1-partial-arc-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6-matched-sphere-v11-branchless-mask-v12';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 const lerp=(a,b,t)=>a+(b-a)*t;
 function random(seed){return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1';
+import {atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1-mountain-occlusion-v1-partial-arc-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6-matched-sphere-v11-branchless-mask-v12';
 
 const clamp=THREE.MathUtils.clamp;
 export function jumpPose(u,height=1.05,distance=2.6){
