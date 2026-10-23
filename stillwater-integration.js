@@ -20,6 +20,7 @@ const DEFAULT_NAMES=['Audio Playground','Creative Engine','Motion Lab','Plugin W
 let names=[...DEFAULT_NAMES],selected=names[0],filterVisible=new Set(names);
 let aliasMode=false,anchorData=[],ready=false;
 let plannedNames=new Set();
+const englishLabels=new Map();
 let configuredCatalog='',pendingCatalog='',configureRetries=0;
 function requestConfigure(){
  if(!aliasMode)return;
@@ -55,8 +56,8 @@ function renderControls(){
  for(const name of names){
   if(controls.has(name))continue;
   const b=document.createElement('button');b.type='button';b.className='living-node';
-  b.dataset.repo=name;b.setAttribute('aria-label','Explore '+name);
-  const label=document.createElement('span');label.className='living-node-label';label.textContent=name;
+  b.dataset.repo=name;b.setAttribute('aria-label','Explore '+(englishLabels.get(name)||name));
+  const label=document.createElement('span');label.className='living-node-label';label.textContent=englishLabels.get(name)||name;
   b.append(label);b.hidden=true;
   b.addEventListener('click',()=>{
    if(aliasMode)window.dispatchEvent(new CustomEvent('vstopia:choose-alias',{detail:{name}}));
@@ -78,8 +79,9 @@ function redraw(){
   b.style.left=p.x.toFixed(2)+'px';b.style.top=p.y.toFixed(2)+'px';
   let hidden=p.hidden||!filterVisible.has(p.name);
   if(!hidden){
-   const w=mobile?Math.min(128,Math.max(70,p.name.length*5.8+22)):
-     Math.min(160,Math.max(82,p.name.length*6.7+24));
+   const displayName=englishLabels.get(p.name)||p.name;
+   const w=mobile?Math.min(128,Math.max(70,displayName.length*5.8+22)):
+     Math.min(160,Math.max(82,displayName.length*6.7+24));
    const h=mobile?26:28;
    const rect={l:p.x-w/2,r:p.x+w/2,t:p.y-h/2,b:p.y+h/2};
    if(rect.l<6||rect.r>stage.clientWidth-6||rect.t<8||
@@ -101,6 +103,8 @@ window.addEventListener('vstopia:aliases',e=>{
   /^[A-Za-zÀ-ÖØ-öø-ÿ ]{4,40}$/.test(row.name)).slice(0,100);
  if(valid.length!==entries.length||new Set(valid.map(x=>x.name)).size!==valid.length)return;
  names=valid.map(x=>x.name);
+ englishLabels.clear();
+ for(const row of valid)englishLabels.set(row.name,row.label||row.name);
  plannedNames=new Set(valid.filter(x=>x.planned).map(x=>x.name));
  aliasMode=true;filterVisible=new Set(names);
  if(!names.includes(selected))selected=names[0];

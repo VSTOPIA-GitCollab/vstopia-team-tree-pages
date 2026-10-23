@@ -336,8 +336,8 @@ function setupInteractions(){
 }
 function build(){
  holder=document.createElement('canvas');holder.className='ez-webgl-canvas';holder.tabIndex=0;
- holder.setAttribute('aria-label','Albero tridimensionale EZ-Tree: trascina per ruotare, usa la rotella per ingrandire, seleziona i nomi dei rami.');
- markerLayer=document.createElement('div');markerLayer.className='ez-marker-layer';markerLayer.setAttribute('aria-label','Nodi del progetto');
+ holder.setAttribute('aria-label','3D interactive tree: drag to rotate, scroll to zoom and select branch names.');
+ markerLayer=document.createElement('div');markerLayer.className='ez-marker-layer';markerLayer.setAttribute('aria-label','Project nodes');
  stage.insertBefore(holder,fallback);
  stage.insertBefore(markerLayer,fallback);
  renderer=new THREE.WebGLRenderer({canvas:holder,alpha:true,antialias:true,powerPreference:'high-performance'});

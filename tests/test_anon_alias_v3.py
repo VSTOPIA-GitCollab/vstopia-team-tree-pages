@@ -46,5 +46,5 @@ class AnonymousAliasTests(unittest.TestCase):
   self.assertIn('oldest_open_pr_days',js)
   self.assertIn('id="aliasRepoList"',html)
   self.assertIn('has-alias-metrics',js)
-  self.assertIn('Cerca un giardino',js)
+  self.assertIn('Search a garden',js)
 if __name__=='__main__':unittest.main()

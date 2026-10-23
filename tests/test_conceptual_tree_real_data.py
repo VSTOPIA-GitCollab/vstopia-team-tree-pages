@@ -20,8 +20,8 @@ class HonestPublicTree(unittest.TestCase):
   for bad in ('ESEMPIO DI ATTIVITÀ','Create a new animation','DEMO COMMITS','r.last_commit','r.issues+r.prs','commits: [','issues: [','last_commit:',"'DEMO'"):
    self.assertNotIn(bad,APP)
   self.assertNotIn('DEMO',INDEX)
-  self.assertIn('AREA TEMATICA',APP)
-  self.assertIn('Percorso della mappa, non un repository specifico',APP)
+  self.assertIn('THEMATIC AREA',APP)
+  self.assertIn('A map category, not an individual repository',APP)
   self.assertIn('PROJECT AREAS',INDEX)
  def test_filters_are_categories_not_invented_issue_activity(self):
   self.assertIn('data-filter="creative"',INDEX)
