@@ -3,12 +3,14 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { createMysticTree, createDistantMountains } from './nature.js?v=fish-woodland-v1-atmosphere-shared-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6';
+import { createMysticTree, createDistantMountains } from './nature.js?v=fish-woodland-v1-atmosphere-shared-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6-rock-normal-v8-crisp-shadows';
 import {createSurfaceMaps,displaceBarkGeometry,canopyOcclusion} from './surface-detail.js?v=surface-depth-20261022';
 import {createAtmosphere,atmosphereUniforms} from './atmosphere.js?v=waterfall-weather-v1-mountain-occlusion-v1-partial-arc-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6-matched-sphere-v11-branchless-mask-v12';
 import {createLakeFish,addMountainVegetation} from './lake-life.js?v=fish-woodland-v1-splash-v2-atmosphere-shared-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6';
 import {addMountainWaterfall} from './mountain-waterfall.js?v=waterfall-weather-v1-atmosphere-shared-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-leftstretch-v6';
 import {createShootingStars} from './shooting-stars.js?v=rare-meteors-v1';
+import {addMountainPines} from './mountain-pines.js?v=alpine-conifers-dark-patches-v1';
+import {grassPaletteWeights} from './grass-color.js?v=meadow-palette-v2';
 import {makeMovingCloudSky} from './moving-cloud-sky.js?v=moving-clouds-v1-alps-field-v1-weather-occlusion-v1-partial-arc-v1-crest-restored-dark-v1-midground-v1-real-crest-v2-approved-aspect-v2-raise-v3-right-wide-v4-skylight-v5-leftstretch-v6-highlightmask-v7-narrow-v9';
 import { mountVstopiaTreeBridge } from './vstopia-bridge.js?v=ios-frame-20261022';
 
@@ -43,11 +45,14 @@ const home=V(31,12.5,39);
 if(lowPower)home.sub(focus).multiplyScalar(.88).add(focus);
 camera.position.copy(home);
 const controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(focus);controls.enableDamping=true;controls.dampingFactor=.055;controls.minDistance=7;controls.maxDistance=135;controls.maxPolarAngle=Math.PI*.487;controls.minPolarAngle=.16;controls.panSpeed=.65;controls.rotateSpeed=.45;controls.zoomSpeed=.75;controls.autoRotateSpeed=.35;controls.update();
-const sun=new THREE.DirectionalLight('#fff0cf',3.0);sun.position.set(-45,65,30);sun.castShadow=true;sun.shadow.mapSize.set(lowPower?512:2048,lowPower?512:2048);Object.assign(sun.shadow.camera,{left:-32,right:32,top:32,bottom:-32,near:1,far:210});sun.shadow.bias=-.00018;sun.shadow.normalBias=.018;sun.shadow.radius=2;sun.target.position.set(-4,7,-22);scene.add(sun,sun.target);
+const sun=new THREE.DirectionalLight('#fff0cf',3.0);sun.position.set(45,65,-30);sun.castShadow=true;sun.shadow.mapSize.set(lowPower?512:2048,lowPower?512:2048);Object.assign(sun.shadow.camera,{left:-32,right:32,top:32,bottom:-32,near:1,far:210});sun.shadow.bias=-.00018;sun.shadow.normalBias=.018;sun.shadow.radius=2;sun.target.position.set(-4,7,-22);scene.add(sun,sun.target);
 scene.add(new THREE.HemisphereLight('#c4dbe5','#45513a',.72));
 const sky=new Sky();sky.scale.setScalar(10000);scene.add(sky);
 const su=sky.material.uniforms;su.turbidity.value=5;su.rayleigh.value=1.3;su.mieCoefficient.value=.006;su.mieDirectionalG.value=.83;
-const sunDir=V(-.5,.65,.35).normalize();su.sunPosition.value.copy(sunDir);
+// Source mountain photo is lit from the viewing-right side. Keep one
+// reversed azimuth for the real shadow light, Sky shader, Water and leaf BRDF.
+// The elevation can change without rotating the sun back across the scene.
+const sunDir=V(.55,.65,-.36).normalize();su.sunPosition.value.copy(sunDir);
 // The prefiltered sky supplies physical reflections and indirect light to PBR surfaces.
 const envScene=new THREE.Scene();const envSky=sky.clone();envSky.scale.setScalar(1000);envScene.add(envSky);const pmrem=new THREE.PMREMGenerator(renderer);let envTarget=pmrem.fromScene(envScene,.04,.1,lowPower?500:2000);scene.environment=envTarget.texture;
 const wind={value:.65},time={value:0};
@@ -69,8 +74,18 @@ function sway(material,kind='leaf'){
      vec3 leafInTree=(instanceMatrix*vec4(transformed,1.)).xyz;
      transformed+=inverse(mat3(instanceMatrix))*(treeSway(leafInTree)-leafInTree);
     #endif`:
-    grass?`float h=max(0.,position.y);float gust=sin(t*1.4+phase)*.32+sin(t*2.6+phase*.6)*.14;
-    transformed.x+=gust*uWind*h*h;transformed.z+=cos(t+phase)*.12*uWind*h*h;`:
+    grass?`float h=clamp(position.y,0.,1.);
+    // Broad gusts synchronize a patch; each blade has its own frequency
+    // and phase. Root stays anchored, the tip bends continuously.
+    float individual=fract(sin(dot(anchor.xz,vec2(12.9898,78.233)))*43758.5453);
+    float patchPhase=anchor.x*.13+anchor.z*.09;
+    float personalPhase=phase+individual*6.2831853;
+    float broadGust=sin(t*.92+patchPhase)*.14;
+    float localGust=sin(t*(1.35+individual*.48)+personalPhase)*.16+
+                    sin(t*2.65+personalPhase*.63)*.055;
+    float bend=pow(h,1.85)*uWind*(.82+individual*.31);
+    transformed.x+=(broadGust+localGust)*bend;
+    transformed.z+=(broadGust*.47+localGust*.36)*bend;`:
     `transformed=treeSway(transformed);`}
   `);
   if(leaf && !material.isMeshDepthMaterial){
@@ -318,25 +333,38 @@ function plantTree(model,pos,scale,rotation,hero=false){
  const foliageGeo=leafGeo.clone();
  foliageGeo.setAttribute('instanceOcclusion',new THREE.InstancedBufferAttribute(canopyOcclusion(model.leaves),1));
  const foliage=new THREE.InstancedMesh(foliageGeo,leafMat,model.leaves.length);let i=0;
+ // Per-tree green identity plus slight individual leaf variation. Do not
+ // retint the central Mystic Tree or the separate mountain broadleaf system.
+ const treeHue=.225+.063*noise(pos.x*.038+51,pos.z*.038-23)+range(-.012,.012);
+ const treeLight=.77+.13*noise(pos.x*.018-19,pos.z*.018+33);
+ const treeSat=.32+.12*noise(pos.x*.044+14,pos.z*.044-7);
  for(const leaf of model.leaves){
   dummy.position.copy(leaf.p);
   if(leaf.direction){dummy.quaternion.setFromUnitVectors(V(0,1,0),leaf.direction);dummy.rotateY(leaf.roll);}
   else dummy.rotation.set(range(-1.4,1.4),range(0,6.28),range(-2,2));
   dummy.scale.set(leaf.scale,leaf.scale,leaf.scale);dummy.updateMatrix();foliage.setMatrixAt(i,dummy.matrix);
-  tc.setHSL(hero?range(.235,.28):range(.22,.28),range(.32,.48),hero?range(.65,.85):range(.62,.81));foliage.setColorAt(i++,tc);
+  if(hero)tc.setHSL(range(.235,.28),range(.32,.48),range(.65,.85));
+  else tc.setHSL(THREE.MathUtils.clamp(treeHue+range(-.014,.014),.20,.32),
+    treeSat,THREE.MathUtils.clamp(treeLight+range(-.055,.075),.68,.95));
+  foliage.setColorAt(i++,tc);
  }
  foliage.castShadow=hero || scale>.65;foliage.receiveShadow=true;foliage.customDepthMaterial=leafDepth;foliage.computeBoundingSphere();group.add(foliage);return group;
 }
 const heroTree=plantTree(heroModel,heroPos,1,0,true);
 const mountainWaterfall=addMountainWaterfall({scene,clock:time,lowPower,groundHeight:distantMeadowHeight,leafGeometry:leafGeo,leafMaterial:leafMat});
 addMountainVegetation({scene,clock:time,wind,lowPower,groundHeight:distantMeadowHeight});
+// New independent pine groves and dark vegetation islands. Keep every
+// original mountain broadleaf instance and mountain photo pixel unchanged.
+addMountainPines({scene,lowPower,groundHeight:distantMeadowHeight});
 for(let i=0;i<64;i++){
  const a=range(Math.PI*.93,Math.PI*2.06),r=range(48,110);let x=Math.cos(a)*r,z=Math.sin(a)*r-12;
  if(Math.hypot(x-heroPos.x,z-heroPos.z)<25)continue;
- plantTree(forestModel,V(x,height(x,z)-.05,z),range(.36,.83),range(0,6.28));
+ // Taller young/mature woodland mix; remove accidental tiny bonsai silhouettes.
+ const treeScale=.55+Math.pow(rand(),.82)*.41;
+ plantTree(forestModel,V(x,height(x,z)-.05,z),treeScale,range(0,6.28));
 }
 // Foreground understory on both banks keeps a full orbit spatially coherent.
-for(const [x,z,s] of [[-40,16,.64],[38,9,.58],[-41,-18,.60],[40,-36,.72],[-26,36,.42],[30,39,.46]])plantTree(forestModel,V(x,height(x,z),z),s,range(0,6));
+for(const [x,z,s] of [[-40,16,.75],[38,9,.70],[-41,-18,.72],[40,-36,.83],[-26,36,.63],[30,39,.67]])plantTree(forestModel,V(x,height(x,z),z),s,range(0,6));
 // Stones: high-tessellation irregular geometry with an actual rough surface.
 const rocks=[];
 for(let kind=0;kind<5;kind++){
@@ -351,8 +379,14 @@ for(let kind=0;kind<5;kind++){
  m.castShadow=true;m.receiveShadow=true;scene.add(m);
 }
 // Tens of thousands of individually curved blades, tinted from root to tip.
-const grassGeo=(()=>{const p=[],c=[],idx=[];for(let j=0;j<5;j++){const t=j/4,y=t;const width=.035*(1-t)+.002;for(const side of [-1,1]){p.push(side*width+t*t*.17,y,t*t*.1);c.push(mix(.17,.62,t),mix(.25,.72,t),mix(.075,.31,t));}if(j<4){let k=j*2;idx.push(k,k+2,k+1,k+1,k+2,k+3);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));g.setIndex(idx);g.computeVertexNormals();return g;})();
-const grassMat=sway(new THREE.MeshStandardMaterial({color:'#b6be87',vertexColors:true,side:THREE.DoubleSide,roughness:1}),'grass');
+const grassGeo=(()=>{const p=[],c=[],idx=[];for(let j=0;j<5;j++){const t=j/4,y=t;const width=.035*(1-t)+.002;for(const side of [-1,1]){p.push(side*width+t*t*.17,y,t*t*.1);// Linear vertex-color multipliers, not another green albedo layer:
+ // slightly shaded base and sun-catching upper blades, preserving PBR light.
+ c.push(mix(.49,1.00,t),mix(.57,1.00,t),mix(.47,.89,t));}if(j<4){let k=j*2;idx.push(k,k+2,k+1,k+1,k+2,k+3);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));g.setIndex(idx);g.computeVertexNormals();return g;})();
+// The instance tint is the grass albedo. Multiplying it by the old
+// yellow-green material and dark green vertex RGB crushed hue variation.
+const grassMat=sway(new THREE.MeshStandardMaterial({color:'#ffffff',vertexColors:true,side:THREE.DoubleSide,roughness:1}),'grass');
+const meadowDeep=new THREE.Color('#203f27'),meadowFresh=new THREE.Color('#64894a');
+const meadowDry=new THREE.Color('#808956');
 // The old x[-60,60], z[-54,52] sampling rectangle was the actual square
 // visible in overhead QA, even after the terrain meshes were made radial.
 // Scatter in polar/world space with a long continuous density tail instead.
@@ -381,12 +415,19 @@ while(gi<grassCount && tries++<(lowPower?200000:1450000)){
  const fade=1-.46*THREE.MathUtils.smoothstep(r,130,440);
  dummy.position.set(x,h-.03,z);
  dummy.rotation.set(0,range(0,6.28),range(-.17,.17));
- const bladeHeight=range(.22,.67)*(h<1.1?1.3:1)*fade;
- dummy.scale.set(range(.8,1.8),bladeHeight,1);
+ // Shared biological variation for hue, shaded pockets AND height.
+ // Taller grasses group loosely, rather than every blade being the same size.
+ const tint=grassPaletteWeights(x,z,rand(),noise);
+ const bladeHeight=range(.19,.62)*(h<1.1?1.3:1)*fade*tint.height;
+ dummy.scale.set(range(.72,1.7),bladeHeight,1);
  dummy.updateMatrix();grass.setMatrixAt(gi,dummy.matrix);
- tc.setHSL(range(.18,.26),.33,range(.46,.75));grass.setColorAt(gi++,tc);
+ // Deep shade is world-coherent albedo, not a fake moving black shadow.
+ tc.copy(meadowDeep).lerp(meadowFresh,tint.green).lerp(meadowDry,tint.dry)
+   .multiplyScalar(tint.shade);
+ grass.setColorAt(gi++,tc);
 }
-grass.count=gi;grass.receiveShadow=true;grass.computeBoundingSphere();scene.add(grass);
+grass.count=gi;grass.receiveShadow=true;grass.instanceColor.needsUpdate=true;
+grass.computeBoundingSphere();scene.add(grass);
 // Long-range vegetation is represented by the same photographed textured
 // meadow surface. Sub-pixel instanced grass at the mountain foot caused
 // high-contrast black/white pixel shimmer and is intentionally not created.
@@ -458,7 +499,16 @@ $('wind').oninput=e=>{wind.value=+e.target.value;$('wind-value').textContent=win
 const photoSceneLight={value:+$('light').value};
 function lighting(value){
  photoSceneLight.value=value;
- const elev=mix(.20,.95,value);sunDir.set(-.55,elev,.36).normalize();sun.position.copy(sunDir).multiplyScalar(110);su.sunPosition.value.copy(sunDir);su.turbidity.value=mix(7,3,value);sun.color.setHSL(mix(.075,.12,value),mix(.48,.12,value),.87);sun.intensity=mix(2.0,3.2,value);renderer.toneMappingExposure=mix(.80,1.02,value);water.material.uniforms.sunDirection.value.copy(sunDir);water.material.uniforms.sunColor.value.copy(sun.color);scene.fog.color.set(value<.32?'#b8afa1':'#a6b8b7');$('light-value').textContent=value<.28?'Golden hour':value<.76?'Late afternoon':'Clear daylight';
+ const elev=mix(.20,.95,value);sunDir.set(.55,elev,-.36).normalize();
+ // The distant generated ridges receive their OWN crisper shade response;
+ // copy the exact live sun direction without expanding tree shadow maps.
+ scene.getObjectByName('Distant mountain horizon')?.userData.rockSunDirection?.copy(sunDir);
+ // A DirectionalLight shines toward its target, NOT world (0,0,0).
+ // Position relative to the target so actual cast shadows match sunDir
+ // shared by Sky, Water and leaf translucency at every Light setting.
+ sun.position.copy(sun.target.position).addScaledVector(sunDir,110);
+ sun.target.updateMatrixWorld();sun.updateMatrixWorld();
+ su.sunPosition.value.copy(sunDir);su.turbidity.value=mix(7,3,value);sun.color.setHSL(mix(.075,.12,value),mix(.48,.12,value),.87);sun.intensity=mix(2.0,3.2,value);renderer.toneMappingExposure=mix(.80,1.02,value);water.material.uniforms.sunDirection.value.copy(sunDir);water.material.uniforms.sunColor.value.copy(sun.color);scene.fog.color.set(value<.32?'#b8afa1':'#a6b8b7');$('light-value').textContent=value<.28?'Golden hour':value<.76?'Late afternoon':'Clear daylight';
 }
 $('light').oninput=e=>lighting(+e.target.value);$('light').onchange=()=>{envTarget.dispose();envTarget=pmrem.fromScene(envScene,.04,.1,lowPower?500:2000);scene.environment=envTarget.texture;};lighting(.62);
 $('quality').onchange=e=>{const q=e.target.value;renderer.setPixelRatio(Math.min(devicePixelRatio,lowPower?1:q==='balanced'?1:q==='high'?1.6:2));sun.shadow.mapSize.setScalar(lowPower?512:q==='ultra'?4096:q==='high'?2048:1024);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}grass.count=Math.floor(gi*(q==='balanced'?.48:1));};

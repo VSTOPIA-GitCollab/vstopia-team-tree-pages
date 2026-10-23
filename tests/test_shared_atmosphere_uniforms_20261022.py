@@ -26,10 +26,10 @@ class AtmosphereUniformSingletonTest(unittest.TestCase):
 
     def test_rocks_are_original_pbr_not_extra_hacked(self):
         rock=(SCRIPT/"nature.js").read_text()
-        self.assertIn("new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.16})",rock)
+        self.assertIn("new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.08})",rock)
         self.assertIn("outgoingLight=mix(outgoingLight,vec3(.24,.29,.31)*uAtmosphereLight,haze);",rock)
         self.assertNotIn("distantRockLight",rock)
-        self.assertIn("material.customProgramCacheKey=()=> 'rock-scan-woodland-v3';",rock)
+        self.assertIn("material.customProgramCacheKey=()=> 'rock-scan-woodland-v8-crisp-mountain-shadows';",rock)
 
     def test_cache_versions_force_reload_of_shared_importers(self):
         scene=(SCRIPT/"scene.js").read_text()

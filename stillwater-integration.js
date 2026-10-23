@@ -6,7 +6,7 @@ const fallback=document.getElementById('treeCanvas');
 const frame=document.createElement('iframe');
 frame.id='stillwaterFrame';
 frame.title='Interactive 3D living tree and mountain lake';
-frame.src='./stillwater/index.html?embedded=1&v=organic-grass-variation-20261022-moving-clouds-v1-weather-v1-life-v1-splash-v2-alps-field-v1-weather-occlusion-v1-atmosphere-shared-v1-partial-arc-v1-crest-restored-dark-v1-midground-v1-real-crest-v2-generated-approved-v1-approved-aspect-v2-raise-v3-dark-summit-replacement-v2-right-wide-v4-skylight-v5-leftstretch-v6-highlightmask-v7-edgefeather-v8-innergradient-v9-rgbbleed-v10-branchless-mask-v12-shooting-stars-v1';
+frame.src='./stillwater/index.html?embedded=1&v=organic-grass-variation-20261022-moving-clouds-v1-weather-v1-life-v1-splash-v2-alps-field-v1-weather-occlusion-v1-atmosphere-shared-v1-partial-arc-v1-crest-restored-dark-v1-midground-v1-real-crest-v2-generated-approved-v1-approved-aspect-v2-raise-v3-dark-summit-replacement-v2-right-wide-v4-skylight-v5-leftstretch-v6-highlightmask-v7-edgefeather-v8-innergradient-v9-rgbbleed-v10-branchless-mask-v12-shooting-stars-v1-sun-azimuth-v1-grass-color-v2-alpine-pines-v1-rock-normals-v8-crisp-shadows';
 frame.allow='fullscreen';
 frame.setAttribute('loading','eager');
 const labelLayer=document.createElement('div');labelLayer.id='stillwaterLabels';

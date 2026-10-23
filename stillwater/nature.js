@@ -141,11 +141,17 @@ export function createDistantMountains(){
  const noise=(x,y)=>{const ix=Math.floor(x),iy=Math.floor(y);let u=x-ix,v=y-iy;u=u*u*(3-2*u);v=v*v*(3-2*v);return lerp(lerp(hash(ix,iy),hash(ix+1,iy),u),lerp(hash(ix,iy+1),hash(ix+1,iy+1),u),v);};
  function ridged(x,y){let a=.55,sum=0,weight=1;for(let i=0;i<6;i++){let s=1-Math.abs(2*noise(x,y)-1);s=s*s*weight;sum+=s*a;weight=Math.min(1,s*1.8);x=x*2.09+17;y=y*2.09+9;a*=.48;}return sum;}
  const group=new THREE.Group();group.name='Distant mountain horizon';
+// Generated ridges are outside the existing small tree-shadow-camera frustum.
+// Use a shared sun direction only for ridge-side illumination contrast.
+const rockSunDirection=new THREE.Vector3(.55,.65,-.36).normalize();
+group.userData.rockSunDirection=rockSunDirection;
  const textures=new THREE.TextureLoader();
  const rockColor=textures.load('./assets/rock-pbr/aerial-rocks-color.jpg');
  rockColor.colorSpace=THREE.SRGBColorSpace;
  const rockNormal=textures.load('./assets/rock-pbr/aerial-rocks-normal.jpg');
+ rockNormal.colorSpace=THREE.NoColorSpace; // normal directions, not RGB albedo
  const rockRoughness=textures.load('./assets/rock-pbr/aerial-rocks-roughness.jpg');
+ rockRoughness.colorSpace=THREE.NoColorSpace; // scalar material roughness
  for(const tex of [rockColor,rockNormal,rockRoughness]){tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.anisotropy=4;}
 
  for(let layer=0;layer<3;layer++){
@@ -166,9 +172,9 @@ export function createDistantMountains(){
   g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.computeVertexNormals();
   // A scan provides actual mineral detail; macro geometry supplies silhouette
   // and slope shadows. No post-lighting brightness multiplier or flat blue paint.
-  const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.16});
+  const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,fog:false,envMapIntensity:.08});
   material.onBeforeCompile=shader=>{
-   Object.assign(shader.uniforms,{...atmosphereUniforms,uRockColor:{value:rockColor},uRockNormal:{value:rockNormal},uRockRoughness:{value:rockRoughness}});
+   Object.assign(shader.uniforms,{...atmosphereUniforms,uRockColor:{value:rockColor},uRockNormal:{value:rockNormal},uRockRoughness:{value:rockRoughness},uRockSunDirection:{value:rockSunDirection}});
    shader.vertexShader='varying vec3 vRockWorld; varying vec3 vRockNormal; varying float mountainDistance;\n'+shader.vertexShader;
    shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
     vRockWorld=(modelMatrix*vec4(transformed,1.)).xyz;
@@ -177,6 +183,7 @@ export function createDistantMountains(){
    shader.fragmentShader=`varying vec3 vRockWorld; varying vec3 vRockNormal; varying float mountainDistance;
     uniform sampler2D uRockColor,uRockNormal,uRockRoughness;
     uniform float uAtmosphereLight;uniform vec3 uAtmosphereFog;
+    uniform vec3 uRockSunDirection;
     vec3 rockWeights(vec3 n){vec3 w=pow(abs(n),vec3(4.));return w/(w.x+w.y+w.z);}
     vec4 rockSample(sampler2D tex,vec3 p,vec3 w){return texture2D(tex,p.zy)*w.x+texture2D(tex,p.xz)*w.y+texture2D(tex,p.xy)*w.z;}
    `+shader.fragmentShader;
@@ -186,29 +193,53 @@ export function createDistantMountains(){
     rockUV+=vec3(sin(vRockWorld.z*.012),sin(vRockWorld.x*.014+vRockWorld.z*.008),sin(vRockWorld.x*.011))*1.2;
     vec3 mineral=mix(rockSample(uRockColor,rockUV,rockW).rgb,
      rockSample(uRockColor,rockUV*.413+vec3(17.3,4.9,11.7),rockW).rgb,.42);
+    // Owner rejected the experimental v6/v6b alpine-material palette.
+    // Preserve the pre-experiment v5 vegetation shading and matte PBR.
     float woodlandPatch=.5+.25*sin(vRockWorld.x*.023+sin(vRockWorld.z*.019)*2.)+.25*sin(vRockWorld.z*.037+vRockWorld.x*.011);
     float vegetation=smoothstep(.30,.82,rockN.y)*(1.-smoothstep(70.,130.,vRockWorld.y))*(.35+.65*woodlandPatch);
     vec3 undergrowth=vec3(.065,.14,.035)*(.82+mineral*.65);
     diffuseColor.rgb*=mix(mineral,undergrowth,vegetation*.91);
    `);
    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
-    roughnessFactor=clamp(rockSample(uRockRoughness,rockUV,rockW).r,.72,1.);
+    // Dry matte rock, retain restrained spatial variation from the scan.
+    float rawRockRoughness=rockSample(uRockRoughness,rockUV,rockW).r;
+    roughnessFactor=mix(.90,.98,rawRockRoughness);
    `);
    shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+    // The same warped world-space UVs as rock albedo: avoid drifting relief.
+    // Whiteout-style triplanar normal composition in WORLD SPACE, then the
+    // standard Three.js view-space PBR normal. A neutral (0,0,1) map must
+    // reproduce rockN exactly, including negative-facing rock surfaces.
     vec3 nx=texture2D(uRockNormal,rockUV.zy).xyz*2.-1.;
     vec3 ny=texture2D(uRockNormal,rockUV.xz).xyz*2.-1.;
     vec3 nz=texture2D(uRockNormal,rockUV.xy).xyz*2.-1.;
-    nx.xy*=.48;ny.xy*=.48;nz.xy*=.48;
-    vec3 blended=normalize(vec3(abs(nx.z)*rockN.x,nx.y+rockN.y,nx.x+rockN.z)*rockW.x+
-     vec3(ny.x+rockN.x,abs(ny.z)*rockN.y,ny.y+rockN.z)*rockW.y+
-     vec3(nz.x+rockN.x,nz.y+rockN.y,abs(nz.z)*rockN.z)*rockW.z);
+    float nearDetail=1.-smoothstep(240.,1450.,mountainDistance);
+    float normalStrength=mix(.35,.78,nearDetail);
+    nx.xy*=normalStrength;ny.xy*=normalStrength;nz.xy*=normalStrength;
+    // Mirror projected U on opposing faces so the normal features do not
+    // flip direction across the slope's +X/-X, +Y/-Y or +Z/-Z sides.
+    nx.x*=sign(rockN.x);ny.x*=sign(rockN.y);nz.x*=-sign(rockN.z);
+    nx.xy+=rockN.zy;nx.z*=rockN.x;
+    ny.xy+=rockN.xz;ny.z*=rockN.y;
+    nz.xy+=rockN.xy;nz.z*=rockN.z;
+    vec3 blended=normalize(nx.zyx*rockW.x+ny.xzy*rockW.y+nz.xyz*rockW.z);
     normal=normalize(mat3(viewMatrix)*blended);
+   `);
+   // Sun-facing vs shadow-facing cliffs, not a new terrain colour layer.
+   // True tree shadow-map frustum covers only the nearby grove, not the 3D
+   // distant ridges: shape the indirect bounce locally for crisp dark faces.
+   shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>',`#include <lights_fragment_end>
+    float facingSun=dot(rockN,normalize(uRockSunDirection));
+    float crispRockLight=smoothstep(-.035,.16,facingSun);
+    float rockShadowStrength=mix(.56,1.,crispRockLight);
+    reflectedLight.indirectDiffuse*=rockShadowStrength;
+    reflectedLight.indirectSpecular*=mix(.78,1.,crispRockLight);
    `);
    shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`float haze=min(.38,1.-exp(-max(0.,mountainDistance-250.)*.00020));
     outgoingLight=mix(outgoingLight,vec3(.24,.29,.31)*uAtmosphereLight,haze);
     #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=> 'rock-scan-woodland-v3';
+  material.customProgramCacheKey=()=> 'rock-scan-woodland-v8-crisp-mountain-shadows';
   const mesh=new THREE.Mesh(g,material);mesh.name=`Horizon ridge ${layer+1}`;group.add(mesh);
  }
  return group;
